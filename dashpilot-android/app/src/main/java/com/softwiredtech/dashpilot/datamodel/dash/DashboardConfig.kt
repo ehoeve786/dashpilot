@@ -48,6 +48,15 @@ val availableDashboards = buildList {
     )
     add(
         DashboardConfig(
+            id = "compose",
+            nameRes = R.string.dashboard_name_compose,
+            url = "${LOCAL_ASSET_BASE_URL}web-compose/index.html",
+            type = DashboardType.WEB,
+            screenshotRes = R.drawable.preview_compose
+        )
+    )
+    add(
+        DashboardConfig(
             id = "retro",
             nameRes = R.string.dashboard_name_retro,
             url = "${LOCAL_ASSET_BASE_URL}web-retro/index.html",

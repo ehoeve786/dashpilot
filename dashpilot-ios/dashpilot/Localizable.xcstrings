@@ -784,6 +784,22 @@
         }
       }
     },
+    "Custom Dashboard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigenes Dashboard"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Egyéni műszerfal"
+          }
+        }
+      }
+    },
     "Dark Mode" : {
       "localizations" : {
         "de" : {

@@ -38,6 +38,13 @@ let availableDashboards: [DashboardConfig] = [
         screenshotName: "preview_analog"
     ),
     DashboardConfig(
+        id: "compose",
+        name: String(localized: "Custom Dashboard"),
+        url: "compose",
+        type: .web,
+        screenshotName: "preview_compose"
+    ),
+    DashboardConfig(
         id: "retro",
         name: String(localized: "Retro Dashboard"),
         url: "retro",

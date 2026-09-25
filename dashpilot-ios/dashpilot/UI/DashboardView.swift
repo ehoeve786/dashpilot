@@ -15,6 +15,7 @@ struct DashboardView: View {
     /// Set after the first swipe; nil means "show what the route passed in".
     @State private var swipedDashboard: DashboardConfig?
     @State private var switchedToName: String?
+    @State private var composeEditing = ComposeEditingState.shared
     @State private var nameOverlayDismiss: Task<Void, Never>?
 
     /// Only web dashboards participate in the swipe carousel.
@@ -73,7 +74,10 @@ struct DashboardView: View {
                     let dx = value.translation.width
                     guard abs(dx) > 60, abs(dx) > abs(value.translation.height) else { return }
                     switchDashboard(step: dx < 0 ? 1 : -1)
-                }
+                },
+            // Suspended while a dash-app's own editor is open, so dragging a
+            // widget does not swipe to the next dashboard.
+            including: composeEditing.isEditing ? .subviews : .all
         )
         .ignoresSafeArea()
         .navigationBarHidden(true)
@@ -85,7 +89,10 @@ struct DashboardView: View {
                 dashStream = connectionVM.dashStateStream()
             }
         }
-        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
+            ComposeEditingState.shared.isEditing = false
+        }
     }
 
     /// Moves `step` (+1 next, -1 previous) through the web dashboards,

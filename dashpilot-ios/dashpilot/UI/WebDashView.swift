@@ -76,6 +76,40 @@ final class AppSchemeHandler: NSObject, WKURLSchemeHandler {
     }
 }
 
+// web-compose stores its layout document through the host: a WKWebView served
+// over a custom scheme has an opaque origin, where localStorage is unavailable.
+enum ComposeLayoutStore {
+    static let key = "dash_compose_layout"
+    static let dashboardId = "compose"
+    static let messageName = "composeLayout"
+    static let editingMessageName = "composeEditing"
+
+    static var saved: String? { UserDefaults.standard.string(forKey: key) }
+
+    static func save(_ json: String) {
+        UserDefaults.standard.set(json, forKey: key)
+    }
+
+    // The layout is read before the first script runs, so the page renders it directly.
+    static func injectionScript() -> WKUserScript? {
+        guard let json = saved,
+              let data = try? JSONSerialization.data(withJSONObject: json, options: [.fragmentsAllowed]),
+              let literal = String(data: data, encoding: .utf8) else { return nil }
+        return WKUserScript(source: "window.__DASHPILOT_COMPOSE_LAYOUT__ = \(literal);",
+                            injectionTime: .atDocumentStart,
+                            forMainFrameOnly: true)
+    }
+}
+
+// True while the web-compose editor is open. The dashboard carousel reads a
+// horizontal drag as "next dashboard", which would fire while a widget is being
+// dragged or resized, so the carousel suspends itself for the duration.
+@Observable
+final class ComposeEditingState {
+    static let shared = ComposeEditingState()
+    var isEditing = false
+}
+
 struct WebDashView: UIViewRepresentable {
 
     let url: String
@@ -85,11 +119,21 @@ struct WebDashView: UIViewRepresentable {
         Coordinator()
     }
 
-    private static let localApps: Set<String> = ["vanilla", "retro", "ambient", "analog"]
+    private static let localApps: Set<String> = ["vanilla", "retro", "ambient", "analog", "compose"]
 
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.userContentController.add(context.coordinator, name: "log")
+
+        if url == ComposeLayoutStore.dashboardId {
+            config.userContentController.add(context.coordinator, name: ComposeLayoutStore.messageName)
+            config.userContentController.add(context.coordinator, name: ComposeLayoutStore.editingMessageName)
+            if let script = ComposeLayoutStore.injectionScript() {
+                config.userContentController.addUserScript(script)
+            }
+        }
+        // A dashboard that cannot edit never leaves the carousel suspended.
+        ComposeEditingState.shared.isEditing = false
 
         if Self.localApps.contains(url) {
             let bundleDir = Bundle.main.bundleURL.appendingPathComponent("web-\(url)")
@@ -143,6 +187,10 @@ struct WebDashView: UIViewRepresentable {
                                    didReceive message: WKScriptMessage) {
             if message.name == "log" {
                 print("WebView JS: \(message.body)")
+            } else if message.name == ComposeLayoutStore.messageName, let json = message.body as? String {
+                ComposeLayoutStore.save(json)
+            } else if message.name == ComposeLayoutStore.editingMessageName {
+                ComposeEditingState.shared.isEditing = (message.body as? NSNumber)?.boolValue ?? false
             }
         }
 

@@ -1,0 +1,108 @@
+{
+  "type": "radial",
+  "version": 1,
+  "renderer": "svg",
+  "name": {
+    "en": "Radial gauge",
+    "hu": "Kör műszer",
+    "de": "Rundinstrument"
+  },
+  "defaultSize": {
+    "w": 4,
+    "h": 4
+  },
+  "minSize": {
+    "w": 2,
+    "h": 2
+  },
+  "binds": [
+    {
+      "key": "value",
+      "kinds": [
+        "number"
+      ],
+      "name": {
+        "en": "Value",
+        "hu": "Érték",
+        "de": "Wert"
+      },
+      "default": "egoSpeed"
+    },
+    {
+      "key": "marker",
+      "kinds": [
+        "number"
+      ],
+      "default": null,
+      "name": {
+        "en": "Marker",
+        "hu": "Jelölő",
+        "de": "Markierung"
+      }
+    }
+  ],
+  "props": [
+    {
+      "key": "label",
+      "type": "string",
+      "default": "",
+      "name": {
+        "en": "Label",
+        "hu": "Felirat",
+        "de": "Beschriftung"
+      }
+    },
+    {
+      "key": "min",
+      "type": "number",
+      "default": null,
+      "name": {
+        "en": "Minimum",
+        "hu": "Minimum",
+        "de": "Minimum"
+      }
+    },
+    {
+      "key": "max",
+      "type": "number",
+      "default": null,
+      "name": {
+        "en": "Maximum",
+        "hu": "Maximum",
+        "de": "Maximum"
+      }
+    },
+    {
+      "key": "precision",
+      "type": "number",
+      "default": null,
+      "min": 0,
+      "max": 3,
+      "name": {
+        "en": "Decimals",
+        "hu": "Tizedesjegyek",
+        "de": "Nachkommastellen"
+      }
+    },
+    {
+      "key": "accent",
+      "type": "color",
+      "default": "",
+      "name": {
+        "en": "Arc color",
+        "hu": "Ív színe",
+        "de": "Bogenfarbe"
+      }
+    },
+    {
+      "key": "showLabel",
+      "type": "bool",
+      "default": false,
+      "name": {
+        "en": "Show label",
+        "hu": "Felirat mutatása",
+        "de": "Beschriftung anzeigen"
+      }
+    }
+  ]
+}

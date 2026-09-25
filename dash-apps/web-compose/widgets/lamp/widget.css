@@ -1,0 +1,42 @@
+.w-lamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 5cqmin, 10px);
+  padding: 6%;
+}
+.lamp__icon {
+  width: clamp(16px, 48cqmin, 120px);
+  height: clamp(16px, 48cqmin, 120px);
+  fill: var(--track);
+  transition: fill 120ms linear, filter 120ms linear;
+}
+.lamp__label {
+  color: var(--text-dim);
+  font-size: clamp(10px, 11cqmin, 20px);
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.w-lamp[data-on="1"] .lamp__icon {
+  fill: var(--lamp-on);
+  filter: drop-shadow(0 0 6px var(--lamp-on));
+}
+.w-lamp[data-on="1"] .lamp__label { color: var(--text); }
+.w-lamp[data-on="1"][data-blink="1"] .lamp__icon { animation: lamp-blink 0.8s steps(1) infinite; }
+.w-lamp[data-hide-off="1"][data-on="0"] { visibility: hidden; }
+
+/* Short but wide: icon and label side by side. */
+@container (max-height: 90px) and (min-width: 120px) {
+  .w-lamp { flex-direction: row; gap: 0.5em; }
+  .lamp__icon { width: clamp(16px, 50cqh, 40px); height: clamp(16px, 50cqh, 40px); flex: none; }
+  .lamp__label { font-size: clamp(11px, 22cqh, 18px); }
+}
+/* Short and narrow: icon only. */
+@container (max-height: 90px) and (max-width: 119px) { .lamp__label { display: none; } }
+
+@keyframes lamp-blink { 50% { opacity: 0.25; } }

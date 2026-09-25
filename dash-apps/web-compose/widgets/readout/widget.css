@@ -1,0 +1,43 @@
+.w-readout {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(8px, 7cqmin, 24px);
+  text-align: start;
+}
+.w-readout[data-align="center"] { text-align: center; }
+.w-readout[data-align="end"] { text-align: end; }
+
+.readout__label {
+  color: var(--text-dim);
+  font-size: clamp(11px, 11cqmin, 22px);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The value fills the width it has: ~0.6em per character, the unit at 0.32em.
+   --chars / --unit-chars are set by widget.js. */
+.readout__line {
+  white-space: nowrap;
+  line-height: 1;
+  font-size: max(16px, min(44cqh, calc(86cqw / (var(--chars, 3) * 0.6 + var(--unit-chars, 0) * 0.2 + 0.35)), 160px));
+}
+.readout__value {
+  color: var(--accent, var(--text));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.readout__unit {
+  color: var(--text-dim);
+  font-size: max(11px, 0.32em);
+  margin-inline-start: 0.3em;
+}
+
+/* One row tall: label and value side by side. */
+@container (max-height: 90px) {
+  .w-readout { flex-direction: row; align-items: center; gap: 0.6em; }
+  .readout__label { flex: 1; }
+  .readout__line { font-size: max(14px, min(55cqh, calc(48cqw / (var(--chars, 3) * 0.6 + var(--unit-chars, 0) * 0.2 + 0.35)), 44px)); }
+}

@@ -1,0 +1,83 @@
+{
+  "type": "readout",
+  "version": 1,
+  "renderer": "dom",
+  "name": {
+    "en": "Readout",
+    "hu": "Kijelző",
+    "de": "Anzeige"
+  },
+  "defaultSize": {
+    "w": 3,
+    "h": 2
+  },
+  "minSize": {
+    "w": 2,
+    "h": 1
+  },
+  "binds": [
+    {
+      "key": "value",
+      "kinds": [
+        "number",
+        "enum",
+        "string"
+      ],
+      "name": {
+        "en": "Value",
+        "hu": "Érték",
+        "de": "Wert"
+      },
+      "default": "egoSpeed"
+    }
+  ],
+  "props": [
+    {
+      "key": "label",
+      "type": "string",
+      "default": "",
+      "name": {
+        "en": "Label",
+        "hu": "Felirat",
+        "de": "Beschriftung"
+      }
+    },
+    {
+      "key": "precision",
+      "type": "number",
+      "default": null,
+      "min": 0,
+      "max": 3,
+      "name": {
+        "en": "Decimals",
+        "hu": "Tizedesjegyek",
+        "de": "Nachkommastellen"
+      }
+    },
+    {
+      "key": "accent",
+      "type": "color",
+      "default": "",
+      "name": {
+        "en": "Value color",
+        "hu": "Érték színe",
+        "de": "Wertfarbe"
+      }
+    },
+    {
+      "key": "align",
+      "type": "enum",
+      "default": "start",
+      "options": [
+        "start",
+        "center",
+        "end"
+      ],
+      "name": {
+        "en": "Alignment",
+        "hu": "Igazítás",
+        "de": "Ausrichtung"
+      }
+    }
+  ]
+}

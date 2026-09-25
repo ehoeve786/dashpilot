@@ -1,0 +1,29 @@
+.w-radial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4%;
+}
+.radial__svg { width: 100%; height: 100%; overflow: visible; }
+.radial__track,
+.radial__arc {
+  fill: none;
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+.radial__track { stroke: var(--track); }
+.radial__arc { stroke: var(--accent, var(--brand)); }
+.radial__marker line {
+  stroke: var(--text);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.radial__value {
+  fill: var(--text);
+  font-size: 52px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.radial__unit { fill: var(--text-dim); font-size: 16px; }
+.radial__label { fill: var(--text-dim); font-size: 14px; font-weight: 500; }

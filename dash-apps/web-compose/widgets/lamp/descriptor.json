@@ -1,0 +1,101 @@
+{
+  "type": "lamp",
+  "version": 1,
+  "renderer": "dom",
+  "name": {
+    "en": "Indicator",
+    "hu": "Jelzőfény",
+    "de": "Kontrollleuchte"
+  },
+  "defaultSize": {
+    "w": 2,
+    "h": 2
+  },
+  "minSize": {
+    "w": 1,
+    "h": 1
+  },
+  "binds": [
+    {
+      "key": "value",
+      "kinds": [
+        "bool"
+      ],
+      "name": {
+        "en": "Condition",
+        "hu": "Feltétel",
+        "de": "Bedingung"
+      },
+      "default": "adasOn"
+    }
+  ],
+  "props": [
+    {
+      "key": "label",
+      "type": "string",
+      "default": "",
+      "name": {
+        "en": "Label",
+        "hu": "Felirat",
+        "de": "Beschriftung"
+      }
+    },
+    {
+      "key": "icon",
+      "type": "enum",
+      "default": "dot",
+      "options": [
+        "dot",
+        "arrow-left",
+        "arrow-right",
+        "warning",
+        "wheel"
+      ],
+      "name": {
+        "en": "Icon",
+        "hu": "Ikon",
+        "de": "Symbol"
+      }
+    },
+    {
+      "key": "color",
+      "type": "color",
+      "default": "#22c55e",
+      "name": {
+        "en": "Active color",
+        "hu": "Aktív szín",
+        "de": "Aktive Farbe"
+      }
+    },
+    {
+      "key": "blink",
+      "type": "bool",
+      "default": false,
+      "name": {
+        "en": "Blink when active",
+        "hu": "Villogjon aktívan",
+        "de": "Blinken wenn aktiv"
+      }
+    },
+    {
+      "key": "hideWhenOff",
+      "type": "bool",
+      "default": false,
+      "name": {
+        "en": "Hide when off",
+        "hu": "Rejtve, ha nem aktív",
+        "de": "Ausblenden wenn aus"
+      }
+    },
+    {
+      "key": "showLabel",
+      "type": "bool",
+      "default": false,
+      "name": {
+        "en": "Show label",
+        "hu": "Felirat mutatása",
+        "de": "Beschriftung anzeigen"
+      }
+    }
+  ]
+}

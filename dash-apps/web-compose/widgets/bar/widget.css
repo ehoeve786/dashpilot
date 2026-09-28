@@ -1,0 +1,61 @@
+.w-bar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  padding: clamp(8px, 7cqmin, 24px);
+}
+/* Nothing but the track: keep it centred rather than at the bottom. */
+.w-bar[data-bare] { justify-content: center; }
+.bar__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.bar__label {
+  color: var(--text-dim);
+  font-size: clamp(11px, 11cqmin, 22px);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bar__value {
+  color: var(--text);
+  font-size: max(16px, min(30cqh, calc(86cqw / (var(--chars, 3) * 0.6 + var(--unit-chars, 0) * 0.24 + 0.35)), 96px));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+.bar__unit {
+  color: var(--text-dim);
+  font-size: 0.4em;
+  margin-inline-start: 0.3em;
+}
+.bar__track {
+  position: relative;
+  height: clamp(6px, 9cqh, 18px);
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+  flex: none;
+}
+.bar__fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: var(--accent, var(--brand));
+  border-radius: inherit;
+  will-change: transform;
+}
+
+/* One row tall: label, value and track on one line. */
+@container (max-height: 90px) {
+  .w-bar { flex-direction: row; align-items: center; }
+  .bar__head { flex-direction: row; align-items: baseline; gap: 0.6em; flex: none; max-width: 55%; }
+  .bar__value { font-size: max(14px, min(45cqh, calc(30cqw / (var(--chars, 3) * 0.6 + var(--unit-chars, 0) * 0.24 + 0.35)), 36px)); }
+  .bar__track { flex: 1; height: clamp(6px, 16cqh, 14px); }
+}

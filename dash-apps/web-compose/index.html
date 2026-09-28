@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>DashPilot Compose</title>
+  <link rel="stylesheet" href="styles/compose.css">
+  <link rel="stylesheet" href="widgets/_generated.css">
+  <link rel="stylesheet" href="styles/editor.css">
+</head>
+<body>
+  <main class="compose" data-compose-root></main>
+
+  <!-- Classic scripts in dependency order: the perf gate inlines these into jsdom. -->
+  <script src="core/i18n.js"></script>
+  <script src="core/signals.js"></script>
+  <script src="core/registry.js"></script>
+  <script src="core/layout.js"></script>
+  <script src="core/host.js"></script>
+  <script src="widgets/_generated.js"></script>
+  <script src="layouts/default.js"></script>
+  <script src="core/runtime.js"></script>
+  <script src="core/editor.js"></script>
+  <script src="core/demo.js"></script>
+</body>
+</html>

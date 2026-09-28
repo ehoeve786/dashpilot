@@ -18,6 +18,7 @@
     <string name="dashboard_name_retro">Retro</string>
     <string name="dashboard_name_expo">Expo</string>
     <string name="dashboard_name_analog">Analog</string>
+    <string name="dashboard_name_compose">Custom</string>
     <string name="dashboard_name_rive">Rive</string>
     <string name="dashboard_name_dev_rive">Load Rive File</string>
     <string name="settings_section_display">Display</string>

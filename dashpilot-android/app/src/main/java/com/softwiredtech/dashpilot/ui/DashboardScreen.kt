@@ -92,6 +92,8 @@ fun DashboardScreen(
     // Set after the first swipe; null means "show what the route passed in".
     var swipedDashboardId by rememberSaveable { mutableStateOf<String?>(null) }
     var swipeCount by remember { mutableIntStateOf(0) }
+    // Raised by a dash-app that has its own editor open (see WebDashView).
+    var dashAppEditing by remember { mutableStateOf(false) }
     var switchedToName by remember { mutableStateOf("") }
     var nameOverlayVisible by remember { mutableStateOf(false) }
 
@@ -128,7 +130,10 @@ fun DashboardScreen(
             // Observe in the Initial pass so the WebView underneath keeps
             // receiving every touch; the swipe is recognized purely by
             // watching the first pointer travel between down and up.
-            .pointerInput(Unit) {
+            .pointerInput(dashAppEditing) {
+                // While a dash-app's editor is open, dragging a widget must not
+                // be read as a swipe to the next dashboard.
+                if (dashAppEditing) return@pointerInput
                 val threshold = 60.dp.toPx()
                 awaitEachGesture {
                     val down = awaitFirstDown(
@@ -160,7 +165,8 @@ fun DashboardScreen(
                         modifier = Modifier.fillMaxSize(),
                         url = currentUrl,
                         scope = scope,
-                        dashStateFlow = dashStateFlow
+                        dashStateFlow = dashStateFlow,
+                        onEditingChange = { editing -> dashAppEditing = editing }
                     )
                 }
                 "rive", "dev_rive" -> {

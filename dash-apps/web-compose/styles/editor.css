@@ -1,0 +1,244 @@
+/* Editor chrome. None of this is in play until body.editing is set. */
+.editing .cell { touch-action: none; }
+
+/* Keep the grid clear of the editor bar. */
+.editing .compose { padding-top: calc(var(--editor-inset, 0px) + 8px); }
+
+.editing .cell--editable {
+  outline: 1px dashed color-mix(in srgb, var(--text-dim) 45%, transparent);
+  outline-offset: -1px;
+  cursor: grab;
+}
+.editing .cell--selected {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+.editing .cell--dragging {
+  cursor: grabbing;
+  opacity: 0.85;
+  z-index: 3;
+}
+.editing .cell--swap {
+  outline: 2px dashed var(--brand);
+  outline-offset: -2px;
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+}
+.editing .cell__body { pointer-events: none; }
+
+.cell__resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 34px;
+  height: 34px;
+  display: none;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 7px;
+  cursor: nwse-resize;
+  touch-action: none;
+}
+.editing .cell__resize { display: flex; }
+.cell__resize span {
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid var(--text-dim);
+  border-bottom: 2px solid var(--text-dim);
+  border-bottom-right-radius: 3px;
+}
+.editing .cell--selected .cell__resize span { border-color: var(--brand); }
+
+.editor {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 10px max(8px, env(safe-area-inset-left));
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 92%, transparent), transparent);
+  pointer-events: none;
+}
+.editor > * { pointer-events: auto; }
+
+.editor__bar,
+.editor__selection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.editor__title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.editor__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-inline-end: 4px;
+}
+.editor__hint {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.editor__btn {
+  appearance: none;
+  border: 1px solid var(--track);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.editor__btn--primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.editor__btn--danger { color: var(--danger); }
+.editor__btn--small { padding: 5px 10px; font-size: 12px; }
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: color-mix(in srgb, #000 55%, transparent);
+}
+.sheet__panel {
+  width: min(720px, 100%);
+  max-height: 78dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--track);
+}
+.sheet__title { font-size: 15px; font-weight: 600; }
+.sheet__body { overflow-y: auto; padding: 8px 16px 20px; }
+.sheet__section {
+  margin: 16px 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--track) 60%, transparent);
+  font-size: 14px;
+}
+.field__label { color: var(--text-dim); }
+.field__control {
+  appearance: none;
+  min-width: 140px;
+  max-width: 60%;
+  border: 1px solid var(--track);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+}
+.field__control--check {
+  position: relative;
+  flex: none;
+  min-width: 0;
+  width: 46px;
+  height: 28px;
+  padding: 0;
+  border-radius: 999px;
+  background: var(--track);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+.field__control--check::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 30%);
+  transition: transform 150ms ease;
+}
+.field__control--check:checked { background: var(--brand); border-color: var(--brand); }
+.field__control--check:checked::before { transform: translateX(18px); }
+.field__control--color {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+.field__control--color input { width: 44px; height: 32px; padding: 0; border: 1px solid var(--track); border-radius: 8px; background: none; }
+
+.palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  padding-top: 10px;
+}
+.palette__item {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--track);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 10px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.palette__item img { width: 100%; height: 52px; object-fit: contain; }
+/* Previews are drawn in the dark palette; flipped, they read as light widgets. */
+[data-theme="light"] .palette__item img { filter: invert(1) hue-rotate(180deg); }
+.palette__item--full { opacity: 0.45; cursor: not-allowed; }
+.palette__note { font-size: 11px; line-height: 1; color: var(--text-dim); white-space: nowrap; }
+
+.editor__toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translate(-50%, 12px);
+  z-index: 30;
+  max-width: min(420px, calc(100% - 32px));
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--track);
+  color: var(--text);
+  font-size: 13px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.editor__toast--on { opacity: 1; transform: translate(-50%, 0); }

@@ -50,12 +50,6 @@ final class DemoDataSource: IDataSource {
     private static let goEnd: TimeInterval = 78
     // cycleLength is the end of the accelerate-back-to-cruise phase.
 
-    #if DEBUG
-    private static let parked = true
-    #else
-    private static let parked = false
-    #endif
-
     /// Slowly drifting base speed, continuous across cycle boundaries so
     /// cruise phases never jump.
     private static func cruiseSpeed(at t: TimeInterval) -> Float {
@@ -86,7 +80,7 @@ final class DemoDataSource: IDataSource {
         case ..<turnStart:
             // Cruise.
             s.egoSpeed = cruiseSpeed(at: t)
-            s.egoSteeringAngle = Float(sin(t * 0.3) * 3) // gentle lane-keeping wiggle
+            s.egoSteeringAngle = Float(sin(t * 0.3) * 15) // lane-keeping wiggle, big enough to see
             s.trafficLightColor = 0
             s.stopLineDist = 0
 
@@ -106,7 +100,7 @@ final class DemoDataSource: IDataSource {
 
         case ..<cruise2End:
             s.egoSpeed = cruiseSpeed(at: t)
-            s.egoSteeringAngle = Float(sin(t * 0.3) * 3)
+            s.egoSteeringAngle = Float(sin(t * 0.3) * 15)
             s.trafficLightColor = 0
             s.stopLineDist = 0
 
@@ -141,16 +135,6 @@ final class DemoDataSource: IDataSource {
             let progress = (phase - goEnd) / (cycleLength - goEnd)
             s.egoSpeed = cruiseSpeed(at: t) * Float(0.3 + 0.7 * progress)
             s.egoSteeringAngle = 0
-            s.trafficLightColor = 0
-            s.stopLineDist = 0
-        }
-
-        if parked {
-            s.gear = 1 // Park
-            s.egoSpeed = 0
-            s.egoSteeringAngle = 0
-            s.leftBlinker = 0
-            s.rightBlinker = 0
             s.trafficLightColor = 0
             s.stopLineDist = 0
         }

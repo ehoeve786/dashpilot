@@ -103,21 +103,24 @@ async def websocket_server(websocket, websocket_dt: float, path="/", route_path=
         await websocket.close()
 
 # Run the WebSocket server
-async def main(scenario: int, port: int, websocket_fps: float, route_path: str):
+async def main(scenario: int, host: str, port: int, websocket_fps: float, route_path: str):
     websocket_dt = 1.0 / websocket_fps
 
     handler = functools.partial(websocket_server, websocket_dt=websocket_dt, route_path=route_path)
-    server = await websockets.serve(handler, "0.0.0.0", port)
-    local_ip = get_local_ip()
-    print(f"Running websocket server on ws://{local_ip}:{port}")
+    server = await websockets.serve(handler, host, port)
+    local_ip = get_local_ip() if host == "0.0.0.0" else host
+    print(f"Running websocket server on ws://{local_ip}:{port} (no authentication; bound to {host})")
     await server.wait_closed()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scenario", type=int, default=2, help="Scenario number to run (default: 0)")
+    parser.add_argument("--scenario", type=int, default=2, help="Scenario number (currently unused)")
     parser.add_argument("--fps", type=float, default=30.0, help="WebSocket FPS (default: 30.0)")
     parser.add_argument("--route", type=str, default=None, help="Path to route.jsonl")
+    parser.add_argument("--host", type=str, default="0.0.0.0",
+                        help="Interface to bind (default 0.0.0.0 so phones on the LAN can connect; "
+                             "use 127.0.0.1 for local-only). The server has no authentication.")
     parser.add_argument("--port", type=int, default=8080, help="Port number for websocket connection")
     args = parser.parse_args()
     print(f"Selected scenario: {args.scenario}")
-    asyncio.run(main(args.scenario, args.port, args.fps, args.route))
+    asyncio.run(main(args.scenario, args.host, args.port, args.fps, args.route))

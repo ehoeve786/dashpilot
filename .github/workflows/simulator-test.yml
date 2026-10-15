@@ -1,0 +1,28 @@
+name: Simulator Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'simulator/**'
+      - '.github/workflows/simulator-test.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install simulator requirements
+        working-directory: simulator
+        run: pip install -r requirements.txt
+
+      - name: Run simulator tests
+        working-directory: simulator
+        run: python -m unittest -v test_server

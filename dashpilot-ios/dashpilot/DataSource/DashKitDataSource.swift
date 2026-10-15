@@ -51,11 +51,16 @@ final class DashKitDataSource: IDataSource {
             dbcContents.append(content)
             busIndices.append(CInt(bus))
         }
-        decoder = dbcContents.withCStringArray { dbcPtrs in
+        let newDecoder = dbcContents.withCStringArray { dbcPtrs in
             busIndices.withUnsafeBufferPointer { busBuf in
                 bridge_create_vehicle_decoder(dbcPtrs, busBuf.baseAddress, Int32(dbcContents.count), vehicleType)
             }
         }
+        // Swap under the lock and free any decoder left by a previous connect().
+        decoderLock.lock()
+        if let old = decoder { bridge_destroy_vehicle_decoder(old) }
+        decoder = newDecoder
+        decoderLock.unlock()
 
         manager.addGattListener(self)
         manager.connect()

@@ -8,6 +8,10 @@ final class CommaDataSource: IDataSource {
     private var context: UnsafeMutableRawPointer?
     private var group: UnsafeMutableRawPointer?
     private var decoder: UnsafeMutableRawPointer?
+    // Serializes start/stop of the native receive loop, and owns the callback
+    // context it borrows until stop has joined the worker thread.
+    private let loopLock = NSLock()
+    private var loopContext: Unmanaged<CallbackBox>?
 
     private let vehicleType: String
     private let dbcFiles: [(busIndex: Int, resourceName: String)]
@@ -58,21 +62,22 @@ final class CommaDataSource: IDataSource {
         }
         self.group = grp
 
-        // Pass continuation as unmanaged context to the C callback
+        // Pass continuation as unmanaged context to the C callback. Released in
+        // releaseNativeResources() after the native worker has been joined.
         let cont = self.continuation
-        let contextPtr = Unmanaged.passRetained(CallbackBox(cont)).toOpaque()
+        let box = Unmanaged.passRetained(CallbackBox(cont))
 
-        DispatchQueue.global(qos: .userInitiated).async {
-            bridge_start_receive_loop(grp, dec, contextPtr) { ctx, statePtr in
-                guard let ctx, let statePtr else { return }
-                let box = Unmanaged<CallbackBox>.fromOpaque(ctx).takeUnretainedValue()
-                let carState = CarState(from: statePtr.pointee)
-                box.continuation?.yield(carState)
-            }
-            // Loop exited — release the retained context
-            Unmanaged<CallbackBox>.fromOpaque(contextPtr).release()
-            cont?.finish()
+        // The C call returns immediately (the loop runs on a native worker),
+        // so holding the lock here is cheap and keeps start/stop ordered.
+        loopLock.lock()
+        loopContext = box
+        bridge_start_receive_loop(grp, dec, box.toOpaque()) { ctx, statePtr in
+            guard let ctx, let statePtr else { return }
+            let callbackBox = Unmanaged<CallbackBox>.fromOpaque(ctx).takeUnretainedValue()
+            let carState = CarState(from: statePtr.pointee)
+            callbackBox.continuation?.yield(carState)
         }
+        loopLock.unlock()
     }
 
     func disconnect() {
@@ -81,8 +86,13 @@ final class CommaDataSource: IDataSource {
     }
 
     private func releaseNativeResources() {
-        // NOTE: This will block until receive loop has exited
+        loopLock.lock()
+        // Blocks until the native worker has exited, so no callback can run
+        // after this and it is safe to release the context below.
         bridge_stop_receive_loop()
+        loopContext?.release()
+        loopContext = nil
+        loopLock.unlock()
 
         if let group { bridge_delete_sub_sockets(group) }
         if let decoder { bridge_destroy_vehicle_decoder(decoder) }

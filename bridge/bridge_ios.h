@@ -74,7 +74,9 @@ void bridge_decode_can_frame(void* decoder, int bus, uint32_t address, const uin
 // Caller must free() the result.
 char* bridge_discover_publisher(void* ctx, const char* endpoint, const char* initialIp, int timeoutMs);
 
-// Receive loop
+// Receive loop. Start returns immediately and runs the loop on a worker thread;
+// stop signals it and blocks until that thread has exited. Callers must call
+// stop before freeing the group, decoder or callback context.
 typedef void (*bridge_car_state_callback_t)(void* context, const BridgeCarState* state);
 void bridge_start_receive_loop(void* group, void* decoder, void* callbackContext, bridge_car_state_callback_t callback);
 void bridge_stop_receive_loop(void);

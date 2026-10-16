@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <cstring>
 #include <atomic>
+#include <mutex>
+#include <thread>
 
 static void carStateToBridge(const CarState& cs, BridgeCarState* out) {
     out->egoSteeringAngle = cs.egoSteeringAngle;
@@ -46,7 +48,8 @@ static void carStateToBridge(const CarState& cs, BridgeCarState* out) {
 }
 
 static std::atomic<bool> receiveLoopRunning{false};
-static std::atomic<bool> receiveLoopExited{true};
+static std::mutex receiveLoopMutex;
+static std::thread receiveLoopThread;
 
 extern "C" {
 
@@ -100,28 +103,41 @@ void bridge_decode_can_frame(void* decoderPtr, int bus, uint32_t address, const 
     carStateToBridge(decoder->state(), out);
 }
 
+// Starts the receive loop on a worker thread and returns immediately. The
+// thread is owned here, so bridge_stop_receive_loop() always has a handle to
+// join: a stop issued before or during start can no longer return early and
+// leave the loop running on freed sockets.
 void bridge_start_receive_loop(void* groupPtr, void* decoderPtr, void* callbackContext, bridge_car_state_callback_t callback) {
     auto* group = static_cast<SubSocketGroup*>(groupPtr);
     auto* decoder = static_cast<VehicleDecoder*>(decoderPtr);
+
+    std::lock_guard<std::mutex> lock(receiveLoopMutex);
+    if (receiveLoopThread.joinable()) return;  // one loop at a time
     receiveLoopRunning.store(true);
-    receiveLoopExited.store(false);
-
-    BridgeCarState bridgeState = {};
-    bridge::runReceiveLoop(group, decoder, receiveLoopRunning,
-        [&bridgeState, callbackContext, callback](const CarState& state) {
-            carStateToBridge(state, &bridgeState);
-            callback(callbackContext, &bridgeState);
-        });
-
-    receiveLoopExited.store(true);
+    receiveLoopThread = std::thread([group, decoder, callbackContext, callback] {
+        BridgeCarState bridgeState = {};
+        bridge::runReceiveLoop(group, decoder, receiveLoopRunning,
+            [&bridgeState, callbackContext, callback](const CarState& state) {
+                carStateToBridge(state, &bridgeState);
+                callback(callbackContext, &bridgeState);
+            });
+    });
 }
 
+// Signals the worker to exit and joins it, so no callback can run after this
+// returns and the caller may free sockets, decoder and callback context.
 void bridge_stop_receive_loop(void) {
-    receiveLoopRunning.store(false);
-    // Wait for the receive loop to fully exit before returning,
-    // so the caller can safely delete sockets and other resources.
-    while (!receiveLoopExited.load()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    std::thread worker;
+    {
+        std::lock_guard<std::mutex> lock(receiveLoopMutex);
+        receiveLoopRunning.store(false);
+        worker = std::move(receiveLoopThread);
+    }
+    if (!worker.joinable()) return;
+    if (worker.get_id() == std::this_thread::get_id()) {
+        worker.detach();  // called from the loop's own callback; cannot join self
+    } else {
+        worker.join();
     }
 }
 

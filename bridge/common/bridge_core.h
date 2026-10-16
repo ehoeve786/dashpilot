@@ -14,7 +14,9 @@
 #define ANDROID _SAVED_ANDROID
 #undef _SAVED_ANDROID
 #endif
+#include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <chrono>
 #include <cstdio>
 #include <functional>
@@ -171,7 +173,14 @@ inline std::string discoverPublisher(
     auto lastDot = initialIp.rfind('.');
     if (lastDot == std::string::npos) return "";
     std::string prefix = initialIp.substr(0, lastDot);
-    int selfOctet = std::stoi(initialIp.substr(lastDot + 1));
+    std::string lastOctet = initialIp.substr(lastDot + 1);
+    // std::stoi throws on bad input, and an exception must not cross the
+    // extern "C" boundary into Swift/Kotlin. Validate instead.
+    if (lastOctet.empty() || lastOctet.size() > 3 ||
+        !std::all_of(lastOctet.begin(), lastOctet.end(), [](unsigned char c) { return std::isdigit(c); })) {
+        return "";
+    }
+    int selfOctet = std::stoi(lastOctet);
 
     std::vector<int> octets;
     for (int i = 1; i <= 254; i++) {

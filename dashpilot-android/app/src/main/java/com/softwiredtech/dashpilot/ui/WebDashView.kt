@@ -113,8 +113,10 @@ fun WebDashView(
                 }
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
-                settings.allowFileAccess = true
-                settings.allowContentAccess = true
+                // Dash apps are served from the asset loader domain only; no
+                // file:// or content:// access is needed.
+                settings.allowFileAccess = false
+                settings.allowContentAccess = false
                 settings.cacheMode = WebSettings.LOAD_DEFAULT
                 addJavascriptInterface(carStateBridge, "NativeCarState")
                 loadUrl(url)

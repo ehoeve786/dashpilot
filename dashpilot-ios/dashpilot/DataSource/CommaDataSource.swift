@@ -25,6 +25,9 @@ final class CommaDataSource: IDataSource {
     }
 
     func connect(address: String) {
+        // Free anything left from a previous connect() so reconnects don't leak.
+        releaseNativeResources()
+
         // Load DBC files from bundle and create decoder
         var dbcContents: [String] = []
         var busIndices: [CInt] = []
@@ -73,7 +76,12 @@ final class CommaDataSource: IDataSource {
     }
 
     func disconnect() {
-        // NOTE: This will block until receive loop has excited
+        releaseNativeResources()
+        continuation?.finish()
+    }
+
+    private func releaseNativeResources() {
+        // NOTE: This will block until receive loop has exited
         bridge_stop_receive_loop()
 
         if let group { bridge_delete_sub_sockets(group) }
@@ -82,7 +90,6 @@ final class CommaDataSource: IDataSource {
         self.group = nil
         self.decoder = nil
         self.context = nil
-        continuation?.finish()
     }
 }
 

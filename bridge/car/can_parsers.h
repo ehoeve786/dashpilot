@@ -34,11 +34,22 @@ public:
         }
     }
 
+    // Frames come from a network publisher (see discoverPublisher), so the
+    // table is bounded: CAN FD caps payloads at 64 bytes, and tracked
+    // addresses are capped so a flood of distinct IDs cannot grow memory
+    // without limit. A real bus carries a few hundred IDs.
+    static constexpr size_t kMaxFrameLen = 64;
+    static constexpr size_t kMaxTrackedFrames = 4096;
+
     void updateFrame(int bus, uint32_t address, const uint8_t* data, size_t len) {
+        if (len > kMaxFrameLen) return;
         uint64_t key = frameKey(bus, address);
-        auto& stored = latestFrames_[key];
-        stored.resize(len);
-        std::memcpy(stored.data(), data, len);
+        auto it = latestFrames_.find(key);
+        if (it == latestFrames_.end()) {
+            if (latestFrames_.size() >= kMaxTrackedFrames) return;
+            it = latestFrames_.emplace(key, std::vector<uint8_t>()).first;
+        }
+        it->second.assign(data, data + len);
     }
 
     double get(int bus, const std::string& msgName, const std::string& sigName) const {

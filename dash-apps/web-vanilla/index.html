@@ -598,12 +598,13 @@
     // A side car this close while that side's blind spot is set is the car
     // BSM reports: draw it once, at its DAS position.
     const DAS_HANDOFF_DX = 5.0;
+    // Lead and cut-in; the side vehicles are tracked in buildSideVehicles.
     const DAS_SLOTS = [
       { key: "lead", id: 9980 },
-      { key: "left", id: 9981 },
-      { key: "right", id: 9982 },
       { key: "cutin", id: 9983 },
     ];
+    const SIDE_LEFT_ID = 9981;
+    const SIDE_RIGHT_ID = 9982;
     // The cut-in car is crossing lanes, so its own Dy is the point; clamp it
     // to the neighbouring lanes.
     const DAS_CUTIN_MAX_DY = 5.0;
@@ -639,15 +640,9 @@
           delete dasSmoothed[slot.key];
           continue;
         }
-        // Side cars sit in the neighbouring lane, following its curve.
-        const laneOffset = Number(car.laneViewRange) > 0 ? (Number(car.laneWidth) || BS_DY_LEFT) : BS_DY_LEFT;
-        const curve = laneCenterDy(car, dx + DAS_DX_OFFSET);
-        let dy = slot.key === "left" ? curve + laneOffset : slot.key === "right" ? curve - laneOffset : 0;
-        if (slot.key === "lead" || slot.key === "cutin") {
-          const raw = Number(car[slot.key + "VehDy"]) || 0;
-          const max = slot.key === "lead" ? DAS_LEAD_MAX_DY : DAS_CUTIN_MAX_DY;
-          dy = Math.max(-max, Math.min(max, raw));
-        }
+        const raw = Number(car[slot.key + "VehDy"]) || 0;
+        const max = slot.key === "lead" ? DAS_LEAD_MAX_DY : DAS_CUTIN_MAX_DY;
+        const dy = Math.max(-max, Math.min(max, raw));
         const prev = dasSmoothed[slot.key];
         const cur = prev
           ? { dx: prev.dx + (dx - prev.dx) * k, dy: prev.dy + (dy - prev.dy) * k }
@@ -665,10 +660,6 @@
       }
     }
 
-    function dasHandoff(car, side) {
-      const dx = dasDx(car[side + "VehDx"]);
-      return dx >= 0 && dx < DAS_HANDOFF_DX;
-    }
 
     // DAS_lanes virtual lane. The car's polynomial is y = C0 + C1 x + C2 x^2
     // + C3 x^3 (meters). Measured in this viz: C0, C2 and C3 move the lane
@@ -787,8 +778,8 @@
     }
 
     function sideTargetId(car, side) {
-      if (dasHandoff(car, side)) return side === "left" ? 9981 : 9982;
-      return side === "left" ? BS_LEFT_ID : BS_RIGHT_ID;
+      if (sideTracks[side].ghost) return side === "left" ? BS_LEFT_ID : BS_RIGHT_ID;
+      return side === "left" ? SIDE_LEFT_ID : SIDE_RIGHT_ID;
     }
 
     // A speed limit sign that appears ahead when the limit changes and
@@ -834,44 +825,88 @@
 
     const BS_DX = -3.0;
     const BS_DY_LEFT = 4.0;
-    const BS_DY_RIGHT = -4.0;
     const BS_LEFT_ID = 9990;
     const BS_RIGHT_ID = 9991;
 
-    function buildBlindSpotState(car, world) {
-      const objects = (world.objects || []).filter(o => o.id !== BS_LEFT_ID && o.id !== BS_RIGHT_ID);
+    // One tracked vehicle per side, shared by the blind spot monitor (beside
+    // / behind, no position) and DAS_object (ahead, with position), so a car
+    // passing from one to the other glides instead of jumping 8 m or
+    // swapping models:
+    //   DAS reports it          -> follow DAS
+    //   only BSM sees something -> sit in the blind spot zone
+    // keeping the last DAS vehicle class for a while. A separate placeholder
+    // is drawn only when both see something but DAS's car is further ahead
+    // than DAS_HANDOFF_DX, i.e. they are two different vehicles.
+    const SIDE_TAU_MS = 150;
+    const SIDE_SWITCH_TAU_MS = 450;
+    const SIDE_SWITCH_MS = 1200;
+    const SIDE_CLASS_MEMORY_MS = 5000;
+    const sideTracks = { left: { ghost: false }, right: { ghost: false } };
 
+    function bsmVisible(car, side, alwaysOn) {
+      const blinker = parseInt(car[side + "Blinker"]) > 0;
+      const warn = Math.round(Number(car.sideCollisionWarning) || 0);
+      const sideWarn = side === "left" ? (warn === 1 || warn === 3) : (warn === 2 || warn === 3);
+      return (car[side + "BlindSpot"] > 0 && (alwaysOn || blinker)) || sideWarn;
+    }
+
+    function buildSideVehicles(car, world) {
+      const now = performance.now();
       const alwaysOn = car.alwaysOnBlindSpotMonitor !== false;
-      const leftBlinkerOn = parseInt(car.leftBlinker) > 0;
-      const rightBlinkerOn = parseInt(car.rightBlinker) > 0;
+      const laneOffset = Number(car.laneViewRange) > 0 ? (Number(car.laneWidth) || BS_DY_LEFT) : BS_DY_LEFT;
 
-      const side = Math.round(Number(car.sideCollisionWarning) || 0);
-      const leftWarn = side === 1 || side === 3;
-      const rightWarn = side === 2 || side === 3;
+      for (const side of ["left", "right"]) {
+        const t = sideTracks[side];
+        const sign = side === "left" ? 1 : -1;
+        const dx = dasDx(car[side + "VehDx"]);
+        const bsm = bsmVisible(car, side, alwaysOn);
+        const das = dx >= 0;
 
-      if ((car.leftBlindSpot > 0 && (alwaysOn || leftBlinkerOn) || leftWarn) && !dasHandoff(car, "left")) {
-        objects.push({
-          id: BS_LEFT_ID,
-          Dx: BS_DX,
-          Dy: BS_DY_LEFT,
-          VxRel: 0,
-          vehicle_class: "Car",
-          heading: 0,
+        let target = null;
+        if (das) {
+          target = { x: dx + DAS_DX_OFFSET, source: "das" };
+          t.cls = DAS_CLASSES[Math.round(Number(car[side + "VehType"]) || 0)] || "Car";
+          t.clsMs = now;
+        } else if (bsm) {
+          target = { x: BS_DX, source: "bsm" };
+        }
+
+        t.ghost = das && bsm && dx >= DAS_HANDOFF_DX;
+        if (t.ghost) {
+          world.objects.push({
+            id: side === "left" ? BS_LEFT_ID : BS_RIGHT_ID,
+            Dx: BS_DX, Dy: laneCenterDy(car, BS_DX) + sign * laneOffset,
+            VxRel: 0, vehicle_class: "Car", heading: 0,
+          });
+        }
+
+        if (!target) {
+          t.x = undefined;
+          t.source = undefined;
+          continue;
+        }
+        if (t.x === undefined) {
+          t.x = target.x;
+        } else {
+          if (t.source && t.source !== target.source) t.switchUntil = now + SIDE_SWITCH_MS;
+          const tau = now < (t.switchUntil || 0) ? SIDE_SWITCH_TAU_MS : SIDE_TAU_MS;
+          const k = t.lastMs ? 1 - Math.exp(-(now - t.lastMs) / tau) : 1;
+          t.x += (target.x - t.x) * k;
+        }
+        t.source = target.source;
+        t.lastMs = now;
+
+        const remembered = t.cls && now - (t.clsMs || 0) < SIDE_CLASS_MEMORY_MS;
+        world.objects.push({
+          id: side === "left" ? SIDE_LEFT_ID : SIDE_RIGHT_ID,
+          Dx: t.x,
+          // Side cars sit in the neighbouring lane, following its curve.
+          Dy: laneCenterDy(car, t.x) + sign * laneOffset,
+          VxRel: das ? Number(car[side + "VehVxRel"]) || 0 : 0,
+          vehicle_class: remembered ? t.cls : "Car",
+          heading: das ? Number(car[side + "VehHeading"]) || 0 : 0,
         });
       }
-
-      if ((car.rightBlindSpot > 0 && (alwaysOn || rightBlinkerOn) || rightWarn) && !dasHandoff(car, "right")) {
-        objects.push({
-          id: BS_RIGHT_ID,
-          Dx: BS_DX,
-          Dy: BS_DY_RIGHT,
-          VxRel: 0,
-          vehicle_class: "Car",
-          heading: 0,
-        });
-      }
-
-      world.objects = objects;
     }
 
     var receiveMessage = function(car) {
@@ -912,7 +947,7 @@
         };
 
         buildTrafficLightState(car, world);
-        buildBlindSpotState(car, world);
+        buildSideVehicles(car, world);
         buildDasObjectState(car, world);
         buildWarningEvents(car, world);
 

@@ -45,6 +45,7 @@ class DashKitDataSource(
 
     // Last raw TPMS frame per sensor slot (index 0..3), for the debug readout.
     private val tpmsSlots = arrayOfNulls<String>(4)
+    private val tpmsSlotMs = LongArray(4)
     private var tpmsFrames = 0
 
     override fun connect(address: String) {
@@ -107,11 +108,17 @@ class DashKitDataSource(
         val pressure = ((d[1].toInt() and 0xFF) * 0.025)
         val temp = (d[2].toInt() and 0xFF) - 40
         tpmsSlots[index] = "slot$index loc=$location %.3f bar %d C".format(pressure, temp)
+        tpmsSlotMs[index] = SystemClock.elapsedRealtime()
         tpmsFrames++
     }
 
-    private fun tpmsDebugText(): String =
-        "tpms frames=$tpmsFrames\n" + tpmsSlots.mapIndexed { i, s -> s ?: "slot$i --" }.joinToString("\n")
+    private fun tpmsDebugText(): String {
+        val now = SystemClock.elapsedRealtime()
+        return "tpms frames=$tpmsFrames\n" + tpmsSlots.mapIndexed { i, s ->
+            if (s == null) "slot$i --"
+            else "$s age ${(now - tpmsSlotMs[i]) / 1000}s"
+        }.joinToString("\n")
+    }
 
     private fun countRx(bus: Int, address: Int) {
         val key = (bus.toLong() shl 32) or (address.toLong() and 0xFFFFFFFFL)

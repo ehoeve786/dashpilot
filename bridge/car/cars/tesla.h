@@ -142,7 +142,13 @@ struct BlinkerHold {
 // while driving), so readings are not expired.
 class TpmsLatch {
 public:
-    void update(const CANParsers& cp, CarState& cs) {
+    // A wheel's reading is dropped once its sensor hasn't reported for this
+    // long, so a stale tyre shows "no reading" instead of an old value.
+    static constexpr std::chrono::seconds STALE{60};
+    using Clock = std::chrono::steady_clock;
+
+    void update(const CANParsers& cp, CarState& cs,
+                Clock::time_point now = Clock::now()) {
         uint32_t seq = cp.frameSeq(1, "VCSEC_TPMSData");
         if (seq != lastSeq_) {
             lastSeq_ = seq;
@@ -156,6 +162,14 @@ public:
                 // fault or a bad frame, so it keeps the previous reading.
                 if (pressure >= PRESSURE_MIN && pressure < PRESSURE_SNA) pressure_[location] = pressure;
                 if (temp < TEMP_SNA) temp_[location] = temp;
+                seen_[location] = now;
+                seenValid_[location] = true;
+            }
+        }
+        for (int w = 0; w < 4; w++) {
+            if (!seenValid_[w] || now - seen_[w] > STALE) {
+                pressure_[w] = -1;
+                temp_[w] = -100;
             }
         }
         cs.tpmsPressureFL = pressure_[0];
@@ -181,6 +195,8 @@ private:
     uint32_t lastSeq_ = 0;
     double pressure_[4] = {-1, -1, -1, -1};
     double temp_[4] = {-100, -100, -100, -100};
+    Clock::time_point seen_[4] = {};
+    bool seenValid_[4] = {};
 };
 
 // DAS_lanes (0x239, chassis bus, 10 Hz): the Autopilot's virtual lane as a

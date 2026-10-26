@@ -95,15 +95,16 @@ struct Harness {
 
     void feedTpms(const std::string& data) {
         cp.updateFrame(1, 537, reinterpret_cast<const uint8_t*>(data.data()), data.size());
-        tpms.update(cp, cs);
+        tpms.update(cp, cs, now);
     }
+
+    void advance(int ms) { now += std::chrono::milliseconds(ms); }
 
     void feedLanes(const std::string& data) {
         cp.updateFrame(0, 569, reinterpret_cast<const uint8_t*>(data.data()), data.size());
         lanes.update(cp, cs, now);
     }
 
-    void advance(int ms) { now += std::chrono::milliseconds(ms); }
 };
 
 void tpms_unknown_until_first_reading() {
@@ -144,6 +145,19 @@ void tpms_ignores_sna_and_unlocated_sensors() {
     CHECK(h.cs.tpmsPressureFR == -1.0);
     CHECK(h.cs.tpmsPressureRL == -1.0);
     CHECK(h.cs.tpmsPressureRR == -1.0);
+}
+
+void tpms_expires_a_wheel_that_stops_reporting() {
+    Harness h;
+    h.feedTpms(tpmsFrame(0, 0, 116, 65));  // FL 2.9 bar
+    h.advance(30000);
+    h.feedTpms(tpmsFrame(2, 1, 88, 60));   // FR reports, FL does not
+    CHECK(near(h.cs.tpmsPressureFL, 2.9));
+    h.advance(31000);                      // FL silent for 61 s
+    h.feedTpms(tpmsFrame(2, 1, 88, 60));
+    CHECK(h.cs.tpmsPressureFL == -1.0);
+    CHECK(h.cs.tpmsTempFL == -100.0);
+    CHECK(near(h.cs.tpmsPressureFR, 2.2));
 }
 
 void tpms_ignores_zero_bar_readings() {
@@ -230,6 +244,7 @@ int main() {
     tpms_maps_sensors_by_location_and_keeps_them();
     tpms_ignores_sna_and_unlocated_sensors();
     tpms_ignores_zero_bar_readings();
+    tpms_expires_a_wheel_that_stops_reporting();
     lanes_convert_to_si_and_expire();
     dashkit_mapper_reads_das_status_warnings();
     dashkit_mapper_publishes_through_the_double_array();

@@ -43,6 +43,10 @@ class DashKitDataSource(
 
     private var currentState = CarState()
 
+    // Last raw TPMS frame per sensor slot (index 0..3), for the debug readout.
+    private val tpmsSlots = arrayOfNulls<String>(4)
+    private var tpmsFrames = 0
+
     override fun connect(address: String) {
         manager.addGattListener(this)
         manager.connect()
@@ -87,10 +91,27 @@ class DashKitDataSource(
                     Log.i(RX_LOG_TAG, "tpms raw bus=${frame.bus} len=${frame.data.size} $hex")
                 }
             }
-            currentState = decoder.decodeFrame(frame.bus, frame.address, frame.data) ?: return
+            if (frame.address == TPMS_ADDRESS && frame.data.size >= 5) noteTpms(frame.data)
+            currentState = (decoder.decodeFrame(frame.bus, frame.address, frame.data) ?: return)
+                .copy(tpmsDebug = tpmsDebugText())
         }
         _incoming.tryEmit(currentState)
     }
+
+    // Decodes the VCSEC_TPMSData layout from bus_1_tesla_vehicle.dbc:
+    // index 0|2, pressure 8|8 (x0.025 bar), temperature 16|8 (-40 C),
+    // location 32|3 (0 FL, 1 FR, 2 RL, 3 RR).
+    private fun noteTpms(d: ByteArray) {
+        val index = d[0].toInt() and 0x3
+        val location = d[4].toInt() and 0x7
+        val pressure = ((d[1].toInt() and 0xFF) * 0.025)
+        val temp = (d[2].toInt() and 0xFF) - 40
+        tpmsSlots[index] = "slot$index loc=$location %.3f bar %d C".format(pressure, temp)
+        tpmsFrames++
+    }
+
+    private fun tpmsDebugText(): String =
+        "tpms frames=$tpmsFrames\n" + tpmsSlots.mapIndexed { i, s -> s ?: "slot$i --" }.joinToString("\n")
 
     private fun countRx(bus: Int, address: Int) {
         val key = (bus.toLong() shl 32) or (address.toLong() and 0xFFFFFFFFL)

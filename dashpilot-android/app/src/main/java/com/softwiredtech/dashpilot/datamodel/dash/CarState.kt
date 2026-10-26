@@ -43,6 +43,10 @@ data class CarState(
 
     val changingLane: Boolean = false,
 
+    // Debug only, not sent to the dashboards as a number: the last raw
+    // VCSEC_TPMSData frame seen per sensor slot. Empty until one arrives.
+    val tpmsDebug: String = "",
+
     // Tyre pressure (bar, -1 = no reading) and temperature (degC, -100 = none).
     val tpmsPressureFL: Float = -1f,
     val tpmsPressureFR: Float = -1f,

@@ -58,6 +58,7 @@ class CarStateBridge(
     @Volatile private var tpmsTempFR: Float = -100f
     @Volatile private var tpmsTempRL: Float = -100f
     @Volatile private var tpmsTempRR: Float = -100f
+    @Volatile private var tpmsDebug: String = ""
     @Volatile private var laneWidth: Float = 0f
     @Volatile private var laneViewRange: Float = 0f
     @Volatile private var laneC0: Float = 0f
@@ -107,6 +108,7 @@ class CarStateBridge(
         tpmsTempFR = state.tpmsTempFR
         tpmsTempRL = state.tpmsTempRL
         tpmsTempRR = state.tpmsTempRR
+        tpmsDebug = state.tpmsDebug
         laneWidth = state.laneWidth
         laneViewRange = state.laneViewRange
         laneC0 = state.laneC0
@@ -164,6 +166,7 @@ class CarStateBridge(
     @JavascriptInterface fun getTpmsTempFR(): Float = tpmsTempFR
     @JavascriptInterface fun getTpmsTempRL(): Float = tpmsTempRL
     @JavascriptInterface fun getTpmsTempRR(): Float = tpmsTempRR
+    @JavascriptInterface fun getTpmsDebug(): String = tpmsDebug
     @JavascriptInterface fun getLaneWidth(): Float = laneWidth
     @JavascriptInterface fun getLaneViewRange(): Float = laneViewRange
     @JavascriptInterface fun getLaneC0(): Float = laneC0

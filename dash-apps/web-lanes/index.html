@@ -486,29 +486,21 @@
     }
 
     async function loadEgo() {
-      // A user-supplied models/ego.glb (e.g. a purchased Model Y; glTF
-      // convention, front toward +Z) replaces the bundled stand-in.
+      // A user-supplied models/ego.glb (glTF convention, front toward +Z)
+      // replaces the bundled Model Y without a code change.
+      let g;
       try {
-        const g = await loader.loadAsync("./models/ego.glb");
-        return normalize(g.scene, { targetLength: EGO_LENGTH });
+        g = await loader.loadAsync("./models/ego.glb");
       } catch (_err) {
-        const g = await loader.loadAsync("./models/ego-tesla.glb");
+        g = await loader.loadAsync("./models/ego-model-y.glb");
+        // The bundled Model Y's body is its "paint" material: give it
+        // Midnight Silver Metallic's flake and clear coat.
         g.scene.traverse((m) => {
-          if (!m.isMesh) return;
-          if (m.name === "Cube" || m.parent?.name === "Cube") { m.visible = false; return; }
-          if (m.material?.name === "Vehicle") {
-            // The body shares one texture atlas with glass and tyres:
-            // tinting it turns the light paint texels Midnight Silver while
-            // dark glass and rubber stay dark.
-            m.material = new THREE.MeshPhysicalMaterial({ map: m.material.map, ...EGO_PAINT });
-          }
+          if (m.isMesh && m.material?.name === "paint") m.material = new THREE.MeshPhysicalMaterial(EGO_PAINT);
         });
-        return normalize(g.scene, { targetLength: EGO_LENGTH, faceForwardZ: EGO_FALLBACK_FACES_Z });
       }
+      return normalize(g.scene, { targetLength: EGO_LENGTH });
     }
-    // The bundled Tesla stand-in's nose points toward +Z in its file, like
-    // the pack models.
-    const EGO_FALLBACK_FACES_Z = 1;
 
     let ego = null;
     loadEgo().then((m) => {

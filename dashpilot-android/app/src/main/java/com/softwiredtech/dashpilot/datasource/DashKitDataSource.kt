@@ -107,7 +107,8 @@ class DashKitDataSource(
         val location = d[4].toInt() and 0x7
         val pressure = ((d[1].toInt() and 0xFF) * 0.025)
         val temp = (d[2].toInt() and 0xFF) - 40
-        tpmsByLocation[location] = "slot$index %.3f bar %d C".format(pressure, temp)
+        val hex = d.joinToString(" ") { "%02x".format(it) }
+        tpmsByLocation[location] = "slot$index %.3f bar %d C [$hex]".format(pressure, temp)
         tpmsLocationMs[location] = SystemClock.elapsedRealtime()
         tpmsFrames++
     }

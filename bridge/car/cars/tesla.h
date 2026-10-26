@@ -142,7 +142,13 @@ struct BlinkerHold {
 // vehicles don't stay on screen.
 class DasObjectLatch {
 public:
-    static constexpr std::chrono::milliseconds STALE{500};
+    // A group is dropped after this long without a frame (or, for vehicles,
+    // without a non-SNA reading). The window adapts to each group's measured
+    // interval: some cars cycle the six groups slowly enough that a fixed
+    // 500 ms made the lead car blink between frames.
+    static constexpr std::chrono::milliseconds STALE_MIN{500};
+    static constexpr std::chrono::milliseconds STALE_MAX{2000};
+    static constexpr int STALE_INTERVALS = 3;
 
     void update(const CANParsers& cp, CarState& cs,
                 std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now()) {
@@ -155,20 +161,25 @@ public:
             case 2: latchVehicle(cp, right_, "DAS_rightVeh", now); break;
             case 3: latchVehicle(cp, cutin_, "DAS_cutinVeh", now); break;
             case 4:
-                sign_ = {get(cp, "DAS_roadSignId"), get(cp, "DAS_roadSignColor"),
-                         get(cp, "DAS_roadSignArrow"), get(cp, "DAS_roadSignStopLineDist"),
-                         get(cp, "DAS_roadSignControlActive"), now, true};
+                sign_.rate.observe(now);
+                sign_.id = get(cp, "DAS_roadSignId");
+                sign_.color = get(cp, "DAS_roadSignColor");
+                sign_.arrow = get(cp, "DAS_roadSignArrow");
+                sign_.stopLineDist = get(cp, "DAS_roadSignStopLineDist");
+                sign_.controlActive = get(cp, "DAS_roadSignControlActive");
                 break;
             case 5:
-                headings_ = {{get(cp, "DAS_leadVehHeading"), get(cp, "DAS_leftVehHeading"),
-                              get(cp, "DAS_rightVehHeading"), get(cp, "DAS_cutinVehHeading")},
-                             now, true};
+                headings_.rate.observe(now);
+                headings_.rad[0] = get(cp, "DAS_leadVehHeading");
+                headings_.rad[1] = get(cp, "DAS_leftVehHeading");
+                headings_.rad[2] = get(cp, "DAS_rightVehHeading");
+                headings_.rad[3] = get(cp, "DAS_cutinVehHeading");
                 break;
             default:
                 break;
             }
         }
-        bool headingsFresh = fresh(headings_.seen, headings_.valid, now);
+        bool headingsFresh = headings_.rate.fresh(now);
         apply(lead_, now, headingsFresh ? headings_.rad[0] : HEADING_SNA,
               cs.leadVehDx, cs.leadVehDy, cs.leadVehType, cs.leadVehVxRel, cs.leadVehHeading);
         apply(left_, now, headingsFresh ? headings_.rad[1] : HEADING_SNA,
@@ -178,7 +189,7 @@ public:
         apply(cutin_, now, headingsFresh ? headings_.rad[3] : HEADING_SNA,
               cs.cutinVehDx, cs.cutinVehDy, cs.cutinVehType, cs.cutinVehVxRel, cs.cutinVehHeading);
 
-        bool sign = fresh(sign_.seen, sign_.valid, now) && sign_.id < SIGN_ID_SNA;
+        bool sign = sign_.rate.fresh(now) && sign_.id < SIGN_ID_SNA;
         cs.roadSignId = sign ? sign_.id : -1.0;
         cs.roadSignColor = sign ? sign_.color : 0.0;
         cs.roadSignArrow = sign ? sign_.arrow : 0.0;
@@ -187,20 +198,46 @@ public:
     }
 
 private:
-    struct Vehicle {
-        double dx = 0, dy = 0, type = 0, vxRel = 0;
-        std::chrono::steady_clock::time_point seen{};
+    using Clock = std::chrono::steady_clock;
+
+    // Last arrival of a group and an average of its interval, which sets how
+    // long the group stays fresh.
+    struct Rate {
+        Clock::time_point seen{};
+        double intervalMs = 0;   // 0 until two frames have arrived
         bool valid = false;
+
+        void observe(Clock::time_point now) {
+            if (valid) {
+                double ms = std::chrono::duration<double, std::milli>(now - seen).count();
+                // A gap longer than the cap is an outage, not the cadence.
+                if (ms < static_cast<double>(STALE_MAX.count()))
+                    intervalMs = intervalMs > 0 ? intervalMs + 0.25 * (ms - intervalMs) : ms;
+            }
+            seen = now;
+            valid = true;
+        }
+        // Until the cadence is known, assume the slowest.
+        std::chrono::milliseconds window() const {
+            if (intervalMs <= 0) return STALE_MAX;
+            auto ms = std::chrono::milliseconds(static_cast<long long>(STALE_INTERVALS * intervalMs));
+            return std::clamp(ms, STALE_MIN, STALE_MAX);
+        }
+        bool fresh(Clock::time_point now) const { return valid && (now - seen) <= window(); }
+    };
+    struct Vehicle {
+        double dx = 0, dy = 0, type = 0, vxRel = 0;   // last non-SNA reading
+        Rate rate;                                    // every frame of the group
+        Clock::time_point detected{};                 // last non-SNA reading
+        bool everDetected = false;
     };
     struct Sign {
         double id = 0, color = 0, arrow = 0, stopLineDist = 0, controlActive = 0;
-        std::chrono::steady_clock::time_point seen{};
-        bool valid = false;
+        Rate rate;
     };
     struct Headings {
         double rad[4] = {};
-        std::chrono::steady_clock::time_point seen{};
-        bool valid = false;
+        Rate rate;
     };
 
     // SNA (signal not available) values after DBC scaling.
@@ -214,22 +251,25 @@ private:
         return cp.get(0, "DAS_object", sig);
     }
 
+    // An SNA frame doesn't clear the vehicle at once: it stays for the group's
+    // freshness window, so a reading that drops out for a frame or two holds.
     static void latchVehicle(const CANParsers& cp, Vehicle& v, const std::string& prefix,
-                             std::chrono::steady_clock::time_point now) {
-        v = {cp.get(0, "DAS_object", prefix + "Dx"), cp.get(0, "DAS_object", prefix + "Dy"),
-             cp.get(0, "DAS_object", prefix + "Type"), cp.get(0, "DAS_object", prefix + "VxRel"),
-             now, true};
-    }
-
-    static bool fresh(std::chrono::steady_clock::time_point seen, bool valid,
-                      std::chrono::steady_clock::time_point now) {
-        return valid && (now - seen) <= STALE;
+                             Clock::time_point now) {
+        v.rate.observe(now);
+        double dx = cp.get(0, "DAS_object", prefix + "Dx");
+        if (dx >= DX_SNA) return;
+        v.dx = dx;
+        v.dy = cp.get(0, "DAS_object", prefix + "Dy");
+        v.type = cp.get(0, "DAS_object", prefix + "Type");
+        v.vxRel = cp.get(0, "DAS_object", prefix + "VxRel");
+        v.detected = now;
+        v.everDetected = true;
     }
 
     // Dx -1 = no vehicle; 0 m is a valid distance.
-    static void apply(const Vehicle& v, std::chrono::steady_clock::time_point now, double heading,
+    static void apply(const Vehicle& v, Clock::time_point now, double heading,
                       double& dx, double& dy, double& type, double& vxRel, double& headingOut) {
-        bool present = fresh(v.seen, v.valid, now) && v.dx < DX_SNA;
+        bool present = v.everDetected && v.rate.fresh(now) && (now - v.detected) <= v.rate.window();
         dx = present ? v.dx : -1.0;
         dy = present ? v.dy : 0.0;
         type = present ? v.type : 0.0;

@@ -137,19 +137,52 @@ void latches_each_group_across_frames() {
     CHECK(h.cs.rightVehType == 3.0);
 }
 
-void sna_distance_clears_the_slot() {
+void sna_distance_clears_the_slot_after_the_window() {
     Harness h;
     h.feed(objectFrame(1, 2, 20, 73));
     CHECK(near(h.cs.leftVehDx, 10.0));
-    h.feed(objectFrame(1, 0, 255, 0));
+    // A dropout of a frame or two holds the last reading...
+    for (int i = 0; i < 4; i++) {
+        h.advance(100);
+        h.feed(objectFrame(1, 0, 255, 0));
+    }
+    CHECK(near(h.cs.leftVehDx, 10.0));
+    CHECK(h.cs.leftVehType == 2.0);
+    // ...but SNA for longer than the window (500 ms at 10 Hz) clears it.
+    for (int i = 0; i < 2; i++) {
+        h.advance(100);
+        h.feed(objectFrame(1, 0, 255, 0));
+    }
     CHECK(h.cs.leftVehDx == -1.0);
     CHECK(h.cs.leftVehType == 0.0);
 }
 
+void slow_group_cadence_does_not_blink() {
+    Harness h;
+    // Before the cadence is known the window is the 2 s maximum.
+    // Lead group about once a second, other traffic in between.
+    for (int i = 0; i < 4; i++) {
+        h.feed(objectFrame(0, 2, 60, 63));
+        for (int j = 0; j < 9; j++) {
+            h.advance(100);
+            h.feedOther();
+            CHECK(near(h.cs.leadVehDx, 30.0));
+        }
+        h.advance(100);
+    }
+    // Window is capped: gone 2 s after the last frame.
+    h.advance(1100);
+    h.feedOther();
+    CHECK(h.cs.leadVehDx == -1.0);
+}
+
 void expires_when_group_stops_refreshing_despite_other_traffic() {
     Harness h;
-    h.feed(objectFrame(0, 2, 60, 63));
-    h.advance(400);
+    for (int i = 0; i < 3; i++) {  // 10 Hz cadence: 500 ms window
+        h.feed(objectFrame(0, 2, 60, 63));
+        h.advance(100);
+    }
+    h.advance(300);
     h.feedOther();
     CHECK(near(h.cs.leadVehDx, 30.0));
     h.advance(200);  // 600 ms since the last DAS_object frame
@@ -160,7 +193,7 @@ void expires_when_group_stops_refreshing_despite_other_traffic() {
 void other_groups_do_not_refresh_a_slot() {
     Harness h;
     h.feed(objectFrame(0, 2, 60, 63));
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 21; i++) {  // past the 2 s window of an unknown cadence
         h.advance(100);
         h.feed(objectFrame(1, 2, 20, 73));
     }
@@ -203,6 +236,8 @@ void road_sign_sna_and_staleness() {
     h.feed(sign);
     CHECK(h.cs.roadSignId == 0.0);
     CHECK(h.cs.roadSignStopLineDist == -1.0);
+    h.advance(100);
+    h.feed(sign);  // 10 Hz cadence: 500 ms window
     h.advance(600);
     h.feedOther();
     CHECK(h.cs.roadSignId == -1.0);
@@ -282,7 +317,8 @@ void dashkit_mapper_publishes_through_the_double_array() {
 int main() {
     no_frames_means_no_vehicles();
     latches_each_group_across_frames();
-    sna_distance_clears_the_slot();
+    sna_distance_clears_the_slot_after_the_window();
+    slow_group_cadence_does_not_blink();
     expires_when_group_stops_refreshing_despite_other_traffic();
     other_groups_do_not_refresh_a_slot();
     latches_cutin_road_sign_and_headings();

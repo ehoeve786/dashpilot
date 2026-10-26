@@ -43,6 +43,17 @@ data class CarState(
 
     val changingLane: Boolean = false,
 
+    // DAS_object vehicles ahead, meters; Dx -1 = no vehicle.
+    val leadVehDx: Float = -1f,
+    val leadVehDy: Float = 0f,
+    val leadVehType: Float = 0f,
+    val leftVehDx: Float = -1f,
+    val leftVehDy: Float = 0f,
+    val leftVehType: Float = 0f,
+    val rightVehDx: Float = -1f,
+    val rightVehDy: Float = 0f,
+    val rightVehType: Float = 0f,
+
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = ""
 ) {
@@ -56,7 +67,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 39
+        const val FIELD_COUNT = 48
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

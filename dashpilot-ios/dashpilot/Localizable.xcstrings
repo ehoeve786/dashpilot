@@ -1926,6 +1926,22 @@
         }
       }
     },
+    "Lanes Dashboard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fahrspuren-Dashboard"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sávok műszerfal"
+          }
+        }
+      }
+    },
     "Load" : {
       "localizations" : {
         "de" : {

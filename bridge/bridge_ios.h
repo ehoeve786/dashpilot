@@ -50,6 +50,17 @@ typedef struct {
     double selfdriveActive;
     double experimentalMode;
     double changingLane;
+
+    // DAS_object vehicles ahead, meters; Dx -1 = no vehicle.
+    double leadVehDx;
+    double leadVehDy;
+    double leadVehType;
+    double leftVehDx;
+    double leftVehDy;
+    double leftVehType;
+    double rightVehDx;
+    double rightVehDy;
+    double rightVehType;
 } BridgeCarState;
 
 // Context

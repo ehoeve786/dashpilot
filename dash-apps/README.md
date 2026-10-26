@@ -84,6 +84,16 @@ Values not received yet are `0` / `false`. For speed limit, stop line and energy
 | `madsActive`, `experimentalMode` | bool | openpilot states, comma only |
 | `selfdriveActive` | bool | openpilot engaged, comma only. **iOS only** for web apps |
 
+**Vehicles ahead** (DashKit, from the Autopilot's `DAS_object`)
+
+| key | type | meaning |
+|---|---|---|
+| `leadVehDx`, `leftVehDx`, `rightVehDx` | meters | gap from the front bumper to the vehicle ahead in this lane, the lane to the left, the lane to the right. **-1 = no vehicle** |
+| `leadVehDy`, `leftVehDy`, `rightVehDy` | meters | lateral offset. Sign not yet verified on a car: place side vehicles by lane, not by this |
+| `leadVehType`, `leftVehType`, `rightVehType` | 0–5 | 0 unknown, 1 truck, 2 car, 3 motorcycle, 4 bicycle, 5 pedestrian |
+
+These only cover vehicles level with or ahead of the car. `leftBlindSpot` / `rightBlindSpot` cover beside and behind, so use both: a side vehicle under ~5 m while its blind spot is set is the same vehicle. Each slot refreshes about every 180 ms; ease positions between updates. [`web-lanes/`](web-lanes/) shows one way to draw them; open its `index.html?demo` in a browser to try it without the app.
+
 **Battery**
 
 | key | type | meaning |

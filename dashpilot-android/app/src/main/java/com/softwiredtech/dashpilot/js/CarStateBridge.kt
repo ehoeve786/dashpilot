@@ -50,6 +50,15 @@ class CarStateBridge(
     @Volatile private var renderQuality: Int = 3
     @Volatile private var darkModeBackgroundGray: Int = 0
     @Volatile private var changingLane: Boolean = false
+    @Volatile private var leadVehDx: Float = -1f
+    @Volatile private var leadVehDy: Float = 0f
+    @Volatile private var leadVehType: Float = 0f
+    @Volatile private var leftVehDx: Float = -1f
+    @Volatile private var leftVehDy: Float = 0f
+    @Volatile private var leftVehType: Float = 0f
+    @Volatile private var rightVehDx: Float = -1f
+    @Volatile private var rightVehDy: Float = 0f
+    @Volatile private var rightVehType: Float = 0f
     @Volatile private var speedCameraDistance: Int = -1
     @Volatile private var dataSourceType: String = ""
 
@@ -82,6 +91,15 @@ class CarStateBridge(
         experimentalMode = state.experimentalMode
         madsActive = state.madsActive
         changingLane = state.changingLane
+        leadVehDx = state.leadVehDx
+        leadVehDy = state.leadVehDy
+        leadVehType = state.leadVehType
+        leftVehDx = state.leftVehDx
+        leftVehDy = state.leftVehDy
+        leftVehType = state.leftVehType
+        rightVehDx = state.rightVehDx
+        rightVehDy = state.rightVehDy
+        rightVehType = state.rightVehType
     }
 
     @JavascriptInterface fun getEgoSteeringAngle(): Float = egoSteeringAngle
@@ -122,6 +140,15 @@ class CarStateBridge(
     @JavascriptInterface fun getRenderQuality(): Int = renderQuality
     @JavascriptInterface fun getDarkModeBackgroundGray(): Int = darkModeBackgroundGray
     @JavascriptInterface fun isChangingLane(): Boolean = changingLane
+    @JavascriptInterface fun getLeadVehDx(): Float = leadVehDx
+    @JavascriptInterface fun getLeadVehDy(): Float = leadVehDy
+    @JavascriptInterface fun getLeadVehType(): Float = leadVehType
+    @JavascriptInterface fun getLeftVehDx(): Float = leftVehDx
+    @JavascriptInterface fun getLeftVehDy(): Float = leftVehDy
+    @JavascriptInterface fun getLeftVehType(): Float = leftVehType
+    @JavascriptInterface fun getRightVehDx(): Float = rightVehDx
+    @JavascriptInterface fun getRightVehDy(): Float = rightVehDy
+    @JavascriptInterface fun getRightVehType(): Float = rightVehType
     @JavascriptInterface fun getSpeedCameraDistance(): Int = speedCameraDistance
 
     fun updateSpeedCameraDistance(distanceMeters: Int) {

@@ -134,6 +134,66 @@ struct BlinkerHold {
     }
 };
 
+// DAS_object (0x309, chassis bus) carries one group per frame, selected by
+// DAS_objectId (0 lead, 1 left, 2 right, ...), so the parser's single latest
+// frame only ever holds one group. Latch each group as it arrives and expire
+// it when the car stops refreshing it, so stale vehicles don't stay on screen.
+class DasObjectLatch {
+public:
+    static constexpr std::chrono::milliseconds STALE{500};
+
+    void update(const CANParsers& cp, CarState& cs,
+                std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now()) {
+        uint32_t seq = cp.frameSeq(0, "DAS_object");
+        if (seq != lastSeq_) {
+            lastSeq_ = seq;
+            switch (static_cast<int>(cp.get(0, "DAS_object", "DAS_objectId"))) {
+            case 0:
+                lead_ = {cp.get(0, "DAS_object", "DAS_leadVehDx"),
+                         cp.get(0, "DAS_object", "DAS_leadVehDy"),
+                         cp.get(0, "DAS_object", "DAS_leadVehType"), now, true};
+                break;
+            case 1:
+                left_ = {cp.get(0, "DAS_object", "DAS_leftVehDx"),
+                         cp.get(0, "DAS_object", "DAS_leftVehDy"),
+                         cp.get(0, "DAS_object", "DAS_leftVehType"), now, true};
+                break;
+            case 2:
+                right_ = {cp.get(0, "DAS_object", "DAS_rightVehDx"),
+                          cp.get(0, "DAS_object", "DAS_rightVehDy"),
+                          cp.get(0, "DAS_object", "DAS_rightVehType"), now, true};
+                break;
+            default:
+                break;
+            }
+        }
+        apply(lead_, now, cs.leadVehDx, cs.leadVehDy, cs.leadVehType);
+        apply(left_, now, cs.leftVehDx, cs.leftVehDy, cs.leftVehType);
+        apply(right_, now, cs.rightVehDx, cs.rightVehDy, cs.rightVehType);
+    }
+
+private:
+    struct Slot {
+        double dx = 0, dy = 0, type = 0;
+        std::chrono::steady_clock::time_point seen{};
+        bool valid = false;
+    };
+
+    // Dx raw 255 (* 0.5 m) is SNA: no vehicle in this slot.
+    static constexpr double DX_SNA = 127.5;
+
+    static void apply(const Slot& s, std::chrono::steady_clock::time_point now,
+                      double& dx, double& dy, double& type) {
+        bool present = s.valid && s.dx < DX_SNA && (now - s.seen) <= STALE;
+        dx = present ? s.dx : -1.0;
+        dy = present ? s.dy : 0.0;
+        type = present ? s.type : 0.0;
+    }
+
+    uint32_t lastSeq_ = 0;
+    Slot lead_, left_, right_;
+};
+
 class TeslaCommaPartyMapper : public CarStateMapper {
 public:
     void update(const CANParsers& cp, CarState& cs) override {
@@ -183,6 +243,8 @@ public:
         cs.hvacRecirc = cp.get(1, "UI_hvacRequest", "UI_hvacReqRecirc");
         cs.hvacKeepClimateOn = cp.get(1, "UI_hvacRequest", "UI_hvacReqKeepClimateOn");
 
+        das_.update(cp, cs);
+
         updateVehicleBus(cp, cs);
         vin_.update(cp, cs);
     }
@@ -190,6 +252,7 @@ public:
 private:
     BlinkerHold leftBlinkerHold_;
     BlinkerHold rightBlinkerHold_;
+    DasObjectLatch das_;
     TeslaVinUpdater vin_;
 };
 

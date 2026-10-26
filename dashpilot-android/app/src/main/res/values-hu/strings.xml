@@ -19,6 +19,7 @@
     <string name="dashboard_name_expo">Expo</string>
     <string name="dashboard_name_analog">Analog</string>
     <string name="dashboard_name_compose">Egyéni</string>
+    <string name="dashboard_name_lanes">Sávok</string>
     <string name="dashboard_name_rive">Rive</string>
     <string name="dashboard_name_dev_rive">Rive fájl</string>
     <string name="dashboard_name_dev_url">Dash app URL</string>

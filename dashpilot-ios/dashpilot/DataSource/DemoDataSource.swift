@@ -50,6 +50,42 @@ final class DemoDataSource: IDataSource {
         Float(70 + 20 * sin(t * 0.02))
     }
 
+    /// Blind spot windows, and the DAS_object vehicles that hand off to them.
+    private static let leftPeriod: TimeInterval = 23, rightPeriod: TimeInterval = 29
+    private static let bsmWindow: TimeInterval = 3
+    private static let handoff: TimeInterval = 1
+    private static let leftAheadEnd: TimeInterval = 11
+    private static let rightAheadStart: TimeInterval = 19
+    private static let laneWidth: Float = 3.5
+    private static let typeTruck: Float = 1, typeCar: Float = 2
+
+    /// A left-lane car passes us: blind spot first, then pulls away ahead.
+    /// It's reported at 0 m for the last `handoff` seconds of the blind spot window.
+    private static func leftVehDx(at t: TimeInterval) -> Float {
+        let m = t.truncatingRemainder(dividingBy: leftPeriod)
+        return ((bsmWindow - handoff)...leftAheadEnd).contains(m) ? Float(max(0, m - bsmWindow) * 7.5) : -1
+    }
+
+    /// We overtake a right-lane truck: it closes in from ahead, then sits in
+    /// the blind spot, still reported at 0 m for the first `handoff` seconds.
+    private static func rightVehDx(at t: TimeInterval) -> Float {
+        let m = t.truncatingRemainder(dividingBy: rightPeriod)
+        if m >= rightAheadStart { return Float((rightPeriod - m) * 5) }
+        return m < handoff ? 0 : -1
+    }
+
+    private static func leadVehDx(at t: TimeInterval, phase: TimeInterval) -> Float {
+        switch phase {
+        case ..<turnStart: return Float(35 + 10 * sin(t * 0.15))
+        case ..<turnEnd: return -1
+        case ..<cruise2End: return Float(35 + 10 * sin(t * 0.15))
+        case ..<approachEnd:
+            return Float(8 + 35 * (1 - (phase - cruise2End) / (approachEnd - cruise2End)))
+        case ..<stoppedEnd: return 8
+        default: return Float(min(45, 8 + (phase - stoppedEnd) * 3))
+        }
+    }
+
     private static func frame(at t: TimeInterval) -> CarState {
         var s = CarState()
         let cycleIndex = Int(t / cycleLength)
@@ -135,8 +171,18 @@ final class DemoDataSource: IDataSource {
 
         s.accSetSpeed = cruiseSpeed(at: t) + 5
 
-        s.leftBlindSpot = t.truncatingRemainder(dividingBy: 23) < 3 ? 1 : 0
-        s.rightBlindSpot = t.truncatingRemainder(dividingBy: 29) < 3 ? 1 : 0
+        s.leftBlindSpot = t.truncatingRemainder(dividingBy: leftPeriod) < bsmWindow ? 1 : 0
+        s.rightBlindSpot = t.truncatingRemainder(dividingBy: rightPeriod) < bsmWindow ? 1 : 0
+
+        s.leadVehDx = leadVehDx(at: t, phase: phase)
+        s.leadVehDy = s.leadVehDx >= 0 ? Float(sin(t * 0.4) * 0.3) : 0
+        s.leadVehType = s.leadVehDx >= 0 ? typeCar : 0
+        s.leftVehDx = leftVehDx(at: t)
+        s.leftVehDy = s.leftVehDx >= 0 ? laneWidth : 0
+        s.leftVehType = s.leftVehDx >= 0 ? typeCar : 0
+        s.rightVehDx = rightVehDx(at: t)
+        s.rightVehDy = s.rightVehDx >= 0 ? -laneWidth : 0
+        s.rightVehType = s.rightVehDx >= 0 ? typeTruck : 0
 
         // BMS / power — Tesla-ish pack, slowly discharging.
         s.fullPackEnergy = 75

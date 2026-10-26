@@ -43,6 +43,17 @@ struct CarState: Codable {
     var experimentalMode: Bool = false
     var changingLane: Bool = false
 
+    // DAS_object vehicles ahead, meters; Dx -1 = no vehicle.
+    var leadVehDx: Float = -1
+    var leadVehDy: Float = 0
+    var leadVehType: Float = 0
+    var leftVehDx: Float = -1
+    var leftVehDy: Float = 0
+    var leftVehType: Float = 0
+    var rightVehDx: Float = -1
+    var rightVehDy: Float = 0
+    var rightVehType: Float = 0
+
     init() {}
 
     init(from bridge: BridgeCarState) {
@@ -82,6 +93,15 @@ struct CarState: Codable {
         selfdriveActive = bridge.selfdriveActive > 0
         experimentalMode = bridge.experimentalMode > 0
         changingLane = bridge.changingLane > 0
+        leadVehDx = Float(bridge.leadVehDx)
+        leadVehDy = Float(bridge.leadVehDy)
+        leadVehType = Float(bridge.leadVehType)
+        leftVehDx = Float(bridge.leftVehDx)
+        leftVehDy = Float(bridge.leftVehDy)
+        leftVehType = Float(bridge.leftVehType)
+        rightVehDx = Float(bridge.rightVehDx)
+        rightVehDy = Float(bridge.rightVehDy)
+        rightVehType = Float(bridge.rightVehType)
     }
 
     private static let kmToMiles: Float = 0.621371
@@ -144,5 +164,14 @@ struct CarState: Codable {
         selfdriveActive      = try c.decodeIfPresent(Bool.self,  forKey: .selfdriveActive)      ?? false
         experimentalMode     = try c.decodeIfPresent(Bool.self,  forKey: .experimentalMode)     ?? false
         changingLane         = try c.decodeIfPresent(Bool.self,  forKey: .changingLane)         ?? false
+        leadVehDx            = try c.decodeIfPresent(Float.self, forKey: .leadVehDx)            ?? -1
+        leadVehDy            = try c.decodeIfPresent(Float.self, forKey: .leadVehDy)            ?? 0
+        leadVehType          = try c.decodeIfPresent(Float.self, forKey: .leadVehType)          ?? 0
+        leftVehDx            = try c.decodeIfPresent(Float.self, forKey: .leftVehDx)            ?? -1
+        leftVehDy            = try c.decodeIfPresent(Float.self, forKey: .leftVehDy)            ?? 0
+        leftVehType          = try c.decodeIfPresent(Float.self, forKey: .leftVehType)          ?? 0
+        rightVehDx           = try c.decodeIfPresent(Float.self, forKey: .rightVehDx)           ?? -1
+        rightVehDy           = try c.decodeIfPresent(Float.self, forKey: .rightVehDy)           ?? 0
+        rightVehType         = try c.decodeIfPresent(Float.self, forKey: .rightVehType)         ?? 0
     }
 }

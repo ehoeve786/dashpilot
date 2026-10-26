@@ -19,6 +19,7 @@
     <string name="dashboard_name_expo">Expo</string>
     <string name="dashboard_name_analog">Analog</string>
     <string name="dashboard_name_compose">Custom</string>
+    <string name="dashboard_name_lanes">Lanes</string>
     <string name="dashboard_name_rive">Rive</string>
     <string name="dashboard_name_dev_rive">Rive File</string>
     <string name="dashboard_name_dev_url">Dash App URL</string>

@@ -46,8 +46,47 @@ class DemoDataSource : IDataSource {
         const val STOPPED_END = 75.0
         const val GO_END = 78.0
         val LIMITS = floatArrayOf(50f, 90f, 130f)
+        const val LEFT_PERIOD = 23.0
+        const val RIGHT_PERIOD = 29.0
+        const val BSM_WINDOW = 3.0
+        const val HANDOFF_S = 1.0
+        const val LEFT_AHEAD_END = 11.0
+        const val RIGHT_AHEAD_START = 19.0
+        const val LANE_WIDTH = 3.5f
+        const val TYPE_TRUCK = 1f
+        const val TYPE_CAR = 2f
 
         fun cruise(t: Double): Float = (70 + 20 * sin(t * 0.02)).toFloat()
+
+        // A left-lane car passes us: blind spot first, then pulls away ahead.
+        // It's reported at 0 m for the last HANDOFF_S of the blind spot window.
+        fun leftVehDx(t: Double): Float {
+            val m = t % LEFT_PERIOD
+            return if (m in (BSM_WINDOW - HANDOFF_S)..LEFT_AHEAD_END) {
+                (max(0.0, m - BSM_WINDOW) * 7.5).toFloat()
+            } else -1f
+        }
+
+        // We overtake a right-lane truck: it closes in from ahead, then sits in
+        // the blind spot, still reported at 0 m for the first HANDOFF_S.
+        fun rightVehDx(t: Double): Float {
+            val m = t % RIGHT_PERIOD
+            return when {
+                m >= RIGHT_AHEAD_START -> ((RIGHT_PERIOD - m) * 5).toFloat()
+                m < HANDOFF_S -> 0f
+                else -> -1f
+            }
+        }
+
+        fun leadVehDx(t: Double, phase: Double): Float = when {
+            phase < TURN_START || (phase >= TURN_END && phase < CRUISE2_END) ->
+                (35 + 10 * sin(t * 0.15)).toFloat()
+            phase < TURN_END -> -1f
+            phase < APPROACH_END ->
+                (8 + 35 * (1 - (phase - CRUISE2_END) / (APPROACH_END - CRUISE2_END))).toFloat()
+            phase < STOPPED_END -> 8f
+            else -> min(45.0, 8 + (phase - STOPPED_END) * 3).toFloat()
+        }
 
         fun frame(t: Double): CarState {
             val lap = (t / CYCLE).toInt()
@@ -100,6 +139,9 @@ class DemoDataSource : IDataSource {
             val kw = packVoltage * packCurrent / 1000
             val maxRegen = 60f
             val maxDischarge = 300f
+            val lead = leadVehDx(t, phase)
+            val leftDx = leftVehDx(t)
+            val rightDx = rightVehDx(t)
 
             return CarState(
                 egoSteeringAngle = steering,
@@ -108,8 +150,8 @@ class DemoDataSource : IDataSource {
                 rightBlinker = right,
                 gear = 4f,
                 adasOn = true,
-                leftBlindSpot = if (t % 23 < 3) 1f else 0f,
-                rightBlindSpot = if (t % 29 < 3) 1f else 0f,
+                leftBlindSpot = if (t % LEFT_PERIOD < BSM_WINDOW) 1f else 0f,
+                rightBlindSpot = if (t % RIGHT_PERIOD < BSM_WINDOW) 1f else 0f,
                 fusedSpeedLimit = LIMITS[lap % LIMITS.size],
                 stopLineDist = stopLine,
                 trafficLightColor = light,
@@ -132,6 +174,15 @@ class DemoDataSource : IDataSource {
                 powerLevel = max(-1f, min(1f, kw / if (kw >= 0) maxDischarge else maxRegen)) * 100,
                 selfdriveActive = true,
                 madsActive = true,
+                leadVehDx = lead,
+                leadVehDy = if (lead >= 0) (sin(t * 0.4) * 0.3).toFloat() else 0f,
+                leadVehType = if (lead >= 0) TYPE_CAR else 0f,
+                leftVehDx = leftDx,
+                leftVehDy = if (leftDx >= 0) LANE_WIDTH else 0f,
+                leftVehType = if (leftDx >= 0) TYPE_CAR else 0f,
+                rightVehDx = rightDx,
+                rightVehDy = if (rightDx >= 0) -LANE_WIDTH else 0f,
+                rightVehType = if (rightDx >= 0) TYPE_TRUCK else 0f,
             )
         }
     }

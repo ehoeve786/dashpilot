@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lanes</title>
+  <style>
+    :root {
+      --bg: #eef0f3;
+      --road: #d9dde3;
+      --fg: #15181d;
+      --muted: #6b7380;
+    }
+    :root[data-theme="dark"] {
+      --bg: #0b0d10;
+      --road: #171a1f;
+      --fg: #f2f4f7;
+      --muted: #8a93a1;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .hud {
+      position: absolute;
+      left: max(4vw, env(safe-area-inset-left));
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 1vh;
+      pointer-events: none;
+    }
+    .speed {
+      font-size: 22vh;
+      font-weight: 700;
+      line-height: 0.9;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+    .unit {
+      font-size: 4vh;
+      color: var(--muted);
+    }
+    .gear {
+      font-size: 5vh;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .limit {
+      width: 12vh;
+      height: 12vh;
+      border-radius: 50%;
+      border: 1.6vh solid #d22;
+      background: #fff;
+      color: #111;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 5.2vh;
+      font-weight: 700;
+      box-sizing: border-box;
+      margin-top: 2vh;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="road"></canvas>
+  <div class="hud">
+    <div class="speed" id="speed">0</div>
+    <div class="unit" id="unit">km/h</div>
+    <div class="gear" id="gear">D</div>
+    <div class="limit" id="limit"></div>
+  </div>
+  <script>
+    "use strict";
+
+    // ---- World model (meters). x: lateral, + = right on screen. z: forward from ego center.
+    const LANE_W = 3.5;
+    const EGO_HALF_LEN = 2.35;
+    const Z_NEAR = -9;
+    const Z_FAR = 70;
+    // DAS_object Dx is the gap ahead of the ego front bumper; the BSM zone sits
+    // beside and behind the ego car, up to just past its front bumper.
+    const BSM_Z_MIN = -7;
+    const BSM_Z_MAX = EGO_HALF_LEN + 1;
+    // A side car this close ahead is the one BSM is reporting: draw it once.
+    const HANDOFF_DX = 5;
+    const SMOOTH_TAU_S = 0.15;
+    const FADE_S = 0.25;
+
+    // DAS_object type codes -> footprint (width, length) in meters.
+    const SIZES = {
+      0: [1.9, 4.6],  // unknown: draw as car
+      1: [2.5, 11],   // truck
+      2: [1.9, 4.6],  // car
+      3: [0.9, 2.2],  // motorcycle
+      4: [0.7, 1.8],  // bicycle
+      5: [0.7, 0.7],  // pedestrian
+    };
+
+    const COLORS = {
+      dark: {
+        lane: "rgba(255,255,255,0.35)", edge: "rgba(255,255,255,0.6)",
+        ego: "#e9edf2", lead: "#4fa3ff", side: "#7c8694",
+        bsm: "#ffb020", urgent: "#ff3b30", label: "#f2f4f7",
+      },
+      light: {
+        lane: "rgba(0,0,0,0.3)", edge: "rgba(0,0,0,0.55)",
+        ego: "#2a2f37", lead: "#1f6fd1", side: "#8d96a3",
+        bsm: "#e08a00", urgent: "#e0241b", label: "#15181d",
+      },
+    };
+
+    const GEARS = ["-", "P", "R", "N", "D"];
+
+    const canvas = document.getElementById("road");
+    const ctx = canvas.getContext("2d");
+    const speedEl = document.getElementById("speed");
+    const unitEl = document.getElementById("unit");
+    const gearEl = document.getElementById("gear");
+    const limitEl = document.getElementById("limit");
+
+    let car = {};
+    let viewW = 0, viewH = 0;
+    let dashOffset = 0;
+    let lastFrameMs = 0;
+
+    // Per DAS_object slot: displayed position eases toward the latest target
+    // so the ~180 ms group refresh doesn't make vehicles jump.
+    function makeSlot() { return { z: 0, x: 0, type: 2, alpha: 0, present: false }; }
+    const slots = { lead: makeSlot(), left: makeSlot(), right: makeSlot() };
+    const ghostAlpha = { left: 0, right: 0 };
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      viewW = window.innerWidth;
+      viewH = window.innerHeight;
+      canvas.width = Math.round(viewW * dpr);
+      canvas.height = Math.round(viewH * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    // Pinhole camera behind and above the ego car. The road is drawn in the
+    // right ~60% of the screen; the HUD takes the left. y is height above road.
+    function project(x, z, y = 0) {
+      const camBack = 20;
+      const camH = 12;
+      const f = viewH;
+      const depth = Math.max(1, z + camBack);
+      const cx = viewW * 0.62;
+      const horizon = viewH * 0.08;
+      return {
+        x: cx + (f * x) / depth,
+        y: horizon + (f * (camH - y)) / depth,
+        s: f / depth,
+      };
+    }
+
+    function quad(x0, x1, z0, z1) {
+      const a = project(x0, z0), b = project(x1, z0), c = project(x1, z1), d = project(x0, z1);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.lineTo(c.x, c.y);
+      ctx.lineTo(d.x, d.y);
+      ctx.closePath();
+    }
+
+    function drawRoad(c) {
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--road");
+      quad(-LANE_W * 1.5, LANE_W * 1.5, Z_NEAR, Z_FAR);
+      ctx.fill();
+
+      // Solid road edges.
+      ctx.strokeStyle = c.edge;
+      for (const x of [-LANE_W * 1.5, LANE_W * 1.5]) {
+        const a = project(x, Z_NEAR), b = project(x, Z_FAR);
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+
+      // Dashed lane lines, scrolling with ego speed.
+      ctx.fillStyle = c.lane;
+      const dash = 3, gap = 9, period = dash + gap;
+      for (const x of [-LANE_W / 2, LANE_W / 2]) {
+        for (let z = Z_NEAR - (dashOffset % period); z < Z_FAR; z += period) {
+          quad(x - 0.08, x + 0.08, z, Math.min(Z_FAR, z + dash));
+          ctx.fill();
+        }
+      }
+    }
+
+    function poly(points) {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Vehicle as a box: the camera sits behind it, so the rear face, the roof
+    // and the side facing the road center are the visible ones.
+    function drawVehicle(x, zCenter, type, color, alpha) {
+      const [w, len] = SIZES[type] || SIZES[0];
+      const h = type === 1 ? 3.2 : type === 5 ? 1.7 : 1.4;
+      const z0 = zCenter - len / 2, z1 = zCenter + len / 2;
+      const x0 = x - w / 2, x1 = x + w / 2;
+      const P = (px, pz, py) => project(px, pz, py);
+      ctx.globalAlpha = alpha;
+
+      const sideX = x1 < 0 ? x1 : x0 > 0 ? x0 : null;
+      if (sideX !== null) {
+        ctx.fillStyle = color;
+        poly([P(sideX, z0, 0), P(sideX, z1, 0), P(sideX, z1, h), P(sideX, z0, h)]);
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        poly([P(sideX, z0, 0), P(sideX, z1, 0), P(sideX, z1, h), P(sideX, z0, h)]);
+      }
+      ctx.fillStyle = color;
+      poly([P(x0, z0, h), P(x1, z0, h), P(x1, z1, h), P(x0, z1, h)]);
+      poly([P(x0, z0, 0), P(x1, z0, 0), P(x1, z0, h), P(x0, z0, h)]);
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      poly([P(x0, z0, 0), P(x1, z0, 0), P(x1, z0, h), P(x0, z0, h)]);
+      ctx.globalAlpha = 1;
+    }
+
+    function drawBsmZone(side, level, color) {
+      const xc = side * LANE_W;
+      ctx.globalAlpha = level >= 2 ? 0.45 : 0.28;
+      ctx.fillStyle = color;
+      quad(xc - LANE_W / 2 + 0.2, xc + LANE_W / 2 - 0.2, BSM_Z_MIN, BSM_Z_MAX);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    function label(text, x, z, color) {
+      const p = project(x, z);
+      ctx.fillStyle = color;
+      ctx.font = "600 " + Math.round(viewH * 0.035) + "px -apple-system, Roboto, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(text, p.x, p.y - p.s * 2.4);
+    }
+
+    function num(v, fallback) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function formatDistance(m) {
+      if (car.isImperial) return Math.round(m * 3.28084) + " ft";
+      return Math.round(m) + " m";
+    }
+
+    function egoSpeedMs() {
+      const v = Math.max(0, num(car.egoSpeed, 0));
+      return car.isImperial ? v * 0.44704 : v / 3.6;
+    }
+
+    function updateSlot(slot, dx, dy, type, laneX, dt) {
+      const present = dx >= 0;
+      if (present) {
+        const zTarget = EGO_HALF_LEN + dx + (SIZES[type] || SIZES[0])[1] / 2;
+        // Lead keeps its small lateral offset; side cars snap to lane center
+        // because the sign of DAS Dy is not verified yet.
+        const xTarget = laneX === 0 ? Math.max(-1.2, Math.min(1.2, -dy)) : laneX;
+        if (!slot.present && slot.alpha <= 0) {
+          slot.z = zTarget;
+          slot.x = xTarget;
+        } else {
+          const k = 1 - Math.exp(-dt / SMOOTH_TAU_S);
+          slot.z += (zTarget - slot.z) * k;
+          slot.x += (xTarget - slot.x) * k;
+        }
+        slot.type = type;
+        slot.alpha = Math.min(1, slot.alpha + dt / FADE_S);
+      } else {
+        slot.alpha = Math.max(0, slot.alpha - dt / FADE_S);
+      }
+      slot.present = present;
+    }
+
+    function frame(nowMs) {
+      const dt = lastFrameMs ? Math.min(0.1, (nowMs - lastFrameMs) / 1000) : 0;
+      lastFrameMs = nowMs;
+      dashOffset += egoSpeedMs() * dt;
+
+      const theme = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+      const c = COLORS[theme];
+
+      updateSlot(slots.lead, num(car.leadVehDx, -1), num(car.leadVehDy, 0), num(car.leadVehType, 2), 0, dt);
+      updateSlot(slots.left, num(car.leftVehDx, -1), num(car.leftVehDy, 0), num(car.leftVehType, 2), -LANE_W, dt);
+      updateSlot(slots.right, num(car.rightVehDx, -1), num(car.rightVehDy, 0), num(car.rightVehType, 2), LANE_W, dt);
+
+      ctx.clearRect(0, 0, viewW, viewH);
+      drawRoad(c);
+
+      const alwaysOn = car.alwaysOnBlindSpotMonitor !== false;
+      const sides = [
+        { dir: -1, bsm: num(car.leftBlindSpot, 0), blinker: num(car.leftBlinker, 0) > 0, slot: slots.left, dx: num(car.leftVehDx, -1) },
+        { dir: 1, bsm: num(car.rightBlindSpot, 0), blinker: num(car.rightBlinker, 0) > 0, slot: slots.right, dx: num(car.rightVehDx, -1) },
+      ];
+
+      // Far to near so nearer vehicles overdraw farther ones.
+      const drawList = [];
+      for (const s of sides) {
+        const key = s.dir < 0 ? "left" : "right";
+        const level = s.bsm > 0 ? (s.bsm >= 2 || s.blinker ? 2 : 1) : 0;
+        const visible = level > 0 && (alwaysOn || s.blinker);
+        const bsmColor = level >= 2 ? c.urgent : c.bsm;
+        if (visible) drawBsmZone(s.dir, level, bsmColor);
+        const handoff = visible && s.dx >= 0 && s.dx < HANDOFF_DX;
+        if (s.slot.alpha > 0) {
+          drawList.push({ x: s.slot.x, z: s.slot.z, type: s.slot.type, alpha: s.slot.alpha,
+                          color: handoff ? bsmColor : c.side });
+        }
+        // BSM alone gives no position: park a ghost car mid-zone unless the
+        // DAS_object car is already the one in it.
+        const ghostOn = visible && !handoff;
+        ghostAlpha[key] = Math.max(0, Math.min(0.85, ghostAlpha[key] + (ghostOn ? 1 : -1) * dt / FADE_S));
+        if (ghostAlpha[key] > 0) {
+          drawList.push({ x: s.dir * LANE_W, z: -3.5, type: 2, alpha: ghostAlpha[key], color: bsmColor });
+        }
+      }
+      if (slots.lead.alpha > 0) {
+        drawList.push({ x: slots.lead.x, z: slots.lead.z, type: slots.lead.type,
+                        alpha: slots.lead.alpha, color: c.lead });
+      }
+      drawList.sort((a, b) => b.z - a.z);
+      for (const v of drawList) drawVehicle(v.x, v.z, v.type, v.color, v.alpha);
+
+      drawVehicle(0, 0, 2, c.ego, 1);
+
+      const leadDx = num(car.leadVehDx, -1);
+      if (leadDx >= 0 && slots.lead.alpha > 0.5) {
+        const v = egoSpeedMs();
+        const gap = v > 1.5 ? "  " + (leadDx / v).toFixed(1) + " s" : "";
+        label(formatDistance(leadDx) + gap, slots.lead.x, slots.lead.z, c.label);
+      }
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    function render(state) {
+      car = state;
+      if (typeof state.darkMode === "boolean") {
+        document.documentElement.setAttribute("data-theme", state.darkMode ? "dark" : "light");
+      }
+      speedEl.textContent = String(Math.max(0, Math.round(num(state.egoSpeed, 0))));
+      unitEl.textContent = state.isImperial ? "mph" : "km/h";
+      gearEl.textContent = GEARS[Math.round(num(state.gear, 0))] || "-";
+      const limit = Math.round(num(state.fusedSpeedLimit, 0));
+      limitEl.style.display = limit > 0 ? "flex" : "none";
+      limitEl.textContent = String(limit);
+    }
+
+    // ---- Data intake: iOS pushes a plain object, Android exposes getters.
+    window.receiveMessage = render;
+
+    const ANDROID_KEYS = [
+      "egoSpeed", "gear", "fusedSpeedLimit", "leftBlinker", "rightBlinker",
+      "leftBlindSpot", "rightBlindSpot",
+      "leadVehDx", "leadVehDy", "leadVehType",
+      "leftVehDx", "leftVehDy", "leftVehType",
+      "rightVehDx", "rightVehDy", "rightVehType",
+      "isImperial", "darkMode", "alwaysOnBlindSpotMonitor",
+    ];
+
+    function fromAndroid() {
+      const n = window.NativeCarState, s = {};
+      for (const k of ANDROID_KEYS) {
+        const cap = k[0].toUpperCase() + k.slice(1);
+        const m = k === "isImperial" ? k : n["get" + cap] ? "get" + cap : "is" + cap;
+        try {
+          if (typeof n[m] === "function") s[k] = n[m]();
+        } catch (_err) {
+          // Older app builds lack the DAS_object getters: leave them unset.
+        }
+      }
+      return s;
+    }
+
+    window.onCarStateUpdate = () => render(fromAndroid());
+
+    // ---- Standalone preview: open index.html?demo in a desktop browser.
+    if (new URLSearchParams(location.search).has("demo")) {
+      const t0 = performance.now();
+      setInterval(() => {
+        const t = (performance.now() - t0) / 1000;
+        const lm = t % 23, rm = t % 29;
+        // Side cars overlap the 3 s BSM windows by 1 s at 0 m: the hand-off.
+        const leftDx = lm >= 2 && lm <= 11 ? Math.max(0, lm - 3) * 7.5 : -1;
+        const rightDx = rm >= 19 ? (29 - rm) * 5 : rm < 1 ? 0 : -1;
+        render({
+          egoSpeed: 95 + 10 * Math.sin(t * 0.1), gear: 4, fusedSpeedLimit: 100,
+          leftBlindSpot: lm < 3 ? 1 : 0, rightBlindSpot: rm < 3 ? 1 : 0,
+          leftBlinker: 0, rightBlinker: 0,
+          leadVehDx: 35 + 10 * Math.sin(t * 0.15), leadVehDy: 0.3 * Math.sin(t * 0.4), leadVehType: 2,
+          leftVehDx: leftDx, leftVehDy: leftDx >= 0 ? 3.5 : 0, leftVehType: leftDx >= 0 ? 2 : 0,
+          rightVehDx: rightDx, rightVehDy: rightDx >= 0 ? -3.5 : 0, rightVehType: rightDx >= 0 ? 1 : 0,
+          isImperial: false, darkMode: !new URLSearchParams(location.search).has("light"),
+          alwaysOnBlindSpotMonitor: true,
+        });
+      }, 100);
+    } else {
+      render({});
+    }
+  </script>
+</body>
+</html>

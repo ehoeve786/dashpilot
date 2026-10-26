@@ -16,7 +16,7 @@ APPS_DIR="$REPO_ROOT/dash-apps"
 XCASSETS_DIR="$REPO_ROOT/dashpilot-ios/dashpilot/Assets.xcassets"
 
 # Default folders (override by passing arguments)
-DEFAULT_FOLDERS=(web-vanilla web-retro web-ambient web-analog web-compose)
+DEFAULT_FOLDERS=(web-vanilla web-retro web-ambient web-analog web-compose web-lanes)
 PREVIEW_FOLDERS=("${DEFAULT_FOLDERS[@]}" rive)
 
 if [ $# -gt 0 ]; then

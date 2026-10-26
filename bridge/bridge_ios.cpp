@@ -43,6 +43,15 @@ static void carStateToBridge(const CarState& cs, BridgeCarState* out) {
     out->selfdriveActive = cs.selfdriveActive;
     out->experimentalMode = cs.experimentalMode;
     out->changingLane = cs.changingLane;
+    out->leadVehDx = cs.leadVehDx;
+    out->leadVehDy = cs.leadVehDy;
+    out->leadVehType = cs.leadVehType;
+    out->leftVehDx = cs.leftVehDx;
+    out->leftVehDy = cs.leftVehDy;
+    out->leftVehType = cs.leftVehType;
+    out->rightVehDx = cs.rightVehDx;
+    out->rightVehDy = cs.rightVehDy;
+    out->rightVehType = cs.rightVehType;
 }
 
 static std::atomic<bool> receiveLoopRunning{false};

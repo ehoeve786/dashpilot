@@ -65,6 +65,15 @@ val availableDashboards = buildList {
     )
     add(
         DashboardConfig(
+            id = "lanes",
+            nameRes = R.string.dashboard_name_lanes,
+            url = "${LOCAL_ASSET_BASE_URL}web-lanes/index.html",
+            type = DashboardType.WEB,
+            screenshotRes = R.drawable.preview_lanes
+        )
+    )
+    add(
+        DashboardConfig(
             id = "rive",
             nameRes = R.string.dashboard_name_rive,
             url = "dash_demo",

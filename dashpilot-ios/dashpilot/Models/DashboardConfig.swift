@@ -52,6 +52,13 @@ let availableDashboards: [DashboardConfig] = [
         screenshotName: "preview_retro"
     ),
     DashboardConfig(
+        id: "lanes",
+        name: String(localized: "Lanes Dashboard"),
+        url: "lanes",
+        type: .web,
+        screenshotName: "preview_lanes"
+    ),
+    DashboardConfig(
         id: "rive",
         name: String(localized: "Rive"),
         url: "dash_demo",

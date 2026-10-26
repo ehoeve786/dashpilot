@@ -65,7 +65,17 @@ class CanFrameDecoder(
                 hvacRecirc = values[33].toFloat(),
                 hvacKeepClimateOn = values[34].toFloat(),
                 powerLevel = values[35].toFloat(),
-                vin = decodeVin(values, offset = 36)
+                // DAS_object
+                leadVehDx = values[36].toFloat(),
+                leadVehDy = values[37].toFloat(),
+                leadVehType = values[38].toFloat(),
+                leftVehDx = values[39].toFloat(),
+                leftVehDy = values[40].toFloat(),
+                leftVehType = values[41].toFloat(),
+                rightVehDx = values[42].toFloat(),
+                rightVehDy = values[43].toFloat(),
+                rightVehType = values[44].toFloat(),
+                vin = decodeVin(values, offset = 45)
             )
         }
 

@@ -46,12 +46,25 @@ struct CarState {
     double experimentalMode = 0;
     double changingLane = 0;
 
+    // DAS_object vehicles ahead. Dx/Dy in meters (Dy sign unverified);
+    // Dx -1 = no vehicle. Type: 0 unknown, 1 truck, 2 car, 3 motorcycle,
+    // 4 bicycle, 5 pedestrian.
+    double leadVehDx = -1;
+    double leadVehDy = 0;
+    double leadVehType = 0;
+    double leftVehDx = -1;
+    double leftVehDy = 0;
+    double leftVehType = 0;
+    double rightVehDx = -1;
+    double rightVehDy = 0;
+    double rightVehType = 0;
+
     // Vehicle VIN, empty until fully assembled by the mapper.
     static constexpr size_t VIN_LENGTH = 17;
     char vin[VIN_LENGTH + 1] = {};
 
     static constexpr size_t VIN_DOUBLE_COUNT = 3;
-    static constexpr size_t VIN_OFFSET = 36;
+    static constexpr size_t VIN_OFFSET = 45;
     static constexpr size_t FIELD_COUNT = VIN_OFFSET + VIN_DOUBLE_COUNT;
 
     void toArray(double* out) const {
@@ -97,6 +110,17 @@ struct CarState {
         out[33] = hvacRecirc;
         out[34] = hvacKeepClimateOn;
         out[35] = powerLevel;
+
+        // DAS_object
+        out[36] = leadVehDx;
+        out[37] = leadVehDy;
+        out[38] = leadVehType;
+        out[39] = leftVehDx;
+        out[40] = leftVehDy;
+        out[41] = leftVehType;
+        out[42] = rightVehDx;
+        out[43] = rightVehDy;
+        out[44] = rightVehType;
 
         // VIN chars ride the double array as raw bit patterns, 8 bytes per
         // double; decoded by CanFrameDecoder.arrayToCarState.

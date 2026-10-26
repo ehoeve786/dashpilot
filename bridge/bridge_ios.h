@@ -61,6 +61,31 @@ typedef struct {
     double rightVehDx;
     double rightVehDy;
     double rightVehType;
+    double cutinVehDx;
+    double cutinVehDy;
+    double cutinVehType;
+    double leadVehVxRel;
+    double leftVehVxRel;
+    double rightVehVxRel;
+    double cutinVehVxRel;
+    double leadVehHeading;
+    double leftVehHeading;
+    double rightVehHeading;
+    double cutinVehHeading;
+    double roadSignId;
+    double roadSignColor;
+    double roadSignArrow;
+    double roadSignStopLineDist;
+    double roadSignControlActive;
+    double laneWidth;
+    double laneViewRange;
+    double laneC0;
+    double laneC1;
+    double laneC2;
+    double laneC3;
+    double forwardCollisionWarning;
+    double laneDepartureWarning;
+    double sideCollisionWarning;
 } BridgeCarState;
 
 // Context

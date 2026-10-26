@@ -58,13 +58,51 @@ struct CarState {
     double rightVehDx = -1;
     double rightVehDy = 0;
     double rightVehType = 0;
+    double cutinVehDx = -1;
+    double cutinVehDy = 0;
+    double cutinVehType = 0;
+    // Relative speed (m/s, + = pulling away) and heading (rad, sign
+    // unverified) of the DAS_object vehicles; 0 when unknown.
+    double leadVehVxRel = 0;
+    double leftVehVxRel = 0;
+    double rightVehVxRel = 0;
+    double cutinVehVxRel = 0;
+    double leadVehHeading = 0;
+    double leftVehHeading = 0;
+    double rightVehHeading = 0;
+    double cutinVehHeading = 0;
+
+    // DAS_object road sign: id -1 none, 0 stop sign, 1 traffic light.
+    // Color 0 none, 1 red, 2 yellow, 3 green, 4 red+yellow. Arrow 0 circle,
+    // 1 left, 2 right, 3 straight, 4 unknown. Stop line meters, -1 = unknown.
+    double roadSignId = -1;
+    double roadSignColor = 0;
+    double roadSignArrow = 0;
+    double roadSignStopLineDist = -1;
+    double roadSignControlActive = 0;
+
+    // DAS_lanes virtual lane, y = C0 + C1 x + C2 x^2 + C3 x^3 in meters
+    // (sign unverified). laneViewRange 0 = no lane data.
+    double laneWidth = 0;
+    double laneViewRange = 0;
+    double laneC0 = 0;
+    double laneC1 = 0;
+    double laneC2 = 0;
+    double laneC3 = 0;
+
+    // DAS_status warnings. FCW 0/1; lane departure 0 none, 1 left,
+    // 2 right, 3 left severe, 4 right severe; side collision 0 none,
+    // 1 left, 2 right, 3 both.
+    double forwardCollisionWarning = 0;
+    double laneDepartureWarning = 0;
+    double sideCollisionWarning = 0;
 
     // Vehicle VIN, empty until fully assembled by the mapper.
     static constexpr size_t VIN_LENGTH = 17;
     char vin[VIN_LENGTH + 1] = {};
 
     static constexpr size_t VIN_DOUBLE_COUNT = 3;
-    static constexpr size_t VIN_OFFSET = 45;
+    static constexpr size_t VIN_OFFSET = 70;
     static constexpr size_t FIELD_COUNT = VIN_OFFSET + VIN_DOUBLE_COUNT;
 
     void toArray(double* out) const {
@@ -121,6 +159,31 @@ struct CarState {
         out[42] = rightVehDx;
         out[43] = rightVehDy;
         out[44] = rightVehType;
+        out[45] = cutinVehDx;
+        out[46] = cutinVehDy;
+        out[47] = cutinVehType;
+        out[48] = leadVehVxRel;
+        out[49] = leftVehVxRel;
+        out[50] = rightVehVxRel;
+        out[51] = cutinVehVxRel;
+        out[52] = leadVehHeading;
+        out[53] = leftVehHeading;
+        out[54] = rightVehHeading;
+        out[55] = cutinVehHeading;
+        out[56] = roadSignId;
+        out[57] = roadSignColor;
+        out[58] = roadSignArrow;
+        out[59] = roadSignStopLineDist;
+        out[60] = roadSignControlActive;
+        out[61] = laneWidth;
+        out[62] = laneViewRange;
+        out[63] = laneC0;
+        out[64] = laneC1;
+        out[65] = laneC2;
+        out[66] = laneC3;
+        out[67] = forwardCollisionWarning;
+        out[68] = laneDepartureWarning;
+        out[69] = sideCollisionWarning;
 
         // VIN chars ride the double array as raw bit patterns, 8 bytes per
         // double; decoded by CanFrameDecoder.arrayToCarState.

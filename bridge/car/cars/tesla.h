@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 
@@ -135,9 +136,10 @@ struct BlinkerHold {
 };
 
 // DAS_object (0x309, chassis bus) carries one group per frame, selected by
-// DAS_objectId (0 lead, 1 left, 2 right, ...), so the parser's single latest
-// frame only ever holds one group. Latch each group as it arrives and expire
-// it when the car stops refreshing it, so stale vehicles don't stay on screen.
+// DAS_objectId (0 lead, 1 left, 2 right, 3 cut-in, 4 road sign, 5 headings),
+// so the parser's single latest frame only ever holds one group. Latch each
+// group as it arrives and expire it when the car stops refreshing it, so stale
+// vehicles don't stay on screen.
 class DasObjectLatch {
 public:
     static constexpr std::chrono::milliseconds STALE{500};
@@ -147,52 +149,146 @@ public:
         uint32_t seq = cp.frameSeq(0, "DAS_object");
         if (seq != lastSeq_) {
             lastSeq_ = seq;
-            switch (static_cast<int>(cp.get(0, "DAS_object", "DAS_objectId"))) {
-            case 0:
-                lead_ = {cp.get(0, "DAS_object", "DAS_leadVehDx"),
-                         cp.get(0, "DAS_object", "DAS_leadVehDy"),
-                         cp.get(0, "DAS_object", "DAS_leadVehType"), now, true};
+            switch (static_cast<int>(get(cp, "DAS_objectId"))) {
+            case 0: latchVehicle(cp, lead_, "DAS_leadVeh", now); break;
+            case 1: latchVehicle(cp, left_, "DAS_leftVeh", now); break;
+            case 2: latchVehicle(cp, right_, "DAS_rightVeh", now); break;
+            case 3: latchVehicle(cp, cutin_, "DAS_cutinVeh", now); break;
+            case 4:
+                sign_ = {get(cp, "DAS_roadSignId"), get(cp, "DAS_roadSignColor"),
+                         get(cp, "DAS_roadSignArrow"), get(cp, "DAS_roadSignStopLineDist"),
+                         get(cp, "DAS_roadSignControlActive"), now, true};
                 break;
-            case 1:
-                left_ = {cp.get(0, "DAS_object", "DAS_leftVehDx"),
-                         cp.get(0, "DAS_object", "DAS_leftVehDy"),
-                         cp.get(0, "DAS_object", "DAS_leftVehType"), now, true};
-                break;
-            case 2:
-                right_ = {cp.get(0, "DAS_object", "DAS_rightVehDx"),
-                          cp.get(0, "DAS_object", "DAS_rightVehDy"),
-                          cp.get(0, "DAS_object", "DAS_rightVehType"), now, true};
+            case 5:
+                headings_ = {{get(cp, "DAS_leadVehHeading"), get(cp, "DAS_leftVehHeading"),
+                              get(cp, "DAS_rightVehHeading"), get(cp, "DAS_cutinVehHeading")},
+                             now, true};
                 break;
             default:
                 break;
             }
         }
-        apply(lead_, now, cs.leadVehDx, cs.leadVehDy, cs.leadVehType);
-        apply(left_, now, cs.leftVehDx, cs.leftVehDy, cs.leftVehType);
-        apply(right_, now, cs.rightVehDx, cs.rightVehDy, cs.rightVehType);
+        bool headingsFresh = fresh(headings_.seen, headings_.valid, now);
+        apply(lead_, now, headingsFresh ? headings_.rad[0] : HEADING_SNA,
+              cs.leadVehDx, cs.leadVehDy, cs.leadVehType, cs.leadVehVxRel, cs.leadVehHeading);
+        apply(left_, now, headingsFresh ? headings_.rad[1] : HEADING_SNA,
+              cs.leftVehDx, cs.leftVehDy, cs.leftVehType, cs.leftVehVxRel, cs.leftVehHeading);
+        apply(right_, now, headingsFresh ? headings_.rad[2] : HEADING_SNA,
+              cs.rightVehDx, cs.rightVehDy, cs.rightVehType, cs.rightVehVxRel, cs.rightVehHeading);
+        apply(cutin_, now, headingsFresh ? headings_.rad[3] : HEADING_SNA,
+              cs.cutinVehDx, cs.cutinVehDy, cs.cutinVehType, cs.cutinVehVxRel, cs.cutinVehHeading);
+
+        bool sign = fresh(sign_.seen, sign_.valid, now) && sign_.id < SIGN_ID_SNA;
+        cs.roadSignId = sign ? sign_.id : -1.0;
+        cs.roadSignColor = sign ? sign_.color : 0.0;
+        cs.roadSignArrow = sign ? sign_.arrow : 0.0;
+        cs.roadSignStopLineDist = sign && sign_.stopLineDist < STOP_LINE_SNA ? sign_.stopLineDist : -1.0;
+        cs.roadSignControlActive = sign ? sign_.controlActive : 0.0;
     }
 
 private:
-    struct Slot {
-        double dx = 0, dy = 0, type = 0;
+    struct Vehicle {
+        double dx = 0, dy = 0, type = 0, vxRel = 0;
+        std::chrono::steady_clock::time_point seen{};
+        bool valid = false;
+    };
+    struct Sign {
+        double id = 0, color = 0, arrow = 0, stopLineDist = 0, controlActive = 0;
+        std::chrono::steady_clock::time_point seen{};
+        bool valid = false;
+    };
+    struct Headings {
+        double rad[4] = {};
         std::chrono::steady_clock::time_point seen{};
         bool valid = false;
     };
 
-    // Dx raw 255 (* 0.5 m) is SNA: no vehicle in this slot.
-    static constexpr double DX_SNA = 127.5;
+    // SNA (signal not available) values after DBC scaling.
+    static constexpr double DX_SNA = 127.5;          // raw 255 * 0.5 m
+    static constexpr double VXREL_SNA = 30.0;        // raw 15 * 4 - 30 m/s
+    static constexpr double HEADING_SNA = 3.1;       // raw 255 ~ +pi rad
+    static constexpr double SIGN_ID_SNA = 255.0;
+    static constexpr double STOP_LINE_SNA = 184.5;   // raw 1023 * 0.2 - 20 = 184.6 m
 
-    static void apply(const Slot& s, std::chrono::steady_clock::time_point now,
-                      double& dx, double& dy, double& type) {
-        bool present = s.valid && s.dx < DX_SNA && (now - s.seen) <= STALE;
-        dx = present ? s.dx : -1.0;
-        dy = present ? s.dy : 0.0;
-        type = present ? s.type : 0.0;
+    static double get(const CANParsers& cp, const char* sig) {
+        return cp.get(0, "DAS_object", sig);
+    }
+
+    static void latchVehicle(const CANParsers& cp, Vehicle& v, const std::string& prefix,
+                             std::chrono::steady_clock::time_point now) {
+        v = {cp.get(0, "DAS_object", prefix + "Dx"), cp.get(0, "DAS_object", prefix + "Dy"),
+             cp.get(0, "DAS_object", prefix + "Type"), cp.get(0, "DAS_object", prefix + "VxRel"),
+             now, true};
+    }
+
+    static bool fresh(std::chrono::steady_clock::time_point seen, bool valid,
+                      std::chrono::steady_clock::time_point now) {
+        return valid && (now - seen) <= STALE;
+    }
+
+    // Dx -1 = no vehicle; 0 m is a valid distance.
+    static void apply(const Vehicle& v, std::chrono::steady_clock::time_point now, double heading,
+                      double& dx, double& dy, double& type, double& vxRel, double& headingOut) {
+        bool present = fresh(v.seen, v.valid, now) && v.dx < DX_SNA;
+        dx = present ? v.dx : -1.0;
+        dy = present ? v.dy : 0.0;
+        type = present ? v.type : 0.0;
+        vxRel = present && v.vxRel < VXREL_SNA ? v.vxRel : 0.0;
+        headingOut = present && heading < HEADING_SNA ? heading : 0.0;
     }
 
     uint32_t lastSeq_ = 0;
-    Slot lead_, left_, right_;
+    Vehicle lead_, left_, right_, cutin_;
+    Sign sign_;
+    Headings headings_;
 };
+
+// DAS_lanes (0x239, chassis bus, 10 Hz): the Autopilot's virtual lane as a
+// cubic y = C0 + C1 x + C2 x^2 + C3 x^3. Converted to SI here (C0 cm -> m,
+// C1 deg -> slope) so dash apps get one unit system. laneViewRange 0 = none.
+class DasLanesLatch {
+public:
+    static constexpr std::chrono::milliseconds STALE{1000};
+    static constexpr double DEG_TO_RAD = 3.14159265358979323846 / 180.0;
+
+    void update(const CANParsers& cp, CarState& cs,
+                std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now()) {
+        uint32_t seq = cp.frameSeq(0, "DAS_lanes");
+        if (seq != lastSeq_) {
+            lastSeq_ = seq;
+            width_ = cp.get(0, "DAS_lanes", "DAS_virtualLaneWidth");
+            viewRange_ = cp.get(0, "DAS_lanes", "DAS_virtualLaneViewRange");
+            c0_ = cp.get(0, "DAS_lanes", "DAS_virtualLaneC0") / 100.0;
+            c1_ = std::tan(cp.get(0, "DAS_lanes", "DAS_virtualLaneC1") * DEG_TO_RAD);
+            c2_ = cp.get(0, "DAS_lanes", "DAS_virtualLaneC2");
+            c3_ = cp.get(0, "DAS_lanes", "DAS_virtualLaneC3");
+            seen_ = now;
+            valid_ = true;
+        }
+        bool present = valid_ && (now - seen_) <= STALE && viewRange_ > 0;
+        cs.laneWidth = present ? width_ : 0.0;
+        cs.laneViewRange = present ? viewRange_ : 0.0;
+        cs.laneC0 = present ? c0_ : 0.0;
+        cs.laneC1 = present ? c1_ : 0.0;
+        cs.laneC2 = present ? c2_ : 0.0;
+        cs.laneC3 = present ? c3_ : 0.0;
+    }
+
+private:
+    uint32_t lastSeq_ = 0;
+    double width_ = 0, viewRange_ = 0, c0_ = 0, c1_ = 0, c2_ = 0, c3_ = 0;
+    std::chrono::steady_clock::time_point seen_{};
+    bool valid_ = false;
+};
+
+// DAS_status driver warnings, collapsing SNA to 0 (none).
+static inline void updateDasWarnings(const CANParsers& cp, CarState& cs) {
+    double fcw = cp.get(0, "DAS_status", "DAS_forwardCollisionWarning");
+    cs.forwardCollisionWarning = fcw == 1.0 ? 1.0 : 0.0;  // 3 = SNA
+    double ldw = cp.get(0, "DAS_status", "DAS_laneDepartureWarning");
+    cs.laneDepartureWarning = ldw >= 1.0 && ldw <= 4.0 ? ldw : 0.0;  // 5 = SNA
+    cs.sideCollisionWarning = cp.get(0, "DAS_status", "DAS_sideCollisionWarning");
+}
 
 class TeslaCommaPartyMapper : public CarStateMapper {
 public:
@@ -244,6 +340,8 @@ public:
         cs.hvacKeepClimateOn = cp.get(1, "UI_hvacRequest", "UI_hvacReqKeepClimateOn");
 
         das_.update(cp, cs);
+        lanes_.update(cp, cs);
+        updateDasWarnings(cp, cs);
 
         updateVehicleBus(cp, cs);
         vin_.update(cp, cs);
@@ -253,6 +351,7 @@ private:
     BlinkerHold leftBlinkerHold_;
     BlinkerHold rightBlinkerHold_;
     DasObjectLatch das_;
+    DasLanesLatch lanes_;
     TeslaVinUpdater vin_;
 };
 

@@ -98,6 +98,24 @@
       display: none;
     }
 
+    #collisionWarning {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 140px;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(255,0,0,0.6), rgba(255,0,0,0));
+      z-index: 1000;
+      display: none;
+      animation: collisionPulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes collisionPulse {
+      from { opacity: 1; }
+      to { opacity: 0.35; }
+    }
+
     #rightBlindSpot {
       position: fixed;
       top: 0;
@@ -414,6 +432,7 @@
 
   <div id="driverAlert"></div>
 
+  <div id="collisionWarning"></div>
   <div id="leftBlindSpot"></div>
   <div id="rightBlindSpot"></div>
   
@@ -509,7 +528,44 @@
     const TL_COLOR_MAP = { 1: "Red", 2: "Green", 3: "Yellow" };
     const TL_FIXED_DY = -3.0;
 
+    // DAS_object road sign colors: 1 red, 2 yellow, 3 green, 4 red+yellow.
+    const ROAD_SIGN_COLOR_MAP = { 1: "Red", 2: "Yellow", 3: "Green", 4: "Red" };
+    const ROAD_SIGN_ARROWS = { 1: "TurnLeft", 2: "TurnRight", 3: "Straight" };
+    const ROAD_SIGN_STOP_ID = 9970;
+    const ROAD_SIGN_ARROW_ID = 9971;
+    // Arrow painted on the road this far before the stop line.
+    const ROAD_SIGN_ARROW_LEAD = 6;
+    const STOP_SIGN_DY = -4.0;
+
+    // DAS_object's road sign group is richer than DAS_road (stop signs,
+    // arrows) and still live on cars where DAS_road is static, so it wins
+    // whenever it reports something.
+    function buildRoadSignState(car, world) {
+      const id = Number(car.roadSignId ?? -1);
+      const dist = Number(car.roadSignStopLineDist ?? -1);
+      if (id < 0 || dist < 0) return false;
+
+      if (id === 0) {
+        world.stop_signs = [{ id: ROAD_SIGN_STOP_ID, Dx: dist, Dy: STOP_SIGN_DY }];
+        world.stop_line_dist = dist < 127 ? dist : null;
+        world.traffic_lights = [];
+        return true;
+      }
+
+      const colorName = ROAD_SIGN_COLOR_MAP[car.roadSignColor];
+      world.traffic_lights = colorName && dist > 0
+        ? [{ id: 1, Dx: dist, Dy: TL_FIXED_DY, state: colorName }]
+        : [];
+      world.stop_line_dist = dist > 0 && dist < 127 ? dist : null;
+      const arrow = ROAD_SIGN_ARROWS[car.roadSignArrow];
+      if (arrow && dist > ROAD_SIGN_ARROW_LEAD) {
+        world.road_signs = [{ id: ROAD_SIGN_ARROW_ID, Dx: dist - ROAD_SIGN_ARROW_LEAD, Dy: 0, sign_type: arrow }];
+      }
+      return true;
+    }
+
     function buildTrafficLightState(car, world) {
+        if (buildRoadSignState(car, world)) return;
         const dist = car.stopLineDist;
         const colorName = TL_COLOR_MAP[car.trafficLightColor];
 
@@ -546,7 +602,11 @@
       { key: "lead", id: 9980 },
       { key: "left", id: 9981 },
       { key: "right", id: 9982 },
+      { key: "cutin", id: 9983 },
     ];
+    // The cut-in car is crossing lanes, so its own Dy is the point; clamp it
+    // to the neighbouring lanes.
+    const DAS_CUTIN_MAX_DY = 5.0;
     const DAS_CLASSES = ["Car", "Truck", "Car", "Motorcycle", "Bicycle", "Pedestrian", "Ipso"];
     const dasSmoothed = {};
     let dasLastMs = 0;
@@ -570,9 +630,10 @@
           continue;
         }
         let dy = slot.key === "left" ? BS_DY_LEFT : slot.key === "right" ? BS_DY_RIGHT : 0;
-        if (slot.key === "lead") {
-          const raw = Number(car.leadVehDy) || 0;
-          dy = Math.max(-DAS_LEAD_MAX_DY, Math.min(DAS_LEAD_MAX_DY, raw));
+        if (slot.key === "lead" || slot.key === "cutin") {
+          const raw = Number(car[slot.key + "VehDy"]) || 0;
+          const max = slot.key === "lead" ? DAS_LEAD_MAX_DY : DAS_CUTIN_MAX_DY;
+          dy = Math.max(-max, Math.min(max, raw));
         }
         const prev = dasSmoothed[slot.key];
         const cur = prev
@@ -584,9 +645,9 @@
           id: slot.id,
           Dx: cur.dx + DAS_DX_OFFSET,
           Dy: cur.dy,
-          VxRel: 0,
+          VxRel: Number(car[slot.key + "VehVxRel"]) || 0,
           vehicle_class: DAS_CLASSES[Math.round(Number(car[slot.key + "VehType"]) || 0)] || "Car",
-          heading: 0,
+          heading: Number(car[slot.key + "VehHeading"]) || 0,
         });
       }
     }
@@ -594,6 +655,111 @@
     function dasHandoff(car, side) {
       const dx = dasDx(car[side + "VehDx"]);
       return dx >= 0 && dx < DAS_HANDOFF_DX;
+    }
+
+    // DAS_lanes virtual lane. The car's polynomial is y = C0 + C1 x + C2 x^2
+    // + C3 x^3 (meters). Measured in this viz: C0, C2 and C3 move the lane
+    // left when positive, but C1 turns it right, so C1 is negated. Flip
+    // LANE_SIGN if the lane bends the wrong way on a real drive.
+    const LANE_SIGN = 1;
+    const LANE_DEFAULT = { laneWidth: 4, viewRange: 50, lanePolyC0: 0, lanePolyC1: 0, lanePolyC2: 0, lanePolyC3: 0 };
+    const LANE_MAX_VIEW_RANGE = 80;
+    const LANE_SMOOTH_TAU_MS = 120;
+    let laneSmoothed = null;
+    let laneLastMs = 0;
+
+    function buildLaneState(car) {
+      const now = performance.now();
+      const viewRange = Number(car.laneViewRange) || 0;
+      if (viewRange <= 0) {
+        laneSmoothed = null;
+        return { ...LANE_DEFAULT };
+      }
+      const target = {
+        laneWidth: Number(car.laneWidth) || LANE_DEFAULT.laneWidth,
+        viewRange: Math.min(viewRange, LANE_MAX_VIEW_RANGE),
+        lanePolyC0: LANE_SIGN * (Number(car.laneC0) || 0),
+        lanePolyC1: -LANE_SIGN * (Number(car.laneC1) || 0),
+        lanePolyC2: LANE_SIGN * (Number(car.laneC2) || 0),
+        lanePolyC3: LANE_SIGN * (Number(car.laneC3) || 0),
+      };
+      const k = laneSmoothed && laneLastMs ? 1 - Math.exp(-(now - laneLastMs) / LANE_SMOOTH_TAU_MS) : 1;
+      laneLastMs = now;
+      if (!laneSmoothed) laneSmoothed = { ...target };
+      for (const key of Object.keys(target)) laneSmoothed[key] += (target[key] - laneSmoothed[key]) * k;
+      return { ...laneSmoothed };
+    }
+
+    // DAS_status warnings -> viz events. The viz's lane departure names are
+    // mirrored (LaneDepartureWarningRight reddens the left line), so a car
+    // warning about the left line maps to ...Right.
+    function buildWarningEvents(car, world) {
+      const events = [];
+      if (Number(car.forwardCollisionWarning) > 0) {
+        const cutinDx = dasDx(car.cutinVehDx);
+        const leadDx = dasDx(car.leadVehDx);
+        const target = cutinDx >= 0 && (leadDx < 0 || cutinDx < leadDx) ? 9983 : 9980;
+        events.push({ event_type: "CollisionWarning", target_id: target, severity: 1 });
+      }
+      const ldw = Math.round(Number(car.laneDepartureWarning) || 0);
+      if (ldw >= 1 && ldw <= 4) {
+        const leftLine = ldw === 1 || ldw === 3;
+        events.push({
+          event_type: leftLine ? "LaneDepartureWarningRight" : "LaneDepartureWarningLeft",
+          target_id: 0,
+          severity: ldw >= 3 ? 1 : 0.5,
+        });
+      }
+      const side = Math.round(Number(car.sideCollisionWarning) || 0);
+      if (side === 1 || side === 3) events.push({ event_type: "BlindspotWarning", target_id: sideTargetId(car, "left"), severity: 1 });
+      if (side === 2 || side === 3) events.push({ event_type: "BlindspotWarning", target_id: sideTargetId(car, "right"), severity: 1 });
+      world.events = events;
+    }
+
+    function sideTargetId(car, side) {
+      if (dasHandoff(car, side)) return side === "left" ? 9981 : 9982;
+      return side === "left" ? BS_LEFT_ID : BS_RIGHT_ID;
+    }
+
+    // A speed limit sign that appears ahead when the limit changes and
+    // passes the car at its own speed, like driving past the real sign.
+    const SPEED_SIGN_ID = 9972;
+    const SPEED_SIGN_START_DX = 60;
+    const SPEED_SIGN_END_DX = -12;
+    const SPEED_SIGN_DY = -5;
+    let speedSign = null;
+    let lastSpeedLimit = 0;
+
+    function buildSpeedLimitSign(car, world, speedMs, isDrive) {
+      const limit = Math.round(Number(car.fusedSpeedLimit) || 0);
+      const now = performance.now();
+      if (limit > 0 && limit !== lastSpeedLimit && lastSpeedLimit !== 0 && isDrive) {
+        speedSign = { limit, dx: SPEED_SIGN_START_DX, lastMs: now };
+      }
+      lastSpeedLimit = limit;
+      if (!speedSign) return;
+      speedSign.dx -= Math.max(speedMs, 3) * (now - speedSign.lastMs) / 1000;
+      speedSign.lastMs = now;
+      if (speedSign.dx < SPEED_SIGN_END_DX) {
+        speedSign = null;
+        return;
+      }
+      world.speed_limits = [{ id: SPEED_SIGN_ID, Dx: speedSign.dx, Dy: SPEED_SIGN_DY, speed_limit: speedSign.limit }];
+    }
+
+    // Pull the camera back while a blinker is on so more of the next lane
+    // shows, easing in and out instead of snapping.
+    const LANE_CHANGE_ZOOM = 1.25;
+    const CAMERA_ZOOM_TAU_MS = 400;
+    let cameraZoom = 1.0;
+    let cameraZoomLastMs = 0;
+
+    function laneChangeZoom(active) {
+      const now = performance.now();
+      const k = cameraZoomLastMs ? 1 - Math.exp(-(now - cameraZoomLastMs) / CAMERA_ZOOM_TAU_MS) : 1;
+      cameraZoomLastMs = now;
+      cameraZoom += ((active ? LANE_CHANGE_ZOOM : 1.0) - cameraZoom) * k;
+      return cameraZoom;
     }
 
     const BS_DX = -3.0;
@@ -609,7 +775,11 @@
       const leftBlinkerOn = parseInt(car.leftBlinker) > 0;
       const rightBlinkerOn = parseInt(car.rightBlinker) > 0;
 
-      if (car.leftBlindSpot > 0 && (alwaysOn || leftBlinkerOn) && !dasHandoff(car, "left")) {
+      const side = Math.round(Number(car.sideCollisionWarning) || 0);
+      const leftWarn = side === 1 || side === 3;
+      const rightWarn = side === 2 || side === 3;
+
+      if ((car.leftBlindSpot > 0 && (alwaysOn || leftBlinkerOn) || leftWarn) && !dasHandoff(car, "left")) {
         objects.push({
           id: BS_LEFT_ID,
           Dx: BS_DX,
@@ -620,7 +790,7 @@
         });
       }
 
-      if (car.rightBlindSpot > 0 && (alwaysOn || rightBlinkerOn) && !dasHandoff(car, "right")) {
+      if ((car.rightBlindSpot > 0 && (alwaysOn || rightBlinkerOn) || rightWarn) && !dasHandoff(car, "right")) {
         objects.push({
           id: BS_RIGHT_ID,
           Dx: BS_DX,
@@ -674,6 +844,7 @@
         buildTrafficLightState(car, world);
         buildBlindSpotState(car, world);
         buildDasObjectState(car, world);
+        buildWarningEvents(car, world);
 
         const IN_MIN = -360;
         const IN_MAX =  360;
@@ -689,15 +860,16 @@
         world.ego_steering_angle = remappedRad;
         world.ego_speed = speedMs;
 
-        // Serialize for ADAS viz
-        world.lane = { laneWidth:4,viewRange:50,lanePolyC0:0,lanePolyC1:0,lanePolyC2:0,lanePolyC3:0 }
+        world.lane = buildLaneState(car);
 
         // Show gears
         const gearMap = { 1: "P", 2: "R", 3: "N", 4: "D" };
         gearText.textContent = gearMap[gear] || "-";
 
+        buildSpeedLimitSign(car, world, speedMs, gearMap[gear] == "D");
+
         if (gearMap[gear] == "D") {
-          world.camera_view = { view: "back", zoom: 1.0 };
+          world.camera_view = { view: "back", zoom: laneChangeZoom(leftBlinker > 0 || rightBlinker > 0) };
         } else if (gearMap[gear] == "P") {
           world.camera_view = { view: "left_side", zoom: 0.9 };
         } else if (gearMap[gear] == "R") {
@@ -737,8 +909,11 @@
         const activeColor = car.darkMode ? "#1ab3e6" : "#5cbd68";
         accSetSpeed.style.color = car.adasOn ? activeColor : "#d3d3d3";
 
-        applyBlindSpotBorderEffect(car.leftBlindSpot, leftBlindSpot);
-        applyBlindSpotBorderEffect(car.rightBlindSpot, rightBlindSpot);
+        const sideWarn = Math.round(Number(car.sideCollisionWarning) || 0);
+        applyBlindSpotBorderEffect(car.leftBlindSpot > 0 || sideWarn === 1 || sideWarn === 3, leftBlindSpot);
+        applyBlindSpotBorderEffect(car.rightBlindSpot > 0 || sideWarn === 2 || sideWarn === 3, rightBlindSpot);
+        const fcw = Number(car.forwardCollisionWarning) > 0;
+        document.getElementById("collisionWarning").style.display = fcw ? "block" : "none";
 
         const buckle = car.buckleStatus;
         seatbeltIcon.style.display = (buckle != null && buckle == 0) ? "block" : "none";
@@ -850,7 +1025,10 @@
         const camDist = window.NativeCarState?.getSpeedCameraDistance?.() ?? -1;
         const isChangingLane = window.NativeCarState?.isChangingLane?.() ?? car.changingLane ?? false;
         const alertEl = document.getElementById('driverAlert');
-        if (isChangingLane) {
+        if (fcw) {
+          alertEl.textContent = 'Collision warning';
+          alertEl.style.display = 'block';
+        } else if (isChangingLane) {
           alertEl.textContent = 'Changing lane';
           alertEl.style.display = 'block';
         } else if (camDist > 0) {
@@ -909,6 +1087,33 @@
         leftVehType: NativeCarState.getLeftVehType?.() ?? 0,
         rightVehDx: NativeCarState.getRightVehDx?.() ?? -1,
         rightVehType: NativeCarState.getRightVehType?.() ?? 0,
+        leftVehDy: NativeCarState.getLeftVehDy?.() ?? 0,
+        rightVehDy: NativeCarState.getRightVehDy?.() ?? 0,
+        cutinVehDx: NativeCarState.getCutinVehDx?.() ?? -1,
+        cutinVehDy: NativeCarState.getCutinVehDy?.() ?? 0,
+        cutinVehType: NativeCarState.getCutinVehType?.() ?? 0,
+        leadVehVxRel: NativeCarState.getLeadVehVxRel?.() ?? 0,
+        leftVehVxRel: NativeCarState.getLeftVehVxRel?.() ?? 0,
+        rightVehVxRel: NativeCarState.getRightVehVxRel?.() ?? 0,
+        cutinVehVxRel: NativeCarState.getCutinVehVxRel?.() ?? 0,
+        leadVehHeading: NativeCarState.getLeadVehHeading?.() ?? 0,
+        leftVehHeading: NativeCarState.getLeftVehHeading?.() ?? 0,
+        rightVehHeading: NativeCarState.getRightVehHeading?.() ?? 0,
+        cutinVehHeading: NativeCarState.getCutinVehHeading?.() ?? 0,
+        roadSignId: NativeCarState.getRoadSignId?.() ?? -1,
+        roadSignColor: NativeCarState.getRoadSignColor?.() ?? 0,
+        roadSignArrow: NativeCarState.getRoadSignArrow?.() ?? 0,
+        roadSignStopLineDist: NativeCarState.getRoadSignStopLineDist?.() ?? -1,
+        roadSignControlActive: NativeCarState.getRoadSignControlActive?.() ?? 0,
+        laneWidth: NativeCarState.getLaneWidth?.() ?? 0,
+        laneViewRange: NativeCarState.getLaneViewRange?.() ?? 0,
+        laneC0: NativeCarState.getLaneC0?.() ?? 0,
+        laneC1: NativeCarState.getLaneC1?.() ?? 0,
+        laneC2: NativeCarState.getLaneC2?.() ?? 0,
+        laneC3: NativeCarState.getLaneC3?.() ?? 0,
+        forwardCollisionWarning: NativeCarState.getForwardCollisionWarning?.() ?? 0,
+        laneDepartureWarning: NativeCarState.getLaneDepartureWarning?.() ?? 0,
+        sideCollisionWarning: NativeCarState.getSideCollisionWarning?.() ?? 0,
       };
       receiveMessage(car);
     }

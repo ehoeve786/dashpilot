@@ -55,6 +55,20 @@ class DemoDataSource : IDataSource {
         const val LANE_WIDTH = 3.5f
         const val TYPE_TRUCK = 1f
         const val TYPE_CAR = 2f
+        const val LDW_PERIOD = 37.0
+        const val CUTIN_PERIOD = 41.0
+        const val CUTIN_S = 4.0
+        const val LANE_VIEW_RANGE = 60f
+        const val LANE_C2_TURN = 0.003
+
+        // Cut-in from the right lane: slides from Dy -3.5 to 0 at ~18 m, with
+        // a forward collision warning while it's closest.
+        fun cutin(t: Double): Pair<Float, Float>? {
+            val m = t % CUTIN_PERIOD
+            if (m >= CUTIN_S) return null
+            val progress = m / CUTIN_S
+            return Pair((22 - 8 * progress).toFloat(), (-LANE_WIDTH * (1 - progress)).toFloat())
+        }
 
         fun cruise(t: Double): Float = (70 + 20 * sin(t * 0.02)).toFloat()
 
@@ -142,6 +156,14 @@ class DemoDataSource : IDataSource {
             val lead = leadVehDx(t, phase)
             val leftDx = leftVehDx(t)
             val rightDx = rightVehDx(t)
+            val cut = if (phase < TURN_START || (phase >= TURN_END && phase < CRUISE2_END)) cutin(t) else null
+            // Lane bends with the turn; sign follows the steering direction.
+            val laneCurve = if (phase >= TURN_START && phase < TURN_END) {
+                (if (turningLeft) 1 else -1) * LANE_C2_TURN *
+                    sin((phase - TURN_START) / (TURN_END - TURN_START) * PI)
+            } else 0.0
+            val ldwPhase = t % LDW_PERIOD
+            val signVisible = phase >= CRUISE2_END && phase < GO_END
 
             return CarState(
                 egoSteeringAngle = steering,
@@ -183,6 +205,24 @@ class DemoDataSource : IDataSource {
                 rightVehDx = rightDx,
                 rightVehDy = if (rightDx >= 0) -LANE_WIDTH else 0f,
                 rightVehType = if (rightDx >= 0) TYPE_TRUCK else 0f,
+                cutinVehDx = cut?.first ?: -1f,
+                cutinVehDy = cut?.second ?: 0f,
+                cutinVehType = if (cut != null) TYPE_CAR else 0f,
+                cutinVehVxRel = if (cut != null) -2f else 0f,
+                cutinVehHeading = if (cut != null) 0.15f else 0f,
+                leftVehVxRel = if (leftDx >= 0) 7.5f else 0f,
+                rightVehVxRel = if (rightDx >= 0) -5f else 0f,
+                roadSignId = if (signVisible) 1f else -1f,
+                roadSignColor = if (!signVisible) 0f else if (light == 2f) 3f else 1f,
+                roadSignArrow = if (signVisible) 3f else 0f,
+                roadSignStopLineDist = if (signVisible) stopLine else -1f,
+                roadSignControlActive = if (signVisible) 1f else 0f,
+                laneWidth = 3.6f,
+                laneViewRange = LANE_VIEW_RANGE,
+                laneC2 = laneCurve.toFloat(),
+                forwardCollisionWarning = if (cut != null && cut.second > -1f) 1f else 0f,
+                laneDepartureWarning = if (ldwPhase < 1.5) 1f else 0f,
+                sideCollisionWarning = if (t % RIGHT_PERIOD < HANDOFF_S) 2f else 0f,
             )
         }
     }

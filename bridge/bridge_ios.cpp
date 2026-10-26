@@ -52,6 +52,31 @@ static void carStateToBridge(const CarState& cs, BridgeCarState* out) {
     out->rightVehDx = cs.rightVehDx;
     out->rightVehDy = cs.rightVehDy;
     out->rightVehType = cs.rightVehType;
+    out->cutinVehDx = cs.cutinVehDx;
+    out->cutinVehDy = cs.cutinVehDy;
+    out->cutinVehType = cs.cutinVehType;
+    out->leadVehVxRel = cs.leadVehVxRel;
+    out->leftVehVxRel = cs.leftVehVxRel;
+    out->rightVehVxRel = cs.rightVehVxRel;
+    out->cutinVehVxRel = cs.cutinVehVxRel;
+    out->leadVehHeading = cs.leadVehHeading;
+    out->leftVehHeading = cs.leftVehHeading;
+    out->rightVehHeading = cs.rightVehHeading;
+    out->cutinVehHeading = cs.cutinVehHeading;
+    out->roadSignId = cs.roadSignId;
+    out->roadSignColor = cs.roadSignColor;
+    out->roadSignArrow = cs.roadSignArrow;
+    out->roadSignStopLineDist = cs.roadSignStopLineDist;
+    out->roadSignControlActive = cs.roadSignControlActive;
+    out->laneWidth = cs.laneWidth;
+    out->laneViewRange = cs.laneViewRange;
+    out->laneC0 = cs.laneC0;
+    out->laneC1 = cs.laneC1;
+    out->laneC2 = cs.laneC2;
+    out->laneC3 = cs.laneC3;
+    out->forwardCollisionWarning = cs.forwardCollisionWarning;
+    out->laneDepartureWarning = cs.laneDepartureWarning;
+    out->sideCollisionWarning = cs.sideCollisionWarning;
 }
 
 static std::atomic<bool> receiveLoopRunning{false};

@@ -75,7 +75,32 @@ class CanFrameDecoder(
                 rightVehDx = values[42].toFloat(),
                 rightVehDy = values[43].toFloat(),
                 rightVehType = values[44].toFloat(),
-                vin = decodeVin(values, offset = 45)
+                cutinVehDx = values[45].toFloat(),
+                cutinVehDy = values[46].toFloat(),
+                cutinVehType = values[47].toFloat(),
+                leadVehVxRel = values[48].toFloat(),
+                leftVehVxRel = values[49].toFloat(),
+                rightVehVxRel = values[50].toFloat(),
+                cutinVehVxRel = values[51].toFloat(),
+                leadVehHeading = values[52].toFloat(),
+                leftVehHeading = values[53].toFloat(),
+                rightVehHeading = values[54].toFloat(),
+                cutinVehHeading = values[55].toFloat(),
+                roadSignId = values[56].toFloat(),
+                roadSignColor = values[57].toFloat(),
+                roadSignArrow = values[58].toFloat(),
+                roadSignStopLineDist = values[59].toFloat(),
+                roadSignControlActive = values[60].toFloat(),
+                laneWidth = values[61].toFloat(),
+                laneViewRange = values[62].toFloat(),
+                laneC0 = values[63].toFloat(),
+                laneC1 = values[64].toFloat(),
+                laneC2 = values[65].toFloat(),
+                laneC3 = values[66].toFloat(),
+                forwardCollisionWarning = values[67].toFloat(),
+                laneDepartureWarning = values[68].toFloat(),
+                sideCollisionWarning = values[69].toFloat(),
+                vin = decodeVin(values, offset = 70)
             )
         }
 

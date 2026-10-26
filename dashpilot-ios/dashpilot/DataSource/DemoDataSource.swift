@@ -58,6 +58,19 @@ final class DemoDataSource: IDataSource {
     private static let rightAheadStart: TimeInterval = 19
     private static let laneWidth: Float = 3.5
     private static let typeTruck: Float = 1, typeCar: Float = 2
+    private static let ldwPeriod: TimeInterval = 37
+    private static let cutinPeriod: TimeInterval = 41, cutinDuration: TimeInterval = 4
+    private static let laneViewRange: Float = 60
+    private static let laneC2Turn = 0.003
+
+    /// Cut-in from the right lane: slides from Dy -3.5 to 0 at ~18 m, with a
+    /// forward collision warning while it's closest.
+    private static func cutin(at t: TimeInterval) -> (dx: Float, dy: Float)? {
+        let m = t.truncatingRemainder(dividingBy: cutinPeriod)
+        guard m < cutinDuration else { return nil }
+        let progress = m / cutinDuration
+        return (Float(22 - 8 * progress), -laneWidth * Float(1 - progress))
+    }
 
     /// A left-lane car passes us: blind spot first, then pulls away ahead.
     /// It's reported at 0 m for the last `handoff` seconds of the blind spot window.
@@ -183,6 +196,36 @@ final class DemoDataSource: IDataSource {
         s.rightVehDx = rightVehDx(at: t)
         s.rightVehDy = s.rightVehDx >= 0 ? -laneWidth : 0
         s.rightVehType = s.rightVehDx >= 0 ? typeTruck : 0
+        s.leftVehVxRel = s.leftVehDx >= 0 ? 7.5 : 0
+        s.rightVehVxRel = s.rightVehDx >= 0 ? -5 : 0
+
+        let cruising = phase < turnStart || (phase >= turnEnd && phase < cruise2End)
+        if cruising, let cut = cutin(at: t) {
+            s.cutinVehDx = cut.dx
+            s.cutinVehDy = cut.dy
+            s.cutinVehType = typeCar
+            s.cutinVehVxRel = -2
+            s.cutinVehHeading = 0.15
+            s.forwardCollisionWarning = cut.dy > -1 ? 1 : 0
+        }
+
+        // Lane bends with the turn; sign follows the steering direction.
+        s.laneWidth = 3.6
+        s.laneViewRange = laneViewRange
+        if phase >= turnStart && phase < turnEnd {
+            let ease = sin((phase - turnStart) / (turnEnd - turnStart) * .pi)
+            s.laneC2 = Float((turningLeft ? 1 : -1) * laneC2Turn * ease)
+        }
+        s.laneDepartureWarning = t.truncatingRemainder(dividingBy: ldwPeriod) < 1.5 ? 1 : 0
+        s.sideCollisionWarning = t.truncatingRemainder(dividingBy: rightPeriod) < handoff ? 2 : 0
+
+        if phase >= cruise2End && phase < goEnd {
+            s.roadSignId = 1
+            s.roadSignColor = s.trafficLightColor == 2 ? 3 : 1
+            s.roadSignArrow = 3
+            s.roadSignStopLineDist = s.stopLineDist
+            s.roadSignControlActive = 1
+        }
 
         // BMS / power — Tesla-ish pack, slowly discharging.
         s.fullPackEnergy = 75

@@ -53,6 +53,31 @@ data class CarState(
     val rightVehDx: Float = -1f,
     val rightVehDy: Float = 0f,
     val rightVehType: Float = 0f,
+    val cutinVehDx: Float = -1f,
+    val cutinVehDy: Float = 0f,
+    val cutinVehType: Float = 0f,
+    val leadVehVxRel: Float = 0f,
+    val leftVehVxRel: Float = 0f,
+    val rightVehVxRel: Float = 0f,
+    val cutinVehVxRel: Float = 0f,
+    val leadVehHeading: Float = 0f,
+    val leftVehHeading: Float = 0f,
+    val rightVehHeading: Float = 0f,
+    val cutinVehHeading: Float = 0f,
+    val roadSignId: Float = -1f,
+    val roadSignColor: Float = 0f,
+    val roadSignArrow: Float = 0f,
+    val roadSignStopLineDist: Float = -1f,
+    val roadSignControlActive: Float = 0f,
+    val laneWidth: Float = 0f,
+    val laneViewRange: Float = 0f,
+    val laneC0: Float = 0f,
+    val laneC1: Float = 0f,
+    val laneC2: Float = 0f,
+    val laneC3: Float = 0f,
+    val forwardCollisionWarning: Float = 0f,
+    val laneDepartureWarning: Float = 0f,
+    val sideCollisionWarning: Float = 0f,
 
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = ""
@@ -67,7 +92,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 48
+        const val FIELD_COUNT = 73
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

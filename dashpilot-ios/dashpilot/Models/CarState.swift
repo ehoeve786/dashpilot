@@ -53,6 +53,31 @@ struct CarState: Codable {
     var rightVehDx: Float = -1
     var rightVehDy: Float = 0
     var rightVehType: Float = 0
+    var cutinVehDx: Float = -1
+    var cutinVehDy: Float = 0
+    var cutinVehType: Float = 0
+    var leadVehVxRel: Float = 0
+    var leftVehVxRel: Float = 0
+    var rightVehVxRel: Float = 0
+    var cutinVehVxRel: Float = 0
+    var leadVehHeading: Float = 0
+    var leftVehHeading: Float = 0
+    var rightVehHeading: Float = 0
+    var cutinVehHeading: Float = 0
+    var roadSignId: Float = -1
+    var roadSignColor: Float = 0
+    var roadSignArrow: Float = 0
+    var roadSignStopLineDist: Float = -1
+    var roadSignControlActive: Float = 0
+    var laneWidth: Float = 0
+    var laneViewRange: Float = 0
+    var laneC0: Float = 0
+    var laneC1: Float = 0
+    var laneC2: Float = 0
+    var laneC3: Float = 0
+    var forwardCollisionWarning: Float = 0
+    var laneDepartureWarning: Float = 0
+    var sideCollisionWarning: Float = 0
 
     init() {}
 
@@ -102,6 +127,31 @@ struct CarState: Codable {
         rightVehDx = Float(bridge.rightVehDx)
         rightVehDy = Float(bridge.rightVehDy)
         rightVehType = Float(bridge.rightVehType)
+        cutinVehDx = Float(bridge.cutinVehDx)
+        cutinVehDy = Float(bridge.cutinVehDy)
+        cutinVehType = Float(bridge.cutinVehType)
+        leadVehVxRel = Float(bridge.leadVehVxRel)
+        leftVehVxRel = Float(bridge.leftVehVxRel)
+        rightVehVxRel = Float(bridge.rightVehVxRel)
+        cutinVehVxRel = Float(bridge.cutinVehVxRel)
+        leadVehHeading = Float(bridge.leadVehHeading)
+        leftVehHeading = Float(bridge.leftVehHeading)
+        rightVehHeading = Float(bridge.rightVehHeading)
+        cutinVehHeading = Float(bridge.cutinVehHeading)
+        roadSignId = Float(bridge.roadSignId)
+        roadSignColor = Float(bridge.roadSignColor)
+        roadSignArrow = Float(bridge.roadSignArrow)
+        roadSignStopLineDist = Float(bridge.roadSignStopLineDist)
+        roadSignControlActive = Float(bridge.roadSignControlActive)
+        laneWidth = Float(bridge.laneWidth)
+        laneViewRange = Float(bridge.laneViewRange)
+        laneC0 = Float(bridge.laneC0)
+        laneC1 = Float(bridge.laneC1)
+        laneC2 = Float(bridge.laneC2)
+        laneC3 = Float(bridge.laneC3)
+        forwardCollisionWarning = Float(bridge.forwardCollisionWarning)
+        laneDepartureWarning = Float(bridge.laneDepartureWarning)
+        sideCollisionWarning = Float(bridge.sideCollisionWarning)
     }
 
     private static let kmToMiles: Float = 0.621371
@@ -173,5 +223,30 @@ struct CarState: Codable {
         rightVehDx           = try c.decodeIfPresent(Float.self, forKey: .rightVehDx)           ?? -1
         rightVehDy           = try c.decodeIfPresent(Float.self, forKey: .rightVehDy)           ?? 0
         rightVehType         = try c.decodeIfPresent(Float.self, forKey: .rightVehType)         ?? 0
+        cutinVehDx           = try c.decodeIfPresent(Float.self, forKey: .cutinVehDx)           ?? -1
+        cutinVehDy           = try c.decodeIfPresent(Float.self, forKey: .cutinVehDy)           ?? 0
+        cutinVehType         = try c.decodeIfPresent(Float.self, forKey: .cutinVehType)         ?? 0
+        leadVehVxRel         = try c.decodeIfPresent(Float.self, forKey: .leadVehVxRel)         ?? 0
+        leftVehVxRel         = try c.decodeIfPresent(Float.self, forKey: .leftVehVxRel)         ?? 0
+        rightVehVxRel        = try c.decodeIfPresent(Float.self, forKey: .rightVehVxRel)        ?? 0
+        cutinVehVxRel        = try c.decodeIfPresent(Float.self, forKey: .cutinVehVxRel)        ?? 0
+        leadVehHeading       = try c.decodeIfPresent(Float.self, forKey: .leadVehHeading)       ?? 0
+        leftVehHeading       = try c.decodeIfPresent(Float.self, forKey: .leftVehHeading)       ?? 0
+        rightVehHeading      = try c.decodeIfPresent(Float.self, forKey: .rightVehHeading)      ?? 0
+        cutinVehHeading      = try c.decodeIfPresent(Float.self, forKey: .cutinVehHeading)      ?? 0
+        roadSignId           = try c.decodeIfPresent(Float.self, forKey: .roadSignId)           ?? -1
+        roadSignColor        = try c.decodeIfPresent(Float.self, forKey: .roadSignColor)        ?? 0
+        roadSignArrow        = try c.decodeIfPresent(Float.self, forKey: .roadSignArrow)        ?? 0
+        roadSignStopLineDist = try c.decodeIfPresent(Float.self, forKey: .roadSignStopLineDist) ?? -1
+        roadSignControlActive = try c.decodeIfPresent(Float.self, forKey: .roadSignControlActive) ?? 0
+        laneWidth            = try c.decodeIfPresent(Float.self, forKey: .laneWidth)            ?? 0
+        laneViewRange        = try c.decodeIfPresent(Float.self, forKey: .laneViewRange)        ?? 0
+        laneC0               = try c.decodeIfPresent(Float.self, forKey: .laneC0)               ?? 0
+        laneC1               = try c.decodeIfPresent(Float.self, forKey: .laneC1)               ?? 0
+        laneC2               = try c.decodeIfPresent(Float.self, forKey: .laneC2)               ?? 0
+        laneC3               = try c.decodeIfPresent(Float.self, forKey: .laneC3)               ?? 0
+        forwardCollisionWarning = try c.decodeIfPresent(Float.self, forKey: .forwardCollisionWarning) ?? 0
+        laneDepartureWarning = try c.decodeIfPresent(Float.self, forKey: .laneDepartureWarning) ?? 0
+        sideCollisionWarning = try c.decodeIfPresent(Float.self, forKey: .sideCollisionWarning) ?? 0
     }
 }

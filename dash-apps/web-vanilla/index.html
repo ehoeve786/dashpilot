@@ -841,6 +841,13 @@
     const SIDE_SWITCH_TAU_MS = 450;
     const SIDE_SWITCH_MS = 1200;
     const SIDE_CLASS_MEMORY_MS = 5000;
+    // A car only the blind spot monitor sees came up from behind, so it
+    // slides in from off-screen behind (the camera loses it past ~-14 m),
+    // and when the blind spot clears with no DAS car it drops back out the
+    // same way. One DAS loses far ahead just disappears: it went ahead.
+    const SIDE_OFFSCREEN_DX = -16;
+    const SIDE_ENTER_TAU_MS = 350;
+    const SIDE_GONE_DX = -14;
     const sideTracks = { left: { ghost: false }, right: { ghost: false } };
 
     function bsmVisible(car, side, alwaysOn) {
@@ -880,17 +887,30 @@
           });
         }
 
+        if (!target && t.x !== undefined && t.x < DAS_DX_OFFSET + DAS_HANDOFF_DX && t.x > SIDE_GONE_DX) {
+          target = { x: SIDE_OFFSCREEN_DX, source: "exit" };
+        }
         if (!target) {
           t.x = undefined;
           t.source = undefined;
           continue;
         }
         if (t.x === undefined) {
-          t.x = target.x;
+          if (target.source === "bsm") {
+            t.x = SIDE_OFFSCREEN_DX;
+            t.switchUntil = now + SIDE_SWITCH_MS;
+            t.enterTau = true;
+          } else {
+            t.x = target.x;
+          }
         } else {
-          if (t.source && t.source !== target.source) t.switchUntil = now + SIDE_SWITCH_MS;
-          const tau = now < (t.switchUntil || 0) ? SIDE_SWITCH_TAU_MS : SIDE_TAU_MS;
-          const k = t.lastMs ? 1 - Math.exp(-(now - t.lastMs) / tau) : 1;
+          if (t.source && t.source !== target.source) {
+            t.switchUntil = now + SIDE_SWITCH_MS;
+            // Leaving off-screen moves as briskly as arriving.
+            t.enterTau = target.source === "exit";
+          }
+          const tau = now < (t.switchUntil || 0) ? (t.enterTau ? SIDE_ENTER_TAU_MS : SIDE_SWITCH_TAU_MS) : SIDE_TAU_MS;
+          const k = t.lastMs !== undefined ? 1 - Math.exp(-(now - t.lastMs) / tau) : 1;
           t.x += (target.x - t.x) * k;
         }
         t.source = target.source;

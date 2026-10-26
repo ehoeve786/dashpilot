@@ -616,6 +616,16 @@
       return Number.isFinite(n) ? n : -1;
     }
 
+    // Lateral offset (m, + = left) of the lane center at distance x ahead,
+    // or 0 without lane data. With the viz's C1 quirk folded in, this is the
+    // car's own polynomial times LANE_SIGN.
+    function laneCenterDy(car, x) {
+      if (!(Number(car.laneViewRange) > 0)) return 0;
+      const c0 = Number(car.laneC0) || 0, c1 = Number(car.laneC1) || 0;
+      const c2 = Number(car.laneC2) || 0, c3 = Number(car.laneC3) || 0;
+      return LANE_SIGN * (c0 + x * (c1 + x * (c2 + x * c3)));
+    }
+
     // Eases each slot toward its latest DAS value: the car refreshes each
     // group only every ~180 ms, which would otherwise make vehicles jump.
     function buildDasObjectState(car, world) {
@@ -629,7 +639,10 @@
           delete dasSmoothed[slot.key];
           continue;
         }
-        let dy = slot.key === "left" ? BS_DY_LEFT : slot.key === "right" ? BS_DY_RIGHT : 0;
+        // Side cars sit in the neighbouring lane, following its curve.
+        const laneOffset = Number(car.laneViewRange) > 0 ? (Number(car.laneWidth) || BS_DY_LEFT) : BS_DY_LEFT;
+        const curve = laneCenterDy(car, dx + DAS_DX_OFFSET);
+        let dy = slot.key === "left" ? curve + laneOffset : slot.key === "right" ? curve - laneOffset : 0;
         if (slot.key === "lead" || slot.key === "cutin") {
           const raw = Number(car[slot.key + "VehDy"]) || 0;
           const max = slot.key === "lead" ? DAS_LEAD_MAX_DY : DAS_CUTIN_MAX_DY;
@@ -664,6 +677,9 @@
     const LANE_SIGN = 1;
     const LANE_DEFAULT = { laneWidth: 4, viewRange: 50, lanePolyC0: 0, lanePolyC1: 0, lanePolyC2: 0, lanePolyC3: 0 };
     const LANE_MAX_VIEW_RANGE = 80;
+    // assets/shaders/lane_fill_material.wgsl measures the fill mesh in whole
+    // steps of this size so its animation follows curves; keep in sync.
+    const LANE_VIEW_RANGE_STEP = 10;
     const LANE_SMOOTH_TAU_MS = 120;
     let laneSmoothed = null;
     let laneLastMs = 0;
@@ -675,9 +691,10 @@
         laneSmoothed = null;
         return { ...LANE_DEFAULT };
       }
+      const steppedRange = Math.max(LANE_VIEW_RANGE_STEP,
+        Math.round(Math.min(viewRange, LANE_MAX_VIEW_RANGE) / LANE_VIEW_RANGE_STEP) * LANE_VIEW_RANGE_STEP);
       const target = {
         laneWidth: Number(car.laneWidth) || LANE_DEFAULT.laneWidth,
-        viewRange: Math.min(viewRange, LANE_MAX_VIEW_RANGE),
         lanePolyC0: LANE_SIGN * (Number(car.laneC0) || 0),
         lanePolyC1: -LANE_SIGN * (Number(car.laneC1) || 0),
         lanePolyC2: LANE_SIGN * (Number(car.laneC2) || 0),
@@ -687,7 +704,8 @@
       laneLastMs = now;
       if (!laneSmoothed) laneSmoothed = { ...target };
       for (const key of Object.keys(target)) laneSmoothed[key] += (target[key] - laneSmoothed[key]) * k;
-      return { ...laneSmoothed };
+      // View range is not smoothed: the fill shader needs it in whole steps.
+      return { ...laneSmoothed, viewRange: steppedRange };
     }
 
     // DAS_status warnings -> viz events. The viz's lane departure names are

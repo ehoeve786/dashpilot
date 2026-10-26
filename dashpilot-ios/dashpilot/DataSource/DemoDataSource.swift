@@ -138,6 +138,11 @@ final class DemoDataSource: IDataSource {
             let blink: Float = phase.truncatingRemainder(dividingBy: 1.0) < 0.5 ? 2 : 1
             s.leftBlinker = turningLeft ? blink : 0
             s.rightBlinker = turningLeft ? 0 : blink
+            // The driver takes over for the turn: lane keeping off, so the
+            // dashboard shows the steering path.
+            s.adasOn = false
+            s.madsActive = false
+            s.selfdriveActive = false
             s.trafficLightColor = 0
             s.stopLineDist = 0
 

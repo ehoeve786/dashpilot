@@ -684,28 +684,80 @@
     let laneSmoothed = null;
     let laneLastMs = 0;
 
-    function buildLaneState(car) {
+    // While driving manually the fill and lines show where the car will go
+    // from the current steering angle (kinematic bicycle model), since the
+    // viz draws both from one polynomial. Model 3/Y-ish constants.
+    const STEER_RATIO = 12.0;          // steering wheel deg per road wheel deg
+    const WHEELBASE_M = 2.875;
+    const UNDERSTEER_S2_PER_M2 = 0.0012;
+    const PATH_MAX_CURVATURE = 0.1;    // 1/m, ~10 m radius
+    const PATH_RANGE_M = 50;
+    // Fill colors: blue while lane keeping steers, neutral while you do.
+    const FILL_COLOR_ASSIST = [0.1, 0.7, 0.9, 0.55];
+    const FILL_COLOR_MANUAL = [0.75, 0.78, 0.82, 0.35];
+
+    function steppedViewRange(range) {
+      return Math.max(LANE_VIEW_RANGE_STEP,
+        Math.round(Math.min(range, LANE_MAX_VIEW_RANGE) / LANE_VIEW_RANGE_STEP) * LANE_VIEW_RANGE_STEP);
+    }
+
+    // Curvature (1/m, + = left) the car will drive at its steering angle.
+    function steeringCurvature(car) {
+      const wheelDeg = -(Number(car.egoSteeringAngle) || 0) / STEER_RATIO;  // car: negative = left
+      const v = egoSpeedMs(car);
+      const k = Math.tan(wheelDeg * Math.PI / 180) / (WHEELBASE_M * (1 + UNDERSTEER_S2_PER_M2 * v * v));
+      return Math.max(-PATH_MAX_CURVATURE, Math.min(PATH_MAX_CURVATURE, k));
+    }
+
+    function egoSpeedMs(car) {
+      const v = Math.max(0, Number(car.egoSpeed) || 0);
+      return car.isImperial ? v * 0.44704 : v / 3.6;
+    }
+
+    // Returns the lane polynomial to draw and whether it is the steering path.
+    // Lane keeping engaged + lane data: the real lane (the car follows it).
+    // Driving manually in D: the predicted steering path. Otherwise the real
+    // lane if known, else straight.
+    function buildLaneState(car, isDrive) {
       const now = performance.now();
       const viewRange = Number(car.laneViewRange) || 0;
-      if (viewRange <= 0) {
+      const hasLane = viewRange > 0;
+      const lateralActive = !!(car.adasOn || car.madsActive);
+      const steeringPath = isDrive && !(lateralActive && hasLane);
+
+      let target, steppedRange;
+      if (steeringPath) {
+        const curvature = steeringCurvature(car);
+        // A parabola only tracks the arc for x well under the radius.
+        steppedRange = steppedViewRange(Math.min(PATH_RANGE_M, curvature !== 0 ? 1 / Math.abs(curvature) : PATH_RANGE_M));
+        target = {
+          laneWidth: hasLane ? (Number(car.laneWidth) || LANE_DEFAULT.laneWidth) : LANE_DEFAULT.laneWidth,
+          lanePolyC0: 0,
+          lanePolyC1: 0,
+          lanePolyC2: curvature / 2,
+          lanePolyC3: 0,
+        };
+      } else if (hasLane) {
+        steppedRange = steppedViewRange(viewRange);
+        target = {
+          laneWidth: Number(car.laneWidth) || LANE_DEFAULT.laneWidth,
+          lanePolyC0: LANE_SIGN * (Number(car.laneC0) || 0),
+          lanePolyC1: -LANE_SIGN * (Number(car.laneC1) || 0),
+          lanePolyC2: LANE_SIGN * (Number(car.laneC2) || 0),
+          lanePolyC3: LANE_SIGN * (Number(car.laneC3) || 0),
+        };
+      } else {
         laneSmoothed = null;
-        return { ...LANE_DEFAULT };
+        return { lane: { ...LANE_DEFAULT }, steeringPath: false };
       }
-      const steppedRange = Math.max(LANE_VIEW_RANGE_STEP,
-        Math.round(Math.min(viewRange, LANE_MAX_VIEW_RANGE) / LANE_VIEW_RANGE_STEP) * LANE_VIEW_RANGE_STEP);
-      const target = {
-        laneWidth: Number(car.laneWidth) || LANE_DEFAULT.laneWidth,
-        lanePolyC0: LANE_SIGN * (Number(car.laneC0) || 0),
-        lanePolyC1: -LANE_SIGN * (Number(car.laneC1) || 0),
-        lanePolyC2: LANE_SIGN * (Number(car.laneC2) || 0),
-        lanePolyC3: LANE_SIGN * (Number(car.laneC3) || 0),
-      };
+
+      // Same keys in every mode, so switching modes eases instead of jumping.
       const k = laneSmoothed && laneLastMs ? 1 - Math.exp(-(now - laneLastMs) / LANE_SMOOTH_TAU_MS) : 1;
       laneLastMs = now;
       if (!laneSmoothed) laneSmoothed = { ...target };
       for (const key of Object.keys(target)) laneSmoothed[key] += (target[key] - laneSmoothed[key]) * k;
       // View range is not smoothed: the fill shader needs it in whole steps.
-      return { ...laneSmoothed, viewRange: steppedRange };
+      return { lane: { ...laneSmoothed, viewRange: steppedRange }, steeringPath };
     }
 
     // DAS_status warnings -> viz events. The viz's lane departure names are
@@ -864,21 +916,20 @@
         buildDasObjectState(car, world);
         buildWarningEvents(car, world);
 
-        const IN_MIN = -360;
-        const IN_MAX =  360;
-        const OUT_MIN = -30;
-        const OUT_MAX =  30;
-
-        const remappedDeg = (angle - IN_MIN) * (OUT_MAX - OUT_MIN) / (IN_MAX - IN_MIN) + OUT_MIN;
-        const remappedRad = -remappedDeg * Math.PI / 180;
         const speedKmh    = car.isImperial ? roundedSpeed * 1.60934 : roundedSpeed;
         const cappedKmh   = Math.min(speedKmh, 70);
         const speedMs     = cappedKmh / 3.6;
 
-        world.ego_steering_angle = remappedRad;
+        // The viz yaws the whole car model by this angle; the steering now
+        // shows as the predicted path instead (buildLaneState).
+        world.ego_steering_angle = 0;
         world.ego_speed = speedMs;
 
-        world.lane = buildLaneState(car);
+        const laneState = buildLaneState(car, gear === 4);
+        world.lane = laneState.lane;
+        // adas_on is what shows the fill, so keep it on for the steering path.
+        world.adas_on = !!car.adasOn || laneState.steeringPath;
+        world.viz_config.lane_fill_color = laneState.steeringPath && !car.adasOn ? FILL_COLOR_MANUAL : FILL_COLOR_ASSIST;
 
         // Show gears
         const gearMap = { 1: "P", 2: "R", 3: "N", 4: "D" };

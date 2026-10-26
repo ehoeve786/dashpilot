@@ -163,6 +163,9 @@ class DemoDataSource : IDataSource {
                     sin((phase - TURN_START) / (TURN_END - TURN_START) * PI)
             } else 0.0
             val ldwPhase = t % LDW_PERIOD
+            // The driver takes over for the turn: lane keeping off, so the
+            // dashboard shows the steering path.
+            val manual = phase >= TURN_START && phase < TURN_END
             val signVisible = phase >= CRUISE2_END && phase < GO_END
 
             return CarState(
@@ -171,7 +174,7 @@ class DemoDataSource : IDataSource {
                 leftBlinker = left,
                 rightBlinker = right,
                 gear = 4f,
-                adasOn = true,
+                adasOn = !manual,
                 leftBlindSpot = if (t % LEFT_PERIOD < BSM_WINDOW) 1f else 0f,
                 rightBlindSpot = if (t % RIGHT_PERIOD < BSM_WINDOW) 1f else 0f,
                 fusedSpeedLimit = LIMITS[lap % LIMITS.size],
@@ -194,8 +197,8 @@ class DemoDataSource : IDataSource {
                 hvacFanLevel = 11f,
                 hvacPowerState = 1f,
                 powerLevel = max(-1f, min(1f, kw / if (kw >= 0) maxDischarge else maxRegen)) * 100,
-                selfdriveActive = true,
-                madsActive = true,
+                selfdriveActive = !manual,
+                madsActive = !manual,
                 leadVehDx = lead,
                 leadVehDy = if (lead >= 0) (sin(t * 0.4) * 0.3).toFloat() else 0f,
                 leadVehType = if (lead >= 0) TYPE_CAR else 0f,

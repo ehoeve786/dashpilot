@@ -128,22 +128,6 @@
       opacity: 0;
       transition: opacity 0.08s;
     }
-    .chip {
-      position: absolute;
-      transform: translate(-50%, -100%);
-      padding: 0.6vh 1.2vh;
-      border-radius: 99px;
-      font-size: 2vh;
-      font-weight: 600;
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      white-space: nowrap;
-      pointer-events: none;
-      display: none;
-      font-variant-numeric: tabular-nums;
-    }
     .signal {
       position: absolute;
       top: max(3vh, env(safe-area-inset-top));
@@ -226,7 +210,6 @@
       </div>
     </div>
   </div>
-  <div class="chip" id="leadChip"></div>
   <div class="signal" id="signal"><div class="lamp" id="lamp"></div><span id="signalText"></span></div>
 
   <script type="module">
@@ -558,7 +541,6 @@
     }
 
     const tracks = {
-      lead: new Track("lead"), cutin: new Track("cutin"),
       left: new Track("left"), right: new Track("right"),
       leftGhost: new Track("leftGhost"), rightGhost: new Track("rightGhost"),
     };
@@ -610,10 +592,25 @@
       return 0;
     }
 
+    // DAS_object side cars are drawn only around the blind spot hand-off:
+    // one the track already follows (it came out of the blind spot or was
+    // picked up approaching), or a moving car closing in on the blind spot
+    // from ahead. Parked cars, cars far up the next lane, the lead car and
+    // other DAS objects are not drawn.
+    const SIDE_DAS_MAX_DX = 30, SIDE_DAS_MIN_SPEED_MS = 2, SIDE_DAS_CLOSING_MS = -0.5;
+    function sideDasDx(car, s, t) {
+      const dx = dasDx(car[s + "VehDx"]);
+      if (dx < 0 || dx > SIDE_DAS_MAX_DX) return -1;
+      if (t.source === "bsm" || t.source === "das") return dx;
+      const vxRel = num(car[s + "VehVxRel"]);
+      const moving = egoSpeedMs(car) + vxRel >= SIDE_DAS_MIN_SPEED_MS;
+      return moving && vxRel <= SIDE_DAS_CLOSING_MS ? dx : -1;
+    }
+
     function updateSide(car, s, lane, laneWidth, now) {
       const t = side[s];
       const sign = s === "left" ? 1 : -1;
-      const dx = dasDx(car[s + "VehDx"]);
+      const dx = sideDasDx(car, s, t);
       const level = bsmLevel(car, s);
       const das = dx >= 0;
       let target = null;
@@ -652,30 +649,6 @@
       const heading = das ? num(car[s + "VehHeading"]) : 0;
       tr.place(t.x, lane(t.x) + sign * laneWidth, heading, true);
       tr.warn(ghost ? 0 : level, now);
-    }
-
-    // Lead and cut-in.
-    const slot = {
-      lead: { sm: null, smy: null, variant: 0 },
-      cutin: { sm: null, smy: null, variant: 0 },
-    };
-    function updateAhead(car, key, maxDy, lane, now, warnLevel) {
-      const t = slot[key], tr = tracks[key];
-      const dx = dasDx(car[key + "VehDx"]);
-      if (dx < 0) { t.sm = null; tr.hide(); return null; }
-      const type = Math.round(num(car[key + "VehType"], 2));
-      const len = type === 1 ? 8.8 : type === 3 || type === 4 ? 2 : type === 5 ? 0.5 : 4.7;
-      const forward = EGO_HALF + dx + len / 2;
-      const dy = Math.max(-maxDy, Math.min(maxDy, num(car[key + "VehDy"])));
-      if (!t.sm) { t.variant = ++spawnCounter; t.sm = new Smoother(forward); t.smy = new Smoother(dy); }
-      const f = t.sm.update(forward, 250, now);
-      const y = t.smy.update(dy, 250, now);
-      tr.setModel(type, t.variant);
-      // The lead/cut-in sit in the ego lane (plus their own offset), which
-      // bends with the road.
-      tr.place(f, lane(f) + y, num(car[key + "VehHeading"]), true);
-      tr.warn(warnLevel, now);
-      return { forward: f, left: lane(f) + y, dx };
     }
 
     // ---- Per-frame world update --------------------------------------------
@@ -741,13 +714,8 @@
         updateSide(car, s, L, W, now);
       }
 
-      const fcw = num(car.forwardCollisionWarning) > 0;
-      const lead = updateAhead(car, "lead", 1.2, L, now, fcw ? 2 : 0);
-      updateAhead(car, "cutin", 5, L, now, fcw ? 2 : 1);
-
-      // Stop line from the road sign (DAS_object), else DAS_road.
-      const signDist = num(car.roadSignStopLineDist, -1);
-      const stopDist = signDist >= 0 ? signDist : num(car.stopLineDist);
+      // Stop line from DAS_road.
+      const stopDist = num(car.stopLineDist);
       if (stopDist > 0.5 && stopDist < 80) {
         stopLine.update(L, -W / 2 + 0.1, W / 2 - 0.1, 0.035, EGO_HALF + stopDist);
         stopLineMat.uniforms.uOpacity.value = 0.95;
@@ -761,24 +729,11 @@
       // Look a little into the bend so the road ahead stays framed.
       camera.lookAt(toWorldX(L(CAM.lookAhead) * 0.35), 0.4, toWorldZ(CAM.lookAhead));
 
-      updateLeadChip(car, lead);
       renderer.render(scene, camera);
     }
 
     // ---- HUD ---------------------------------------------------------------
     const $ = (id) => document.getElementById(id);
-    const leadChip = $("leadChip");
-    function updateLeadChip(car, lead) {
-      if (!lead) { leadChip.style.display = "none"; return; }
-      const p = new THREE.Vector3(toWorldX(lead.left), 2.2, toWorldZ(lead.forward)).project(camera);
-      if (p.z > 1) { leadChip.style.display = "none"; return; }
-      const v = egoSpeedMs(car);
-      const dist = car.isImperial ? Math.round(lead.dx * 3.28084) + " ft" : Math.round(lead.dx) + " m";
-      leadChip.textContent = v > 1.5 ? `${dist} · ${(lead.dx / v).toFixed(1)} s` : dist;
-      leadChip.style.left = ((p.x + 1) / 2) * innerWidth + "px";
-      leadChip.style.top = ((1 - p.y) / 2) * innerHeight + "px";
-      leadChip.style.display = "block";
-    }
 
     const GEARS = { 1: 0, 2: 1, 3: 2, 4: 3 };
     function updateHud(car) {
@@ -810,19 +765,11 @@
       $("alert").style.display = fcw ? "block" : "none";
       for (const s of ["left", "right"]) $(s + "Glow").style.opacity = bsmLevel(car, s) >= 2 ? "1" : "0";
 
-      // Traffic light / stop sign from DAS_object, else DAS_road.
-      const signId = Math.round(num(car.roadSignId, -1));
-      const signDist = num(car.roadSignStopLineDist, -1);
-      const colors = { 1: "#ff3b30", 2: "#ffcc00", 3: "#34c759", 4: "#ff3b30" };
+      // Traffic light from DAS_road.
       const roadColors = { 1: "#ff3b30", 2: "#34c759", 3: "#ffcc00" };
-      const arrows = { 1: "←", 2: "→", 3: "↑" };
       let color = null, text = "";
       const dist = (m) => (car.isImperial ? Math.round(m * 3.28084) + " ft" : Math.round(m) + " m");
-      if (signId === 0) { color = "#ff3b30"; text = "STOP" + (signDist > 0 ? " · " + dist(signDist) : ""); }
-      else if (signId === 1 && colors[Math.round(num(car.roadSignColor))]) {
-        color = colors[Math.round(num(car.roadSignColor))];
-        text = (arrows[Math.round(num(car.roadSignArrow))] || "") + (signDist > 0 ? " " + dist(signDist) : "");
-      } else if (roadColors[Math.round(num(car.trafficLightColor))]) {
+      if (roadColors[Math.round(num(car.trafficLightColor))]) {
         color = roadColors[Math.round(num(car.trafficLightColor))];
         text = num(car.stopLineDist) > 0 ? dist(num(car.stopLineDist)) : "";
       }
@@ -855,11 +802,8 @@
       "egoSpeed", "egoSteeringAngle", "gear", "fusedSpeedLimit", "leftBlinker", "rightBlinker",
       "leftBlindSpot", "rightBlindSpot", "adasOn", "madsActive", "accSetSpeed",
       "trafficLightColor", "stopLineDist",
-      "leadVehDx", "leadVehDy", "leadVehType", "leadVehHeading",
-      "leftVehDx", "leftVehType", "leftVehHeading",
-      "rightVehDx", "rightVehType", "rightVehHeading",
-      "cutinVehDx", "cutinVehDy", "cutinVehType", "cutinVehHeading",
-      "roadSignId", "roadSignColor", "roadSignArrow", "roadSignStopLineDist",
+      "leftVehDx", "leftVehType", "leftVehHeading", "leftVehVxRel",
+      "rightVehDx", "rightVehType", "rightVehHeading", "rightVehVxRel",
       "laneWidth", "laneViewRange", "laneC0", "laneC1", "laneC2", "laneC3",
       "forwardCollisionWarning", "laneDepartureWarning", "sideCollisionWarning",
       "isImperial", "darkMode", "alwaysOnBlindSpotMonitor", "renderQuality",
@@ -881,21 +825,20 @@
       const t0 = performance.now();
       setInterval(() => {
         const t = (performance.now() - t0) / 1000;
-        const lap = t % 60, lm = t % 23, rm = t % 29, cm = t % 41;
+        const lap = t % 60, lm = t % 23, rm = t % 29;
         const turning = lap >= 20 && lap < 28;
         const ease = turning ? Math.sin(((lap - 20) / 8) * Math.PI) : 0;
         const leftDx = lm >= 2 && lm <= 11 ? Math.max(0, lm - 3) * 7.5 : -1;
         const rightDx = rm >= 19 ? (29 - rm) * 5 : rm < 1 ? 0 : -1;
-        const cut = !turning && cm < 4 ? { dx: 22 - 8 * (cm / 4), dy: -3.5 * (1 - cm / 4) } : null;
         receive({
           egoSpeed: 92 - 25 * ease, gear: 4, fusedSpeedLimit: 100,
           egoSteeringAngle: -60 * ease, adasOn: !turning,
           leftBlinker: turning ? (t % 1 < 0.5 ? 2 : 1) : 0, rightBlinker: 0,
           leftBlindSpot: lm < 3 ? 1 : 0, rightBlindSpot: rm < 3 ? 1 : 0,
-          leadVehDx: turning ? -1 : 32 + 9 * Math.sin(t * 0.15), leadVehDy: 0.25 * Math.sin(t * 0.4), leadVehType: 2,
-          leftVehDx: leftDx, leftVehType: 2, rightVehDx: rightDx, rightVehType: 1,
-          cutinVehDx: cut ? cut.dx : -1, cutinVehDy: cut ? cut.dy : 0, cutinVehType: 2, cutinVehHeading: cut ? 0.12 : 0,
-          forwardCollisionWarning: cut && cut.dy > -1 ? 1 : 0,
+          // Left car passes us out of the blind spot; right truck is
+          // overtaken, approaching the blind spot from ahead.
+          leftVehDx: leftDx, leftVehType: 2, leftVehVxRel: 7.5,
+          rightVehDx: rightDx, rightVehType: 1, rightVehVxRel: -5,
           laneDepartureWarning: t % 37 < 1.5 ? 1 : 0,
           laneWidth: 3.6, laneViewRange: 60, laneC2: 0.003 * ease + 0.0004 * Math.sin(t * 0.05),
           isImperial: false, darkMode: !params.has("light"), alwaysOnBlindSpotMonitor: true, renderQuality: 3,

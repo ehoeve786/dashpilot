@@ -528,44 +528,7 @@
     const TL_COLOR_MAP = { 1: "Red", 2: "Green", 3: "Yellow" };
     const TL_FIXED_DY = -3.0;
 
-    // DAS_object road sign colors: 1 red, 2 yellow, 3 green, 4 red+yellow.
-    const ROAD_SIGN_COLOR_MAP = { 1: "Red", 2: "Yellow", 3: "Green", 4: "Red" };
-    const ROAD_SIGN_ARROWS = { 1: "TurnLeft", 2: "TurnRight", 3: "Straight" };
-    const ROAD_SIGN_STOP_ID = 9970;
-    const ROAD_SIGN_ARROW_ID = 9971;
-    // Arrow painted on the road this far before the stop line.
-    const ROAD_SIGN_ARROW_LEAD = 6;
-    const STOP_SIGN_DY = -4.0;
-
-    // DAS_object's road sign group is richer than DAS_road (stop signs,
-    // arrows) and still live on cars where DAS_road is static, so it wins
-    // whenever it reports something.
-    function buildRoadSignState(car, world) {
-      const id = Number(car.roadSignId ?? -1);
-      const dist = Number(car.roadSignStopLineDist ?? -1);
-      if (id < 0 || dist < 0) return false;
-
-      if (id === 0) {
-        world.stop_signs = [{ id: ROAD_SIGN_STOP_ID, Dx: dist, Dy: STOP_SIGN_DY }];
-        world.stop_line_dist = dist < 127 ? dist : null;
-        world.traffic_lights = [];
-        return true;
-      }
-
-      const colorName = ROAD_SIGN_COLOR_MAP[car.roadSignColor];
-      world.traffic_lights = colorName && dist > 0
-        ? [{ id: 1, Dx: dist, Dy: TL_FIXED_DY, state: colorName }]
-        : [];
-      world.stop_line_dist = dist > 0 && dist < 127 ? dist : null;
-      const arrow = ROAD_SIGN_ARROWS[car.roadSignArrow];
-      if (arrow && dist > ROAD_SIGN_ARROW_LEAD) {
-        world.road_signs = [{ id: ROAD_SIGN_ARROW_ID, Dx: dist - ROAD_SIGN_ARROW_LEAD, Dy: 0, sign_type: arrow }];
-      }
-      return true;
-    }
-
     function buildTrafficLightState(car, world) {
-        if (buildRoadSignState(car, world)) return;
         const dist = car.stopLineDist;
         const colorName = TL_COLOR_MAP[car.trafficLightColor];
 
@@ -616,29 +579,18 @@
       }
     }
 
-    // DAS_object vehicles ahead (lead, left lane, right lane). Dx from the car
-    // is the gap ahead of the front bumper; the world model's Dx is measured
-    // from the ego origin, so shift by DAS_DX_OFFSET. Side cars sit at the
-    // same lateral offsets as the blind spot cars; DAS Dy's sign is not
-    // verified yet, so only the lead car uses it (clamped to its lane).
+    // DAS_object is only used for the cars in the neighbouring lanes that
+    // the blind spot monitor hands over to or takes over from (see
+    // buildSideVehicles); lead, parked and other objects are not drawn.
+    // DAS Dx is the gap ahead of the front bumper; the world model's Dx is
+    // measured from the ego origin, so shift by DAS_DX_OFFSET.
     const DAS_DX_OFFSET = 5.0;
-    const DAS_LEAD_MAX_DY = 1.2;
-    const DAS_SMOOTH_MS = 250;
     // A side car this close while that side's blind spot is set is the car
     // BSM reports: draw it once, at its DAS position.
     const DAS_HANDOFF_DX = 5.0;
-    // Lead and cut-in; the side vehicles are tracked in buildSideVehicles.
-    const DAS_SLOTS = [
-      { key: "lead", id: 9980 },
-      { key: "cutin", id: 9983 },
-    ];
     const SIDE_LEFT_ID = 9981;
     const SIDE_RIGHT_ID = 9982;
-    // The cut-in car is crossing lanes, so its own Dy is the point; clamp it
-    // to the neighbouring lanes.
-    const DAS_CUTIN_MAX_DY = 5.0;
     const DAS_CLASSES = ["Car", "Truck", "Car", "Motorcycle", "Bicycle", "Pedestrian", "Ipso"];
-    const dasSmoothed = {};
 
     function dasDx(v) {
       const n = Number(v);
@@ -654,36 +606,6 @@
       const c2 = Number(car.laneC2) || 0, c3 = Number(car.laneC3) || 0;
       return LANE_SIGN * (c0 + x * (c1 + x * (c2 + x * c3)));
     }
-
-    // Eases each slot toward its latest DAS value: the car refreshes each
-    // group only every ~180 ms, which would otherwise make vehicles jump.
-    function buildDasObjectState(car, world) {
-      const now = performance.now();
-
-      for (const slot of DAS_SLOTS) {
-        const dx = dasDx(car[slot.key + "VehDx"]);
-        if (dx < 0) {
-          delete dasSmoothed[slot.key];
-          continue;
-        }
-        const raw = Number(car[slot.key + "VehDy"]) || 0;
-        const max = slot.key === "lead" ? DAS_LEAD_MAX_DY : DAS_CUTIN_MAX_DY;
-        const dy = Math.max(-max, Math.min(max, raw));
-        if (!dasSmoothed[slot.key]) dasSmoothed[slot.key] = { dx: new Smoother(dx), dy: new Smoother(dy) };
-        const sm = dasSmoothed[slot.key];
-        const cur = { dx: sm.dx.update(dx, DAS_SMOOTH_MS, now), dy: sm.dy.update(dy, DAS_SMOOTH_MS, now) };
-
-        world.objects.push({
-          id: slot.id,
-          Dx: cur.dx + DAS_DX_OFFSET,
-          Dy: cur.dy,
-          VxRel: Number(car[slot.key + "VehVxRel"]) || 0,
-          vehicle_class: DAS_CLASSES[Math.round(Number(car[slot.key + "VehType"]) || 0)] || "Car",
-          heading: Number(car[slot.key + "VehHeading"]) || 0,
-        });
-      }
-    }
-
 
     // DAS_lanes virtual lane. The car's polynomial is y = C0 + C1 x + C2 x^2
     // + C3 x^3 (meters). Measured in this viz: C0, C2 and C3 move the lane
@@ -781,12 +703,6 @@
     // warning about the left line maps to ...Right.
     function buildWarningEvents(car, world) {
       const events = [];
-      if (Number(car.forwardCollisionWarning) > 0) {
-        const cutinDx = dasDx(car.cutinVehDx);
-        const leadDx = dasDx(car.leadVehDx);
-        const target = cutinDx >= 0 && (leadDx < 0 || cutinDx < leadDx) ? 9983 : 9980;
-        events.push({ event_type: "CollisionWarning", target_id: target, severity: 1 });
-      }
       const ldw = Math.round(Number(car.laneDepartureWarning) || 0);
       if (ldw >= 1 && ldw <= 4) {
         const leftLine = ldw === 1 || ldw === 3;
@@ -870,6 +786,23 @@
     const SIDE_ENTER_SMOOTH_MS = 600;
     const SIDE_GONE_DX = -14;
     const sideTracks = { left: { ghost: false }, right: { ghost: false } };
+    // DAS_object side cars are drawn only around the blind spot hand-off:
+    // one the track already follows (it came out of the blind spot or was
+    // picked up approaching), or a moving car closing in on the blind spot
+    // from ahead. Parked cars and cars far up the next lane are left out.
+    const SIDE_DAS_MAX_DX = 30;        // m ahead of the front bumper
+    const SIDE_DAS_MIN_SPEED_MS = 2;   // absolute speed of a new car
+    const SIDE_DAS_CLOSING_MS = -0.5;  // VxRel of a car approaching from ahead
+
+    // DAS gap (m) of the side car if it belongs on screen, else -1.
+    function sideDasDx(car, side, t) {
+      const dx = dasDx(car[side + "VehDx"]);
+      if (dx < 0 || dx > SIDE_DAS_MAX_DX) return -1;
+      if (t.source === "bsm" || t.source === "das") return dx;
+      const vxRel = Number(car[side + "VehVxRel"]) || 0;
+      const moving = egoSpeedMs(car) + vxRel >= SIDE_DAS_MIN_SPEED_MS;
+      return moving && vxRel <= SIDE_DAS_CLOSING_MS ? dx : -1;
+    }
 
     function bsmVisible(car, side, alwaysOn) {
       const blinker = parseInt(car[side + "Blinker"]) > 0;
@@ -886,7 +819,7 @@
       for (const side of ["left", "right"]) {
         const t = sideTracks[side];
         const sign = side === "left" ? 1 : -1;
-        const dx = dasDx(car[side + "VehDx"]);
+        const dx = sideDasDx(car, side, t);
         const bsm = bsmVisible(car, side, alwaysOn);
         const das = dx >= 0;
 
@@ -986,7 +919,6 @@
 
       buildTrafficLightState(car, world);
       buildSideVehicles(car, world);
-      buildDasObjectState(car, world);
       buildWarningEvents(car, world);
 
       const speedKmh    = car.isImperial ? roundedSpeed * 1.60934 : roundedSpeed;
@@ -1252,31 +1184,16 @@
         madsActive: NativeCarState.isMadsActive?.() ?? false,
         renderQuality: NativeCarState.getRenderQuality?.() ?? 3,
         darkModeBackgroundGray: NativeCarState.getDarkModeBackgroundGray?.() ?? 0,
-        leadVehDx: NativeCarState.getLeadVehDx?.() ?? -1,
-        leadVehDy: NativeCarState.getLeadVehDy?.() ?? 0,
-        leadVehType: NativeCarState.getLeadVehType?.() ?? 0,
         leftVehDx: NativeCarState.getLeftVehDx?.() ?? -1,
         leftVehType: NativeCarState.getLeftVehType?.() ?? 0,
         rightVehDx: NativeCarState.getRightVehDx?.() ?? -1,
         rightVehType: NativeCarState.getRightVehType?.() ?? 0,
         leftVehDy: NativeCarState.getLeftVehDy?.() ?? 0,
         rightVehDy: NativeCarState.getRightVehDy?.() ?? 0,
-        cutinVehDx: NativeCarState.getCutinVehDx?.() ?? -1,
-        cutinVehDy: NativeCarState.getCutinVehDy?.() ?? 0,
-        cutinVehType: NativeCarState.getCutinVehType?.() ?? 0,
-        leadVehVxRel: NativeCarState.getLeadVehVxRel?.() ?? 0,
         leftVehVxRel: NativeCarState.getLeftVehVxRel?.() ?? 0,
         rightVehVxRel: NativeCarState.getRightVehVxRel?.() ?? 0,
-        cutinVehVxRel: NativeCarState.getCutinVehVxRel?.() ?? 0,
-        leadVehHeading: NativeCarState.getLeadVehHeading?.() ?? 0,
         leftVehHeading: NativeCarState.getLeftVehHeading?.() ?? 0,
         rightVehHeading: NativeCarState.getRightVehHeading?.() ?? 0,
-        cutinVehHeading: NativeCarState.getCutinVehHeading?.() ?? 0,
-        roadSignId: NativeCarState.getRoadSignId?.() ?? -1,
-        roadSignColor: NativeCarState.getRoadSignColor?.() ?? 0,
-        roadSignArrow: NativeCarState.getRoadSignArrow?.() ?? 0,
-        roadSignStopLineDist: NativeCarState.getRoadSignStopLineDist?.() ?? -1,
-        roadSignControlActive: NativeCarState.getRoadSignControlActive?.() ?? 0,
         laneWidth: NativeCarState.getLaneWidth?.() ?? 0,
         laneViewRange: NativeCarState.getLaneViewRange?.() ?? 0,
         laneC0: NativeCarState.getLaneC0?.() ?? 0,

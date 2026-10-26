@@ -531,6 +531,71 @@
         }
       }
 
+    // DAS_object vehicles ahead (lead, left lane, right lane). Dx from the car
+    // is the gap ahead of the front bumper; the world model's Dx is measured
+    // from the ego origin, so shift by DAS_DX_OFFSET. Side cars sit at the
+    // same lateral offsets as the blind spot cars; DAS Dy's sign is not
+    // verified yet, so only the lead car uses it (clamped to its lane).
+    const DAS_DX_OFFSET = 5.0;
+    const DAS_LEAD_MAX_DY = 1.2;
+    const DAS_SMOOTH_TAU_MS = 150;
+    // A side car this close while that side's blind spot is set is the car
+    // BSM reports: draw it once, at its DAS position.
+    const DAS_HANDOFF_DX = 5.0;
+    const DAS_SLOTS = [
+      { key: "lead", id: 9980 },
+      { key: "left", id: 9981 },
+      { key: "right", id: 9982 },
+    ];
+    const DAS_CLASSES = ["Car", "Truck", "Car", "Motorcycle", "Bicycle", "Pedestrian", "Ipso"];
+    const dasSmoothed = {};
+    let dasLastMs = 0;
+
+    function dasDx(v) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : -1;
+    }
+
+    // Eases each slot toward its latest DAS value: the car refreshes each
+    // group only every ~180 ms, which would otherwise make vehicles jump.
+    function buildDasObjectState(car, world) {
+      const now = performance.now();
+      const k = dasLastMs ? 1 - Math.exp(-(now - dasLastMs) / DAS_SMOOTH_TAU_MS) : 1;
+      dasLastMs = now;
+
+      for (const slot of DAS_SLOTS) {
+        const dx = dasDx(car[slot.key + "VehDx"]);
+        if (dx < 0) {
+          delete dasSmoothed[slot.key];
+          continue;
+        }
+        let dy = slot.key === "left" ? BS_DY_LEFT : slot.key === "right" ? BS_DY_RIGHT : 0;
+        if (slot.key === "lead") {
+          const raw = Number(car.leadVehDy) || 0;
+          dy = Math.max(-DAS_LEAD_MAX_DY, Math.min(DAS_LEAD_MAX_DY, raw));
+        }
+        const prev = dasSmoothed[slot.key];
+        const cur = prev
+          ? { dx: prev.dx + (dx - prev.dx) * k, dy: prev.dy + (dy - prev.dy) * k }
+          : { dx, dy };
+        dasSmoothed[slot.key] = cur;
+
+        world.objects.push({
+          id: slot.id,
+          Dx: cur.dx + DAS_DX_OFFSET,
+          Dy: cur.dy,
+          VxRel: 0,
+          vehicle_class: DAS_CLASSES[Math.round(Number(car[slot.key + "VehType"]) || 0)] || "Car",
+          heading: 0,
+        });
+      }
+    }
+
+    function dasHandoff(car, side) {
+      const dx = dasDx(car[side + "VehDx"]);
+      return dx >= 0 && dx < DAS_HANDOFF_DX;
+    }
+
     const BS_DX = -3.0;
     const BS_DY_LEFT = 4.0;
     const BS_DY_RIGHT = -4.0;
@@ -544,7 +609,7 @@
       const leftBlinkerOn = parseInt(car.leftBlinker) > 0;
       const rightBlinkerOn = parseInt(car.rightBlinker) > 0;
 
-      if (car.leftBlindSpot > 0 && (alwaysOn || leftBlinkerOn)) {
+      if (car.leftBlindSpot > 0 && (alwaysOn || leftBlinkerOn) && !dasHandoff(car, "left")) {
         objects.push({
           id: BS_LEFT_ID,
           Dx: BS_DX,
@@ -555,7 +620,7 @@
         });
       }
 
-      if (car.rightBlindSpot > 0 && (alwaysOn || rightBlinkerOn)) {
+      if (car.rightBlindSpot > 0 && (alwaysOn || rightBlinkerOn) && !dasHandoff(car, "right")) {
         objects.push({
           id: BS_RIGHT_ID,
           Dx: BS_DX,
@@ -608,6 +673,7 @@
 
         buildTrafficLightState(car, world);
         buildBlindSpotState(car, world);
+        buildDasObjectState(car, world);
 
         const IN_MIN = -360;
         const IN_MAX =  360;
@@ -781,8 +847,8 @@
         steeringWheel.style.transform = `rotate(${angle}deg)`;
 
         // Driver alerts
-        const camDist = NativeCarState?.getSpeedCameraDistance?.() ?? -1;
-        const isChangingLane = NativeCarState?.isChangingLane?.() ?? false;
+        const camDist = window.NativeCarState?.getSpeedCameraDistance?.() ?? -1;
+        const isChangingLane = window.NativeCarState?.isChangingLane?.() ?? car.changingLane ?? false;
         const alertEl = document.getElementById('driverAlert');
         if (isChangingLane) {
           alertEl.textContent = 'Changing lane';
@@ -836,6 +902,13 @@
         madsActive: NativeCarState.isMadsActive?.() ?? false,
         renderQuality: NativeCarState.getRenderQuality?.() ?? 3,
         darkModeBackgroundGray: NativeCarState.getDarkModeBackgroundGray?.() ?? 0,
+        leadVehDx: NativeCarState.getLeadVehDx?.() ?? -1,
+        leadVehDy: NativeCarState.getLeadVehDy?.() ?? 0,
+        leadVehType: NativeCarState.getLeadVehType?.() ?? 0,
+        leftVehDx: NativeCarState.getLeftVehDx?.() ?? -1,
+        leftVehType: NativeCarState.getLeftVehType?.() ?? 0,
+        rightVehDx: NativeCarState.getRightVehDx?.() ?? -1,
+        rightVehType: NativeCarState.getRightVehType?.() ?? 0,
       };
       receiveMessage(car);
     }

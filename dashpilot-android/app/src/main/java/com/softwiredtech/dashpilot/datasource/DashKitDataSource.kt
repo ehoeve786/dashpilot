@@ -12,6 +12,9 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.sample
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileWriter
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
@@ -32,6 +35,8 @@ class DashKitDataSource(
         private const val RX_LOG_MS = 10_000L
         // VCSEC_TPMSData: every frame is logged raw, one sensor per frame.
         private const val TPMS_ADDRESS = 0x219
+        // Stop writing the CAN log at about 50 MB (a few minutes of traffic).
+        private const val CAN_LOG_MAX_BYTES = 50L * 1024 * 1024
     }
 
     private val rxCounts = HashMap<Long, Int>()
@@ -50,12 +55,23 @@ class DashKitDataSource(
     // Frames received per vehicle-bus CAN ID since connecting, for the debug readout.
     private val busOneCounts = sortedMapOf<Int, Int>()
 
+    // Debug builds: every forwarded frame, both buses, as CSV
+    // (ms since connect, bus, id, hex data). Overwritten on each connection and
+    // capped in size. Readable from the phone at CAN_LOG_PATH.
+    private val canLogFile = File("/sdcard/Android/data/${BuildConfig.APPLICATION_ID}/files/can-log.csv")
+    private var canLog: BufferedWriter? = null
+    private var canLogBytes = 0L
+    private var canLogStartMs = 0L
+    private var canLogFlushMs = 0L
+    private var canLogDone = false
+
     override fun connect(address: String) {
         manager.addGattListener(this)
         manager.connect()
     }
 
     override fun disconnect() {
+        closeCanLog()
         manager.removeGattListener(this)
         decoder.destroy()
     }
@@ -96,10 +112,47 @@ class DashKitDataSource(
             }
             if (frame.address == TPMS_ADDRESS && frame.data.size >= 5) noteTpms(frame.data)
             if (frame.bus == 1) busOneCounts[frame.address] = (busOneCounts[frame.address] ?: 0) + 1
+            if (BuildConfig.DEBUG) writeCanLog(frame.bus, frame.address, frame.data)
             currentState = (decoder.decodeFrame(frame.bus, frame.address, frame.data) ?: return)
                 .copy(tpmsDebug = tpmsDebugText())
         }
         _incoming.tryEmit(currentState)
+    }
+
+    private fun writeCanLog(bus: Int, address: Int, data: ByteArray) {
+        if (canLogDone) return
+        try {
+            val now = SystemClock.elapsedRealtime()
+            if (canLog == null) {
+                canLogFile.parentFile?.mkdirs()
+                canLog = BufferedWriter(FileWriter(canLogFile, false))
+                canLogBytes = 0
+                canLogStartMs = now
+                canLogFlushMs = now
+                canLog!!.write("ms,bus,id,data\n")
+            }
+            val hex = data.joinToString("") { "%02x".format(it) }
+            val line = "${now - canLogStartMs},$bus,0x%03X,$hex\n".format(address)
+            canLog!!.write(line)
+            canLogBytes += line.length
+            if (now - canLogFlushMs > 1000) {
+                canLog!!.flush()
+                canLogFlushMs = now
+            }
+            if (canLogBytes > CAN_LOG_MAX_BYTES) closeCanLog().also { canLogDone = true }
+        } catch (e: Exception) {
+            Log.w(TAG, "CAN log disabled: ${e.message}")
+            canLogDone = true
+            closeCanLog()
+        }
+    }
+
+    private fun closeCanLog() {
+        try {
+            canLog?.close()
+        } catch (_: Exception) {
+        }
+        canLog = null
     }
 
     // Decodes the VCSEC_TPMSData layout from bus_1_tesla_vehicle.dbc:

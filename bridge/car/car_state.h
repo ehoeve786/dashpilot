@@ -46,40 +46,16 @@ struct CarState {
     double experimentalMode = 0;
     double changingLane = 0;
 
-    // DAS_object vehicles ahead. Dx/Dy in meters (Dy sign unverified);
-    // Dx -1 = no vehicle. Type: 0 unknown, 1 truck, 2 car, 3 motorcycle,
-    // 4 bicycle, 5 pedestrian.
-    double leadVehDx = -1;
-    double leadVehDy = 0;
-    double leadVehType = 0;
-    double leftVehDx = -1;
-    double leftVehDy = 0;
-    double leftVehType = 0;
-    double rightVehDx = -1;
-    double rightVehDy = 0;
-    double rightVehType = 0;
-    double cutinVehDx = -1;
-    double cutinVehDy = 0;
-    double cutinVehType = 0;
-    // Relative speed (m/s, + = pulling away) and heading (rad, sign
-    // unverified) of the DAS_object vehicles; 0 when unknown.
-    double leadVehVxRel = 0;
-    double leftVehVxRel = 0;
-    double rightVehVxRel = 0;
-    double cutinVehVxRel = 0;
-    double leadVehHeading = 0;
-    double leftVehHeading = 0;
-    double rightVehHeading = 0;
-    double cutinVehHeading = 0;
-
-    // DAS_object road sign: id -1 none, 0 stop sign, 1 traffic light.
-    // Color 0 none, 1 red, 2 yellow, 3 green, 4 red+yellow. Arrow 0 circle,
-    // 1 left, 2 right, 3 straight, 4 unknown. Stop line meters, -1 = unknown.
-    double roadSignId = -1;
-    double roadSignColor = 0;
-    double roadSignArrow = 0;
-    double roadSignStopLineDist = -1;
-    double roadSignControlActive = 0;
+    // Tyre pressure (bar) and temperature (degC) per wheel from
+    // VCSEC_TPMSData; pressure -1 = no reading yet, temperature -100.
+    double tpmsPressureFL = -1;
+    double tpmsPressureFR = -1;
+    double tpmsPressureRL = -1;
+    double tpmsPressureRR = -1;
+    double tpmsTempFL = -100;
+    double tpmsTempFR = -100;
+    double tpmsTempRL = -100;
+    double tpmsTempRR = -100;
 
     // DAS_lanes virtual lane, y = C0 + C1 x + C2 x^2 + C3 x^3 in meters
     // (sign unverified). laneViewRange 0 = no lane data.
@@ -102,7 +78,7 @@ struct CarState {
     char vin[VIN_LENGTH + 1] = {};
 
     static constexpr size_t VIN_DOUBLE_COUNT = 3;
-    static constexpr size_t VIN_OFFSET = 70;
+    static constexpr size_t VIN_OFFSET = 53;
     static constexpr size_t FIELD_COUNT = VIN_OFFSET + VIN_DOUBLE_COUNT;
 
     void toArray(double* out) const {
@@ -149,41 +125,26 @@ struct CarState {
         out[34] = hvacKeepClimateOn;
         out[35] = powerLevel;
 
-        // DAS_object
-        out[36] = leadVehDx;
-        out[37] = leadVehDy;
-        out[38] = leadVehType;
-        out[39] = leftVehDx;
-        out[40] = leftVehDy;
-        out[41] = leftVehType;
-        out[42] = rightVehDx;
-        out[43] = rightVehDy;
-        out[44] = rightVehType;
-        out[45] = cutinVehDx;
-        out[46] = cutinVehDy;
-        out[47] = cutinVehType;
-        out[48] = leadVehVxRel;
-        out[49] = leftVehVxRel;
-        out[50] = rightVehVxRel;
-        out[51] = cutinVehVxRel;
-        out[52] = leadVehHeading;
-        out[53] = leftVehHeading;
-        out[54] = rightVehHeading;
-        out[55] = cutinVehHeading;
-        out[56] = roadSignId;
-        out[57] = roadSignColor;
-        out[58] = roadSignArrow;
-        out[59] = roadSignStopLineDist;
-        out[60] = roadSignControlActive;
-        out[61] = laneWidth;
-        out[62] = laneViewRange;
-        out[63] = laneC0;
-        out[64] = laneC1;
-        out[65] = laneC2;
-        out[66] = laneC3;
-        out[67] = forwardCollisionWarning;
-        out[68] = laneDepartureWarning;
-        out[69] = sideCollisionWarning;
+        // TPMS
+        out[36] = tpmsPressureFL;
+        out[37] = tpmsPressureFR;
+        out[38] = tpmsPressureRL;
+        out[39] = tpmsPressureRR;
+        out[40] = tpmsTempFL;
+        out[41] = tpmsTempFR;
+        out[42] = tpmsTempRL;
+        out[43] = tpmsTempRR;
+
+        // DAS_lanes / DAS_status
+        out[44] = laneWidth;
+        out[45] = laneViewRange;
+        out[46] = laneC0;
+        out[47] = laneC1;
+        out[48] = laneC2;
+        out[49] = laneC3;
+        out[50] = forwardCollisionWarning;
+        out[51] = laneDepartureWarning;
+        out[52] = sideCollisionWarning;
 
         // VIN chars ride the double array as raw bit patterns, 8 bytes per
         // double; decoded by CanFrameDecoder.arrayToCarState.

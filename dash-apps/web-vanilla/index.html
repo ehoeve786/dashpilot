@@ -414,6 +414,37 @@
       color: #ffffff;
     }
 
+    /* Tyre pressures around a top-down car outline, bottom right. */
+    #tpms {
+      position: fixed;
+      bottom: 30px;
+      right: 110px;
+      display: none;
+      grid-template-columns: auto 22px auto;
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      row-gap: 14px;
+      align-items: center;
+      font-family: "Inter", sans-serif;
+      color: #555;
+      z-index: 2000;
+      user-select: none;
+    }
+    #tpms svg {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      width: 22px;
+      height: 46px;
+    }
+    #tpms svg rect { fill: none; stroke: #999; stroke-width: 2; }
+    .tpms-tire { display: flex; flex-direction: column; line-height: 1.1; }
+    .tpms-left { align-items: flex-end; }
+    .tpms-tire .p { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .tpms-tire .t { font-size: 12px; color: #999; font-variant-numeric: tabular-nums; }
+    .tpms-tire.low .p { color: #e5a00d; }
+    .tpms-tire.critical .p { color: #e53935; }
+    body.dark-mode #tpms { color: #e6e6e6; }
+    body.dark-mode #tpms svg rect { stroke: #777; }
     #experimentalIcon {
       position: fixed;
       bottom: 30px;
@@ -500,6 +531,14 @@
       <div id="odometer"></div>
     </div>
 
+    <div id="tpms">
+      <div class="tpms-tire tpms-left" id="tpmsFL"><span class="p"></span><span class="t"></span></div>
+      <svg viewBox="0 0 22 46" aria-hidden="true"><rect x="2" y="2" width="18" height="42" rx="7" /></svg>
+      <div class="tpms-tire" id="tpmsFR"><span class="p"></span><span class="t"></span></div>
+      <div class="tpms-tire tpms-left" id="tpmsRL"><span class="p"></span><span class="t"></span></div>
+      <div class="tpms-tire" id="tpmsRR"><span class="p"></span><span class="t"></span></div>
+    </div>
+
     <img id="experimentalIcon" src="experimental.png" alt="Experimental mode" />
 
   <script>
@@ -579,23 +618,8 @@
       }
     }
 
-    // DAS_object is only used for the cars in the neighbouring lanes that
-    // the blind spot monitor hands over to or takes over from (see
-    // buildSideVehicles); lead, parked and other objects are not drawn.
-    // DAS Dx is the gap ahead of the front bumper; the world model's Dx is
-    // measured from the ego origin, so shift by DAS_DX_OFFSET.
-    const DAS_DX_OFFSET = 5.0;
-    // A side car this close while that side's blind spot is set is the car
-    // BSM reports: draw it once, at its DAS position.
-    const DAS_HANDOFF_DX = 5.0;
     const SIDE_LEFT_ID = 9981;
     const SIDE_RIGHT_ID = 9982;
-    const DAS_CLASSES = ["Car", "Truck", "Car", "Motorcycle", "Bicycle", "Pedestrian", "Ipso"];
-
-    function dasDx(v) {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : -1;
-    }
 
     // Lateral offset (m, + = left) of the lane center at distance x ahead,
     // or 0 without lane data. With the viz's C1 quirk folded in, this is the
@@ -719,7 +743,6 @@
     }
 
     function sideTargetId(car, side) {
-      if (sideTracks[side].ghost) return side === "left" ? BS_LEFT_ID : BS_RIGHT_ID;
       return side === "left" ? SIDE_LEFT_ID : SIDE_RIGHT_ID;
     }
 
@@ -762,47 +785,17 @@
 
     const BS_DX = -3.0;
     const BS_DY_LEFT = 4.0;
-    const BS_LEFT_ID = 9990;
-    const BS_RIGHT_ID = 9991;
 
-    // One tracked vehicle per side, shared by the blind spot monitor (beside
-    // / behind, no position) and DAS_object (ahead, with position), so a car
-    // passing from one to the other glides instead of jumping 8 m or
-    // swapping models:
-    //   DAS reports it          -> follow DAS
-    //   only BSM sees something -> sit in the blind spot zone
-    // keeping the last DAS vehicle class for a while. A separate placeholder
-    // is drawn only when both see something but DAS's car is further ahead
-    // than DAS_HANDOFF_DX, i.e. they are two different vehicles.
+    // One tracked vehicle per side for the blind spot monitor, which reports
+    // presence but no position: the car slides in from off-screen behind
+    // (the camera loses it past ~-14 m) into the blind spot zone, and drops
+    // back out the same way when the blind spot clears.
     const SIDE_SMOOTH_MS = 250;
-    const SIDE_SWITCH_SMOOTH_MS = 800;
-    const SIDE_SWITCH_MS = 1200;
-    const SIDE_CLASS_MEMORY_MS = 5000;
-    // A car only the blind spot monitor sees came up from behind, so it
-    // slides in from off-screen behind (the camera loses it past ~-14 m),
-    // and when the blind spot clears with no DAS car it drops back out the
-    // same way. One DAS loses far ahead just disappears: it went ahead.
-    const SIDE_OFFSCREEN_DX = -16;
     const SIDE_ENTER_SMOOTH_MS = 600;
+    const SIDE_SWITCH_MS = 1200;
+    const SIDE_OFFSCREEN_DX = -16;
     const SIDE_GONE_DX = -14;
-    const sideTracks = { left: { ghost: false }, right: { ghost: false } };
-    // DAS_object side cars are drawn only around the blind spot hand-off:
-    // one the track already follows (it came out of the blind spot or was
-    // picked up approaching), or a moving car closing in on the blind spot
-    // from ahead. Parked cars and cars far up the next lane are left out.
-    const SIDE_DAS_MAX_DX = 30;        // m ahead of the front bumper
-    const SIDE_DAS_MIN_SPEED_MS = 2;   // absolute speed of a new car
-    const SIDE_DAS_CLOSING_MS = -0.5;  // VxRel of a car approaching from ahead
-
-    // DAS gap (m) of the side car if it belongs on screen, else -1.
-    function sideDasDx(car, side, t) {
-      const dx = dasDx(car[side + "VehDx"]);
-      if (dx < 0 || dx > SIDE_DAS_MAX_DX) return -1;
-      if (t.source === "bsm" || t.source === "das") return dx;
-      const vxRel = Number(car[side + "VehVxRel"]) || 0;
-      const moving = egoSpeedMs(car) + vxRel >= SIDE_DAS_MIN_SPEED_MS;
-      return moving && vxRel <= SIDE_DAS_CLOSING_MS ? dx : -1;
-    }
+    const sideTracks = { left: {}, right: {} };
 
     function bsmVisible(car, side, alwaysOn) {
       const blinker = parseInt(car[side + "Blinker"]) > 0;
@@ -819,65 +812,59 @@
       for (const side of ["left", "right"]) {
         const t = sideTracks[side];
         const sign = side === "left" ? 1 : -1;
-        const dx = sideDasDx(car, side, t);
-        const bsm = bsmVisible(car, side, alwaysOn);
-        const das = dx >= 0;
 
         let target = null;
-        if (das) {
-          target = { x: dx + DAS_DX_OFFSET, source: "das" };
-          t.cls = DAS_CLASSES[Math.round(Number(car[side + "VehType"]) || 0)] || "Car";
-          t.clsMs = now;
-        } else if (bsm) {
-          target = { x: BS_DX, source: "bsm" };
-        }
-
-        t.ghost = das && bsm && dx >= DAS_HANDOFF_DX;
-        if (t.ghost) {
-          world.objects.push({
-            id: side === "left" ? BS_LEFT_ID : BS_RIGHT_ID,
-            Dx: BS_DX, Dy: laneCenterDy(car, BS_DX) + sign * laneOffset,
-            VxRel: 0, vehicle_class: "Car", heading: 0,
-          });
-        }
-
-        if (!target && t.x !== undefined && t.x < DAS_DX_OFFSET + DAS_HANDOFF_DX && t.x > SIDE_GONE_DX) {
-          target = { x: SIDE_OFFSCREEN_DX, source: "exit" };
-        }
+        if (bsmVisible(car, side, alwaysOn)) target = { x: BS_DX, source: "bsm" };
+        else if (t.x !== undefined && t.x > SIDE_GONE_DX) target = { x: SIDE_OFFSCREEN_DX, source: "exit" };
         if (!target) {
           t.x = undefined;
           t.source = undefined;
           continue;
         }
         if (t.x === undefined) {
-          if (target.source === "bsm") {
-            t.smoother = new Smoother(SIDE_OFFSCREEN_DX);
-            t.switchUntil = now + SIDE_SWITCH_MS;
-            t.enterEase = true;
-          } else {
-            t.smoother = new Smoother(target.x);
-          }
-        } else if (t.source && t.source !== target.source) {
+          t.smoother = new Smoother(SIDE_OFFSCREEN_DX);
           t.switchUntil = now + SIDE_SWITCH_MS;
-          // Leaving off-screen moves as briskly as arriving.
-          t.enterEase = target.source === "exit";
+        } else if (t.source !== target.source) {
+          t.switchUntil = now + SIDE_SWITCH_MS;
         }
-        const smoothMs = now < (t.switchUntil || 0)
-          ? (t.enterEase ? SIDE_ENTER_SMOOTH_MS : SIDE_SWITCH_SMOOTH_MS)
-          : SIDE_SMOOTH_MS;
+        const smoothMs = now < (t.switchUntil || 0) ? SIDE_ENTER_SMOOTH_MS : SIDE_SMOOTH_MS;
         t.x = t.smoother.update(target.x, smoothMs, now);
         t.source = target.source;
 
-        const remembered = t.cls && now - (t.clsMs || 0) < SIDE_CLASS_MEMORY_MS;
         world.objects.push({
           id: side === "left" ? SIDE_LEFT_ID : SIDE_RIGHT_ID,
           Dx: t.x,
           // Side cars sit in the neighbouring lane, following its curve.
           Dy: laneCenterDy(car, t.x) + sign * laneOffset,
-          VxRel: das ? Number(car[side + "VehVxRel"]) || 0 : 0,
-          vehicle_class: remembered ? t.cls : "Car",
-          heading: das ? Number(car[side + "VehHeading"]) || 0 : 0,
+          VxRel: 0,
+          vehicle_class: "Car",
+          heading: 0,
         });
+      }
+    }
+
+    // Tyre pressures (bar from the car; psi when imperial). Amber below
+    // TPMS_LOW_BAR, red below TPMS_CRITICAL_BAR (Model Y placard: 2.9 bar).
+    const TPMS_LOW_BAR = 2.5;
+    const TPMS_CRITICAL_BAR = 2.2;
+    const BAR_TO_PSI = 14.5038;
+
+    function updateTpms(car) {
+      const wheels = ["FL", "FR", "RL", "RR"];
+      const any = wheels.some(w => Number(car["tpmsPressure" + w]) >= 0);
+      document.getElementById("tpms").style.display = any ? "grid" : "none";
+      if (!any) return;
+      for (const w of wheels) {
+        const el = document.getElementById("tpms" + w);
+        const bar = Number(car["tpmsPressure" + w]);
+        const temp = Number(car["tpmsTemp" + w]);
+        const known = Number.isFinite(bar) && bar >= 0;
+        el.querySelector(".p").textContent = !known ? "--"
+          : car.isImperial ? Math.round(bar * BAR_TO_PSI) + " psi" : bar.toFixed(1) + " bar";
+        el.querySelector(".t").textContent = Number.isFinite(temp) && temp > -100
+          ? (car.isImperial ? Math.round(temp * 9 / 5 + 32) + "°F" : Math.round(temp) + "°C") : "";
+        el.classList.toggle("critical", known && bar < TPMS_CRITICAL_BAR);
+        el.classList.toggle("low", known && bar >= TPMS_CRITICAL_BAR && bar < TPMS_LOW_BAR);
       }
     }
 
@@ -1099,6 +1086,8 @@
           }
         }
 
+        updateTpms(car);
+
         // Odometer
         if (car.showOdometer) {
           const odo = car.odometer;
@@ -1184,16 +1173,14 @@
         madsActive: NativeCarState.isMadsActive?.() ?? false,
         renderQuality: NativeCarState.getRenderQuality?.() ?? 3,
         darkModeBackgroundGray: NativeCarState.getDarkModeBackgroundGray?.() ?? 0,
-        leftVehDx: NativeCarState.getLeftVehDx?.() ?? -1,
-        leftVehType: NativeCarState.getLeftVehType?.() ?? 0,
-        rightVehDx: NativeCarState.getRightVehDx?.() ?? -1,
-        rightVehType: NativeCarState.getRightVehType?.() ?? 0,
-        leftVehDy: NativeCarState.getLeftVehDy?.() ?? 0,
-        rightVehDy: NativeCarState.getRightVehDy?.() ?? 0,
-        leftVehVxRel: NativeCarState.getLeftVehVxRel?.() ?? 0,
-        rightVehVxRel: NativeCarState.getRightVehVxRel?.() ?? 0,
-        leftVehHeading: NativeCarState.getLeftVehHeading?.() ?? 0,
-        rightVehHeading: NativeCarState.getRightVehHeading?.() ?? 0,
+        tpmsPressureFL: NativeCarState.getTpmsPressureFL?.() ?? -1,
+        tpmsPressureFR: NativeCarState.getTpmsPressureFR?.() ?? -1,
+        tpmsPressureRL: NativeCarState.getTpmsPressureRL?.() ?? -1,
+        tpmsPressureRR: NativeCarState.getTpmsPressureRR?.() ?? -1,
+        tpmsTempFL: NativeCarState.getTpmsTempFL?.() ?? -100,
+        tpmsTempFR: NativeCarState.getTpmsTempFR?.() ?? -100,
+        tpmsTempRL: NativeCarState.getTpmsTempRL?.() ?? -100,
+        tpmsTempRR: NativeCarState.getTpmsTempRR?.() ?? -100,
         laneWidth: NativeCarState.getLaneWidth?.() ?? 0,
         laneViewRange: NativeCarState.getLaneViewRange?.() ?? 0,
         laneC0: NativeCarState.getLaneC0?.() ?? 0,

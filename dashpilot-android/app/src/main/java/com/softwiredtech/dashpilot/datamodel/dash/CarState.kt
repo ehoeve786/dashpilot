@@ -43,32 +43,16 @@ data class CarState(
 
     val changingLane: Boolean = false,
 
-    // DAS_object vehicles ahead, meters; Dx -1 = no vehicle.
-    val leadVehDx: Float = -1f,
-    val leadVehDy: Float = 0f,
-    val leadVehType: Float = 0f,
-    val leftVehDx: Float = -1f,
-    val leftVehDy: Float = 0f,
-    val leftVehType: Float = 0f,
-    val rightVehDx: Float = -1f,
-    val rightVehDy: Float = 0f,
-    val rightVehType: Float = 0f,
-    val cutinVehDx: Float = -1f,
-    val cutinVehDy: Float = 0f,
-    val cutinVehType: Float = 0f,
-    val leadVehVxRel: Float = 0f,
-    val leftVehVxRel: Float = 0f,
-    val rightVehVxRel: Float = 0f,
-    val cutinVehVxRel: Float = 0f,
-    val leadVehHeading: Float = 0f,
-    val leftVehHeading: Float = 0f,
-    val rightVehHeading: Float = 0f,
-    val cutinVehHeading: Float = 0f,
-    val roadSignId: Float = -1f,
-    val roadSignColor: Float = 0f,
-    val roadSignArrow: Float = 0f,
-    val roadSignStopLineDist: Float = -1f,
-    val roadSignControlActive: Float = 0f,
+    // Tyre pressure (bar, -1 = no reading) and temperature (degC, -100 = none).
+    val tpmsPressureFL: Float = -1f,
+    val tpmsPressureFR: Float = -1f,
+    val tpmsPressureRL: Float = -1f,
+    val tpmsPressureRR: Float = -1f,
+    val tpmsTempFL: Float = -100f,
+    val tpmsTempFR: Float = -100f,
+    val tpmsTempRL: Float = -100f,
+    val tpmsTempRR: Float = -100f,
+    // DAS_lanes / DAS_status.
     val laneWidth: Float = 0f,
     val laneViewRange: Float = 0f,
     val laneC0: Float = 0f,
@@ -92,7 +76,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 73
+        const val FIELD_COUNT = 56
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

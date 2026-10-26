@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <string>
 
 #include "car/car_state_mapper.h"
 
@@ -135,152 +136,48 @@ struct BlinkerHold {
     }
 };
 
-// DAS_object (0x309, chassis bus) carries one group per frame, selected by
-// DAS_objectId (0 lead, 1 left, 2 right, 3 cut-in, 4 road sign, 5 headings),
-// so the parser's single latest frame only ever holds one group. Latch each
-// group as it arrives and expire it when the car stops refreshing it, so stale
-// vehicles don't stay on screen.
-class DasObjectLatch {
+// VCSEC_TPMSData (0x219, vehicle bus) carries one tyre sensor per frame,
+// selected by VCSEC_TPMSDataIndex, with that sensor's wheel position. Keep
+// the last reading per wheel: sensors report rarely (tens of seconds apart
+// while driving), so readings are not expired.
+class TpmsLatch {
 public:
-    // A group is dropped after this long without a frame (or, for vehicles,
-    // without a non-SNA reading). The window adapts to each group's measured
-    // interval: some cars cycle the six groups slowly enough that a fixed
-    // 500 ms made the lead car blink between frames.
-    static constexpr std::chrono::milliseconds STALE_MIN{500};
-    static constexpr std::chrono::milliseconds STALE_MAX{2000};
-    static constexpr int STALE_INTERVALS = 3;
-
-    void update(const CANParsers& cp, CarState& cs,
-                std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now()) {
-        uint32_t seq = cp.frameSeq(0, "DAS_object");
+    void update(const CANParsers& cp, CarState& cs) {
+        uint32_t seq = cp.frameSeq(1, "VCSEC_TPMSData");
         if (seq != lastSeq_) {
             lastSeq_ = seq;
-            switch (static_cast<int>(get(cp, "DAS_objectId"))) {
-            case 0: latchVehicle(cp, lead_, "DAS_leadVeh", now); break;
-            case 1: latchVehicle(cp, left_, "DAS_leftVeh", now); break;
-            case 2: latchVehicle(cp, right_, "DAS_rightVeh", now); break;
-            case 3: latchVehicle(cp, cutin_, "DAS_cutinVeh", now); break;
-            case 4:
-                sign_.rate.observe(now);
-                sign_.id = get(cp, "DAS_roadSignId");
-                sign_.color = get(cp, "DAS_roadSignColor");
-                sign_.arrow = get(cp, "DAS_roadSignArrow");
-                sign_.stopLineDist = get(cp, "DAS_roadSignStopLineDist");
-                sign_.controlActive = get(cp, "DAS_roadSignControlActive");
-                break;
-            case 5:
-                headings_.rate.observe(now);
-                headings_.rad[0] = get(cp, "DAS_leadVehHeading");
-                headings_.rad[1] = get(cp, "DAS_leftVehHeading");
-                headings_.rad[2] = get(cp, "DAS_rightVehHeading");
-                headings_.rad[3] = get(cp, "DAS_cutinVehHeading");
-                break;
-            default:
-                break;
+            const std::string n = std::to_string(static_cast<int>(get(cp, "VCSEC_TPMSDataIndex")));
+            int location = static_cast<int>(get(cp, "VCSEC_TPMSLocation" + n));
+            // 0 FL, 1 FR, 2 RL, 3 RR; anything else is an unlocated sensor.
+            if (location >= 0 && location < 4) {
+                double pressure = get(cp, "VCSEC_TPMSPressure" + n);
+                double temp = get(cp, "VCSEC_TPMSTemperature" + n);
+                if (pressure < PRESSURE_SNA) pressure_[location] = pressure;
+                if (temp < TEMP_SNA) temp_[location] = temp;
             }
         }
-        bool headingsFresh = headings_.rate.fresh(now);
-        apply(lead_, now, headingsFresh ? headings_.rad[0] : HEADING_SNA,
-              cs.leadVehDx, cs.leadVehDy, cs.leadVehType, cs.leadVehVxRel, cs.leadVehHeading);
-        apply(left_, now, headingsFresh ? headings_.rad[1] : HEADING_SNA,
-              cs.leftVehDx, cs.leftVehDy, cs.leftVehType, cs.leftVehVxRel, cs.leftVehHeading);
-        apply(right_, now, headingsFresh ? headings_.rad[2] : HEADING_SNA,
-              cs.rightVehDx, cs.rightVehDy, cs.rightVehType, cs.rightVehVxRel, cs.rightVehHeading);
-        apply(cutin_, now, headingsFresh ? headings_.rad[3] : HEADING_SNA,
-              cs.cutinVehDx, cs.cutinVehDy, cs.cutinVehType, cs.cutinVehVxRel, cs.cutinVehHeading);
-
-        bool sign = sign_.rate.fresh(now) && sign_.id < SIGN_ID_SNA;
-        cs.roadSignId = sign ? sign_.id : -1.0;
-        cs.roadSignColor = sign ? sign_.color : 0.0;
-        cs.roadSignArrow = sign ? sign_.arrow : 0.0;
-        cs.roadSignStopLineDist = sign && sign_.stopLineDist < STOP_LINE_SNA ? sign_.stopLineDist : -1.0;
-        cs.roadSignControlActive = sign ? sign_.controlActive : 0.0;
+        cs.tpmsPressureFL = pressure_[0];
+        cs.tpmsPressureFR = pressure_[1];
+        cs.tpmsPressureRL = pressure_[2];
+        cs.tpmsPressureRR = pressure_[3];
+        cs.tpmsTempFL = temp_[0];
+        cs.tpmsTempFR = temp_[1];
+        cs.tpmsTempRL = temp_[2];
+        cs.tpmsTempRR = temp_[3];
     }
 
 private:
-    using Clock = std::chrono::steady_clock;
+    // SNA after DBC scaling: raw 255.
+    static constexpr double PRESSURE_SNA = 6.36;   // raw 255 * 0.025 bar = 6.375
+    static constexpr double TEMP_SNA = 214.5;      // raw 255 - 40 = 215 degC
 
-    // Last arrival of a group and an average of its interval, which sets how
-    // long the group stays fresh.
-    struct Rate {
-        Clock::time_point seen{};
-        double intervalMs = 0;   // 0 until two frames have arrived
-        bool valid = false;
-
-        void observe(Clock::time_point now) {
-            if (valid) {
-                double ms = std::chrono::duration<double, std::milli>(now - seen).count();
-                // A gap longer than the cap is an outage, not the cadence.
-                if (ms < static_cast<double>(STALE_MAX.count()))
-                    intervalMs = intervalMs > 0 ? intervalMs + 0.25 * (ms - intervalMs) : ms;
-            }
-            seen = now;
-            valid = true;
-        }
-        // Until the cadence is known, assume the slowest.
-        std::chrono::milliseconds window() const {
-            if (intervalMs <= 0) return STALE_MAX;
-            auto ms = std::chrono::milliseconds(static_cast<long long>(STALE_INTERVALS * intervalMs));
-            return std::clamp(ms, STALE_MIN, STALE_MAX);
-        }
-        bool fresh(Clock::time_point now) const { return valid && (now - seen) <= window(); }
-    };
-    struct Vehicle {
-        double dx = 0, dy = 0, type = 0, vxRel = 0;   // last non-SNA reading
-        Rate rate;                                    // every frame of the group
-        Clock::time_point detected{};                 // last non-SNA reading
-        bool everDetected = false;
-    };
-    struct Sign {
-        double id = 0, color = 0, arrow = 0, stopLineDist = 0, controlActive = 0;
-        Rate rate;
-    };
-    struct Headings {
-        double rad[4] = {};
-        Rate rate;
-    };
-
-    // SNA (signal not available) values after DBC scaling.
-    static constexpr double DX_SNA = 127.5;          // raw 255 * 0.5 m
-    static constexpr double VXREL_SNA = 30.0;        // raw 15 * 4 - 30 m/s
-    static constexpr double HEADING_SNA = 3.1;       // raw 255 ~ +pi rad
-    static constexpr double SIGN_ID_SNA = 255.0;
-    static constexpr double STOP_LINE_SNA = 184.5;   // raw 1023 * 0.2 - 20 = 184.6 m
-
-    static double get(const CANParsers& cp, const char* sig) {
-        return cp.get(0, "DAS_object", sig);
-    }
-
-    // An SNA frame doesn't clear the vehicle at once: it stays for the group's
-    // freshness window, so a reading that drops out for a frame or two holds.
-    static void latchVehicle(const CANParsers& cp, Vehicle& v, const std::string& prefix,
-                             Clock::time_point now) {
-        v.rate.observe(now);
-        double dx = cp.get(0, "DAS_object", prefix + "Dx");
-        if (dx >= DX_SNA) return;
-        v.dx = dx;
-        v.dy = cp.get(0, "DAS_object", prefix + "Dy");
-        v.type = cp.get(0, "DAS_object", prefix + "Type");
-        v.vxRel = cp.get(0, "DAS_object", prefix + "VxRel");
-        v.detected = now;
-        v.everDetected = true;
-    }
-
-    // Dx -1 = no vehicle; 0 m is a valid distance.
-    static void apply(const Vehicle& v, Clock::time_point now, double heading,
-                      double& dx, double& dy, double& type, double& vxRel, double& headingOut) {
-        bool present = v.everDetected && v.rate.fresh(now) && (now - v.detected) <= v.rate.window();
-        dx = present ? v.dx : -1.0;
-        dy = present ? v.dy : 0.0;
-        type = present ? v.type : 0.0;
-        vxRel = present && v.vxRel < VXREL_SNA ? v.vxRel : 0.0;
-        headingOut = present && heading < HEADING_SNA ? heading : 0.0;
+    static double get(const CANParsers& cp, const std::string& sig) {
+        return cp.get(1, "VCSEC_TPMSData", sig);
     }
 
     uint32_t lastSeq_ = 0;
-    Vehicle lead_, left_, right_, cutin_;
-    Sign sign_;
-    Headings headings_;
+    double pressure_[4] = {-1, -1, -1, -1};
+    double temp_[4] = {-100, -100, -100, -100};
 };
 
 // DAS_lanes (0x239, chassis bus, 10 Hz): the Autopilot's virtual lane as a
@@ -379,18 +276,18 @@ public:
         cs.hvacRecirc = cp.get(1, "UI_hvacRequest", "UI_hvacReqRecirc");
         cs.hvacKeepClimateOn = cp.get(1, "UI_hvacRequest", "UI_hvacReqKeepClimateOn");
 
-        das_.update(cp, cs);
         lanes_.update(cp, cs);
         updateDasWarnings(cp, cs);
 
         updateVehicleBus(cp, cs);
         vin_.update(cp, cs);
+        tpms_.update(cp, cs);
     }
 
 private:
     BlinkerHold leftBlinkerHold_;
     BlinkerHold rightBlinkerHold_;
-    DasObjectLatch das_;
+    TpmsLatch tpms_;
     DasLanesLatch lanes_;
     TeslaVinUpdater vin_;
 };

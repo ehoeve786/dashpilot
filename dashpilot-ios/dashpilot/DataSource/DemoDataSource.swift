@@ -50,53 +50,29 @@ final class DemoDataSource: IDataSource {
         Float(70 + 20 * sin(t * 0.02))
     }
 
-    /// Blind spot windows, and the DAS_object vehicles that hand off to them.
+    /// Blind spot windows and warnings.
     private static let leftPeriod: TimeInterval = 23, rightPeriod: TimeInterval = 29
     private static let bsmWindow: TimeInterval = 3
-    private static let handoff: TimeInterval = 1
-    private static let leftAheadEnd: TimeInterval = 11
-    private static let rightAheadStart: TimeInterval = 19
-    private static let laneWidth: Float = 3.5
-    private static let typeTruck: Float = 1, typeCar: Float = 2
+    private static let sideWarnDuration: TimeInterval = 1
     private static let ldwPeriod: TimeInterval = 37
-    private static let cutinPeriod: TimeInterval = 41, cutinDuration: TimeInterval = 4
+    private static let fcwPeriod: TimeInterval = 41, fcwDuration: TimeInterval = 1.5
+    /// Rear right tyre leaks down to a warning and is reinflated.
+    private static let leakPeriod: TimeInterval = 120
     private static let laneViewRange: Float = 60
     private static let laneC2Turn = 0.003
 
-    /// Cut-in from the right lane: slides from Dy -3.5 to 0 at ~18 m, with a
-    /// forward collision warning while it's closest.
-    private static func cutin(at t: TimeInterval) -> (dx: Float, dy: Float)? {
-        let m = t.truncatingRemainder(dividingBy: cutinPeriod)
-        guard m < cutinDuration else { return nil }
-        let progress = m / cutinDuration
-        return (Float(22 - 8 * progress), -laneWidth * Float(1 - progress))
+    private static func tyrePressure(_ base: Double, at t: TimeInterval) -> Float {
+        Float(base + 0.03 * sin(t * 0.05))
     }
 
-    /// A left-lane car passes us: blind spot first, then pulls away ahead.
-    /// It's reported at 0 m for the last `handoff` seconds of the blind spot window.
-    private static func leftVehDx(at t: TimeInterval) -> Float {
-        let m = t.truncatingRemainder(dividingBy: leftPeriod)
-        return ((bsmWindow - handoff)...leftAheadEnd).contains(m) ? Float(max(0, m - bsmWindow) * 7.5) : -1
+    private static func leakingPressure(at t: TimeInterval) -> Float {
+        let m = t.truncatingRemainder(dividingBy: leakPeriod)
+        return Float(2.9 - 0.8 * min(1, m / (leakPeriod * 0.6)))
     }
 
-    /// We overtake a right-lane truck: it closes in from ahead, then sits in
-    /// the blind spot, still reported at 0 m for the first `handoff` seconds.
-    private static func rightVehDx(at t: TimeInterval) -> Float {
-        let m = t.truncatingRemainder(dividingBy: rightPeriod)
-        if m >= rightAheadStart { return Float((rightPeriod - m) * 5) }
-        return m < handoff ? 0 : -1
-    }
-
-    private static func leadVehDx(at t: TimeInterval, phase: TimeInterval) -> Float {
-        switch phase {
-        case ..<turnStart: return Float(35 + 10 * sin(t * 0.15))
-        case ..<turnEnd: return -1
-        case ..<cruise2End: return Float(35 + 10 * sin(t * 0.15))
-        case ..<approachEnd:
-            return Float(8 + 35 * (1 - (phase - cruise2End) / (approachEnd - cruise2End)))
-        case ..<stoppedEnd: return 8
-        default: return Float(min(45, 8 + (phase - stoppedEnd) * 3))
-        }
+    /// Tyres warm up from 18 C toward 35 C as the drive goes on.
+    private static func tyreTemp(at t: TimeInterval, offset: Double) -> Float {
+        Float(35 - 17 * exp(-t / 300) + offset)
     }
 
     private static func frame(at t: TimeInterval) -> CarState {
@@ -192,27 +168,17 @@ final class DemoDataSource: IDataSource {
         s.leftBlindSpot = t.truncatingRemainder(dividingBy: leftPeriod) < bsmWindow ? 1 : 0
         s.rightBlindSpot = t.truncatingRemainder(dividingBy: rightPeriod) < bsmWindow ? 1 : 0
 
-        s.leadVehDx = leadVehDx(at: t, phase: phase)
-        s.leadVehDy = s.leadVehDx >= 0 ? Float(sin(t * 0.4) * 0.3) : 0
-        s.leadVehType = s.leadVehDx >= 0 ? typeCar : 0
-        s.leftVehDx = leftVehDx(at: t)
-        s.leftVehDy = s.leftVehDx >= 0 ? laneWidth : 0
-        s.leftVehType = s.leftVehDx >= 0 ? typeCar : 0
-        s.rightVehDx = rightVehDx(at: t)
-        s.rightVehDy = s.rightVehDx >= 0 ? -laneWidth : 0
-        s.rightVehType = s.rightVehDx >= 0 ? typeTruck : 0
-        s.leftVehVxRel = s.leftVehDx >= 0 ? 7.5 : 0
-        s.rightVehVxRel = s.rightVehDx >= 0 ? -5 : 0
+        s.tpmsPressureFL = tyrePressure(2.90, at: t)
+        s.tpmsPressureFR = tyrePressure(2.88, at: t + 7)
+        s.tpmsPressureRL = tyrePressure(2.86, at: t + 13)
+        s.tpmsPressureRR = leakingPressure(at: t)
+        s.tpmsTempFL = tyreTemp(at: t, offset: 0)
+        s.tpmsTempFR = tyreTemp(at: t, offset: 0.5)
+        s.tpmsTempRL = tyreTemp(at: t, offset: -1)
+        s.tpmsTempRR = tyreTemp(at: t, offset: -0.5)
 
-        let cruising = phase < turnStart || (phase >= turnEnd && phase < cruise2End)
-        if cruising, let cut = cutin(at: t) {
-            s.cutinVehDx = cut.dx
-            s.cutinVehDy = cut.dy
-            s.cutinVehType = typeCar
-            s.cutinVehVxRel = -2
-            s.cutinVehHeading = 0.15
-            s.forwardCollisionWarning = cut.dy > -1 ? 1 : 0
-        }
+        let manual = phase >= turnStart && phase < turnEnd
+        s.forwardCollisionWarning = !manual && t.truncatingRemainder(dividingBy: fcwPeriod) < fcwDuration ? 1 : 0
 
         // Lane bends with the turn; sign follows the steering direction.
         s.laneWidth = 3.6
@@ -222,15 +188,7 @@ final class DemoDataSource: IDataSource {
             s.laneC2 = Float((turningLeft ? 1 : -1) * laneC2Turn * ease)
         }
         s.laneDepartureWarning = t.truncatingRemainder(dividingBy: ldwPeriod) < 1.5 ? 1 : 0
-        s.sideCollisionWarning = t.truncatingRemainder(dividingBy: rightPeriod) < handoff ? 2 : 0
-
-        if phase >= cruise2End && phase < goEnd {
-            s.roadSignId = 1
-            s.roadSignColor = s.trafficLightColor == 2 ? 3 : 1
-            s.roadSignArrow = 3
-            s.roadSignStopLineDist = s.stopLineDist
-            s.roadSignControlActive = 1
-        }
+        s.sideCollisionWarning = t.truncatingRemainder(dividingBy: rightPeriod) < sideWarnDuration ? 2 : 0
 
         // BMS / power — Tesla-ish pack, slowly discharging.
         s.fullPackEnergy = 75

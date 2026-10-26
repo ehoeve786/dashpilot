@@ -26,8 +26,8 @@ class DashKitDataSource(
         private val CHAR_UUID = UUID.fromString("CADA0001-CA00-B1E0-B0D6-C000AA0100A1")
 
         // Debug builds log what DashKit forwards: per (bus, id) frame counts
-        // and the decoded DAS_object / DAS_lanes state, every RX_LOG_MS.
-        // `adb logcat -s DashKitRx` shows whether e.g. 0x309 arrives at all.
+        // and the decoded TPMS / DAS_lanes state, every RX_LOG_MS.
+        // `adb logcat -s DashKitRx` shows whether e.g. 0x219 arrives at all.
         private const val RX_LOG_TAG = "DashKitRx"
         private const val RX_LOG_MS = 10_000L
     }
@@ -97,8 +97,8 @@ class DashKitDataSource(
         val s = currentState
         Log.i(
             RX_LOG_TAG,
-            "das lead=${s.leadVehDx} left=${s.leftVehDx} right=${s.rightVehDx} cutin=${s.cutinVehDx} " +
-                "sign=${s.roadSignId} lane=${s.laneViewRange}/${s.laneC2} fcw=${s.forwardCollisionWarning} " +
+            "tpms bar=${s.tpmsPressureFL}/${s.tpmsPressureFR}/${s.tpmsPressureRL}/${s.tpmsPressureRR} " +
+                "lane=${s.laneViewRange}/${s.laneC2} fcw=${s.forwardCollisionWarning} " +
                 "ldw=${s.laneDepartureWarning} bsm=${s.leftBlindSpot}/${s.rightBlindSpot} vin=${s.vin}"
         )
         rxCounts.clear()

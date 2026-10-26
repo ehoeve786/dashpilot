@@ -128,6 +128,31 @@
       opacity: 0;
       transition: opacity 0.08s;
     }
+    .tpms {
+      position: absolute;
+      right: max(3vw, env(safe-area-inset-right));
+      bottom: max(3vh, env(safe-area-inset-bottom));
+      display: none;
+      grid-template-columns: auto 2.6vh auto;
+      column-gap: 1.2vh;
+      row-gap: 1.6vh;
+      align-items: center;
+      padding: 1.4vh 1.8vh;
+      border-radius: 2vh;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      pointer-events: none;
+    }
+    .tpms svg { grid-column: 2; grid-row: 1 / span 2; width: 2.6vh; height: 5.4vh; }
+    .tpms rect { fill: none; stroke: var(--muted); stroke-width: 2; }
+    .tyre { display: flex; flex-direction: column; line-height: 1.15; }
+    .tyre.left { align-items: flex-end; }
+    .tyre b { font-size: 2.2vh; font-weight: 650; font-variant-numeric: tabular-nums; }
+    .tyre small { font-size: 1.4vh; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .tyre.low b { color: var(--warn); }
+    .tyre.critical b { color: var(--alert); }
     .signal {
       position: absolute;
       top: max(3vh, env(safe-area-inset-top));
@@ -210,6 +235,13 @@
       </div>
     </div>
   </div>
+  <div class="tpms" id="tpms">
+    <div class="tyre left" id="tpmsFL"><b></b><small></small></div>
+    <svg viewBox="0 0 22 46" aria-hidden="true"><rect x="2" y="2" width="18" height="42" rx="7" /></svg>
+    <div class="tyre" id="tpmsFR"><b></b><small></small></div>
+    <div class="tyre left" id="tpmsRL"><b></b><small></small></div>
+    <div class="tyre" id="tpmsRR"><b></b><small></small></div>
+  </div>
   <div class="signal" id="signal"><div class="lamp" id="lamp"></div><span id="signalText"></span></div>
 
   <script type="module">
@@ -236,13 +268,8 @@
     // Midnight Silver Metallic: dark grey with metallic flake and clear coat.
     const EGO_PAINT = { color: 0x5a5d61, metalness: 0.78, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.06 };
 
-    // DAS_object type -> model files (cars rotate through variants so the
-    // traffic doesn't look cloned).
+    // Blind spot cars rotate through these so traffic doesn't look cloned.
     const CAR_MODELS = ["car-sedan", "car-suv", "car-hatchback", "car-ev", "car-pickup"];
-    const TYPE_MODELS = {
-      0: CAR_MODELS, 2: CAR_MODELS, 6: CAR_MODELS,
-      1: ["truck-box"], 3: ["motorcycle-sport"], 4: ["bike-road"], 5: ["pedestrian"],
-    };
     const PAINTS = [0xe9eaec, 0x1d2025, 0x9ea4ab, 0x2c4c7c, 0x7d2329, 0x4b5257, 0xc9c2b4];
 
     // ---- Renderer, scene, lighting -----------------------------------------
@@ -495,9 +522,8 @@
     // ---- Vehicle tracks ----------------------------------------------------
     class Track {
       constructor(id) { this.id = id; this.obj = null; this.modelName = null; this.loading = null; }
-      async setModel(type, variant) {
-        const names = TYPE_MODELS[type] || CAR_MODELS;
-        const name = names[variant % names.length];
+      async setModel(variant) {
+        const name = CAR_MODELS[variant % CAR_MODELS.length];
         if (name === this.modelName || this.loading === name) return;
         this.loading = name;
         const proto = await loadPrototype(name);
@@ -542,13 +568,11 @@
 
     const tracks = {
       left: new Track("left"), right: new Track("right"),
-      leftGhost: new Track("leftGhost"), rightGhost: new Track("rightGhost"),
     };
     let spawnCounter = 0;
 
     // ---- State helpers -----------------------------------------------------
     const num = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
-    const dasDx = (v) => num(v, -1);
 
     function egoSpeedMs(car) {
       const v = Math.max(0, num(car.egoSpeed));
@@ -571,14 +595,14 @@
       return Math.max(-MAX_K, Math.min(MAX_K, k));
     }
 
-    // ---- Side tracks (BSM <-> DAS_object hand-off) -------------------------
-    // Same model as the vanilla dashboard: one tracked vehicle per side,
-    // following DAS ahead and the blind spot zone beside/behind, sliding in
-    // from off-screen behind when only BSM sees it.
-    const BSM_FORWARD = -3, OFFSCREEN = -18, GONE = -15, HANDOFF_DX = 5, CLASS_MEMORY_MS = 5000;
+    // ---- Side tracks (blind spot monitor) ----------------------------------
+    // Same model as the vanilla dashboard: one tracked vehicle per side. BSM
+    // reports presence but no position, so the car slides in from off-screen
+    // behind into the blind spot zone and drops back out when it clears.
+    const BSM_FORWARD = -3, OFFSCREEN = -18, GONE = -15;
     const side = {
-      left: { x: undefined, sm: null, source: undefined, switchUntil: 0, enter: false, cls: 2, clsMs: 0, variant: 0 },
-      right: { x: undefined, sm: null, source: undefined, switchUntil: 0, enter: false, cls: 2, clsMs: 0, variant: 0 },
+      left: { x: undefined, sm: null, source: undefined, switchUntil: 0, variant: 0 },
+      right: { x: undefined, sm: null, source: undefined, switchUntil: 0, variant: 0 },
     };
 
     function bsmLevel(car, s) {
@@ -592,63 +616,28 @@
       return 0;
     }
 
-    // DAS_object side cars are drawn only around the blind spot hand-off:
-    // one the track already follows (it came out of the blind spot or was
-    // picked up approaching), or a moving car closing in on the blind spot
-    // from ahead. Parked cars, cars far up the next lane, the lead car and
-    // other DAS objects are not drawn.
-    const SIDE_DAS_MAX_DX = 30, SIDE_DAS_MIN_SPEED_MS = 2, SIDE_DAS_CLOSING_MS = -0.5;
-    function sideDasDx(car, s, t) {
-      const dx = dasDx(car[s + "VehDx"]);
-      if (dx < 0 || dx > SIDE_DAS_MAX_DX) return -1;
-      if (t.source === "bsm" || t.source === "das") return dx;
-      const vxRel = num(car[s + "VehVxRel"]);
-      const moving = egoSpeedMs(car) + vxRel >= SIDE_DAS_MIN_SPEED_MS;
-      return moving && vxRel <= SIDE_DAS_CLOSING_MS ? dx : -1;
-    }
-
     function updateSide(car, s, lane, laneWidth, now) {
       const t = side[s];
       const sign = s === "left" ? 1 : -1;
-      const dx = sideDasDx(car, s, t);
       const level = bsmLevel(car, s);
-      const das = dx >= 0;
       let target = null;
-      if (das) {
-        t.cls = Math.round(num(car[s + "VehType"], 2));
-        t.clsMs = now;
-      }
-      const len = 4.7;
-      if (das) target = { x: EGO_HALF + dx + len / 2, source: "das" };
-      else if (level > 0) target = { x: BSM_FORWARD, source: "bsm" };
-      else if (t.x !== undefined && t.x < EGO_HALF + HANDOFF_DX + len && t.x > GONE) target = { x: OFFSCREEN, source: "exit" };
-
-      const ghost = das && level > 0 && dx >= HANDOFF_DX;
-      const gtrack = tracks[s + "Ghost"];
-      if (ghost) {
-        gtrack.setModel(2, 1 + (s === "left" ? 0 : 2));
-        gtrack.place(BSM_FORWARD, lane(BSM_FORWARD) + sign * laneWidth, 0, true);
-        gtrack.warn(level, now);
-      } else gtrack.hide();
+      if (level > 0) target = { x: BSM_FORWARD, source: "bsm" };
+      else if (t.x !== undefined && t.x > GONE) target = { x: OFFSCREEN, source: "exit" };
 
       const tr = tracks[s];
       if (!target) { t.x = undefined; t.source = undefined; tr.hide(); return; }
       if (t.x === undefined) {
         t.variant = ++spawnCounter;
-        t.sm = new Smoother(target.source === "bsm" ? OFFSCREEN : target.x);
-        if (target.source === "bsm") { t.switchUntil = now + 1200; t.enter = true; }
+        t.sm = new Smoother(OFFSCREEN);
+        t.switchUntil = now + 1200;
       } else if (t.source !== target.source) {
         t.switchUntil = now + 1200;
-        t.enter = target.source === "exit";
       }
-      const smoothMs = now < t.switchUntil ? (t.enter ? 600 : 800) : 250;
-      t.x = t.sm.update(target.x, smoothMs, now);
+      t.x = t.sm.update(target.x, now < t.switchUntil ? 600 : 250, now);
       t.source = target.source;
-      const cls = now - t.clsMs < CLASS_MEMORY_MS ? t.cls : 2;
-      tr.setModel(cls, t.variant);
-      const heading = das ? num(car[s + "VehHeading"]) : 0;
-      tr.place(t.x, lane(t.x) + sign * laneWidth, heading, true);
-      tr.warn(ghost ? 0 : level, now);
+      tr.setModel(t.variant);
+      tr.place(t.x, lane(t.x) + sign * laneWidth, 0, true);
+      tr.warn(level, now);
     }
 
     // ---- Per-frame world update --------------------------------------------
@@ -776,9 +765,33 @@
       $("signal").style.display = color ? "flex" : "none";
       if (color) { $("lamp").style.color = color; $("signalText").textContent = text.trim(); }
 
+      updateTpms(car);
+
       const q = Math.round(num(car.renderQuality, 3));
       const ratio = q <= 1 ? 1 : q === 2 ? 1.5 : Math.min(2.5, devicePixelRatio || 1);
       if (renderer.getPixelRatio() !== ratio) { renderer.setPixelRatio(ratio); resize(); }
+    }
+
+    // Tyre pressures (bar from the car; psi when imperial). Amber below
+    // TPMS_LOW_BAR, red below TPMS_CRITICAL_BAR (Model Y placard: 2.9 bar).
+    const TPMS_LOW_BAR = 2.5, TPMS_CRITICAL_BAR = 2.2, BAR_TO_PSI = 14.5038;
+    function updateTpms(car) {
+      const wheels = ["FL", "FR", "RL", "RR"];
+      const any = wheels.some((w) => num(car["tpmsPressure" + w], -1) >= 0);
+      $("tpms").style.display = any ? "grid" : "none";
+      if (!any) return;
+      for (const w of wheels) {
+        const el = $("tpms" + w);
+        const bar = num(car["tpmsPressure" + w], -1);
+        const temp = num(car["tpmsTemp" + w], -100);
+        const known = bar >= 0;
+        el.querySelector("b").textContent = !known ? "--"
+          : car.isImperial ? Math.round(bar * BAR_TO_PSI) + " psi" : bar.toFixed(1) + " bar";
+        el.querySelector("small").textContent = temp > -100
+          ? (car.isImperial ? Math.round(temp * 9 / 5 + 32) + "°F" : Math.round(temp) + "°C") : "";
+        el.classList.toggle("critical", known && bar < TPMS_CRITICAL_BAR);
+        el.classList.toggle("low", known && bar >= TPMS_CRITICAL_BAR && bar < TPMS_LOW_BAR);
+      }
     }
 
     function resize() {
@@ -802,8 +815,8 @@
       "egoSpeed", "egoSteeringAngle", "gear", "fusedSpeedLimit", "leftBlinker", "rightBlinker",
       "leftBlindSpot", "rightBlindSpot", "adasOn", "madsActive", "accSetSpeed",
       "trafficLightColor", "stopLineDist",
-      "leftVehDx", "leftVehType", "leftVehHeading", "leftVehVxRel",
-      "rightVehDx", "rightVehType", "rightVehHeading", "rightVehVxRel",
+      "tpmsPressureFL", "tpmsPressureFR", "tpmsPressureRL", "tpmsPressureRR",
+      "tpmsTempFL", "tpmsTempFR", "tpmsTempRL", "tpmsTempRR",
       "laneWidth", "laneViewRange", "laneC0", "laneC1", "laneC2", "laneC3",
       "forwardCollisionWarning", "laneDepartureWarning", "sideCollisionWarning",
       "isImperial", "darkMode", "alwaysOnBlindSpotMonitor", "renderQuality",
@@ -828,17 +841,17 @@
         const lap = t % 60, lm = t % 23, rm = t % 29;
         const turning = lap >= 20 && lap < 28;
         const ease = turning ? Math.sin(((lap - 20) / 8) * Math.PI) : 0;
-        const leftDx = lm >= 2 && lm <= 11 ? Math.max(0, lm - 3) * 7.5 : -1;
-        const rightDx = rm >= 19 ? (29 - rm) * 5 : rm < 1 ? 0 : -1;
+        const tyre = (base, phase) => base + 0.03 * Math.sin((t + phase) * 0.05);
+        const warm = 35 - 17 * Math.exp(-t / 300);
         receive({
           egoSpeed: 92 - 25 * ease, gear: 4, fusedSpeedLimit: 100,
           egoSteeringAngle: -60 * ease, adasOn: !turning,
           leftBlinker: turning ? (t % 1 < 0.5 ? 2 : 1) : 0, rightBlinker: 0,
           leftBlindSpot: lm < 3 ? 1 : 0, rightBlindSpot: rm < 3 ? 1 : 0,
-          // Left car passes us out of the blind spot; right truck is
-          // overtaken, approaching the blind spot from ahead.
-          leftVehDx: leftDx, leftVehType: 2, leftVehVxRel: 7.5,
-          rightVehDx: rightDx, rightVehType: 1, rightVehVxRel: -5,
+          // Rear right tyre slowly leaks down to a warning.
+          tpmsPressureFL: tyre(2.9, 0), tpmsPressureFR: tyre(2.88, 7), tpmsPressureRL: tyre(2.86, 13),
+          tpmsPressureRR: 2.9 - 0.8 * Math.min(1, (t % 120) / 72),
+          tpmsTempFL: warm, tpmsTempFR: warm + 0.5, tpmsTempRL: warm - 1, tpmsTempRR: warm - 0.5,
           laneDepartureWarning: t % 37 < 1.5 ? 1 : 0,
           laneWidth: 3.6, laneViewRange: 60, laneC2: 0.003 * ease + 0.0004 * Math.sin(t * 0.05),
           isImperial: false, darkMode: !params.has("light"), alwaysOnBlindSpotMonitor: true, renderQuality: 3,

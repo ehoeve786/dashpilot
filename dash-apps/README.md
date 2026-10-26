@@ -84,26 +84,17 @@ Values not received yet are `0` / `false`. For speed limit, stop line and energy
 | `madsActive`, `experimentalMode` | bool | openpilot states, comma only |
 | `selfdriveActive` | bool | openpilot engaged, comma only. **iOS only** for web apps |
 
-**Vehicles ahead** (DashKit, from the Autopilot's `DAS_object`)
+**Tyres** (DashKit, from `VCSEC_TPMSData`)
 
 | key | type | meaning |
 |---|---|---|
-| `leadVehDx`, `leftVehDx`, `rightVehDx` | meters | gap from the front bumper to the vehicle ahead in this lane, the lane to the left, the lane to the right. **-1 = no vehicle** |
-| `leadVehDy`, `leftVehDy`, `rightVehDy` | meters | lateral offset. Sign not yet verified on a car: place side vehicles by lane, not by this |
-| `leadVehType`, `leftVehType`, `rightVehType` | 0–5 | 0 unknown, 1 truck, 2 car, 3 motorcycle, 4 bicycle, 5 pedestrian |
-| `cutinVehDx`, `cutinVehDy`, `cutinVehType` | as above | a vehicle cutting into your lane. Its Dy is its real lateral position |
-| `leadVehVxRel`, `leftVehVxRel`, `rightVehVxRel`, `cutinVehVxRel` | m/s | relative speed, + = pulling away; 0 = unknown |
-| `leadVehHeading`, `leftVehHeading`, `rightVehHeading`, `cutinVehHeading` | rad | relative heading (sign not yet verified); 0 = unknown |
+| `tpmsPressureFL`, `tpmsPressureFR`, `tpmsPressureRL`, `tpmsPressureRR` | bar | per wheel. **-1 = no reading yet** (sensors report every few tens of seconds while driving) |
+| `tpmsTempFL`, `tpmsTempFR`, `tpmsTempRL`, `tpmsTempRR` | °C | per wheel. -100 = no reading yet |
 
-**Road and lane** (DashKit, from `DAS_object` and `DAS_lanes`)
+**Lane** (DashKit, from `DAS_lanes`)
 
 | key | type | meaning |
 |---|---|---|
-| `roadSignId` | -1–1 | -1 none, 0 stop sign, 1 traffic light |
-| `roadSignColor` | 0–4 | 0 none, 1 red, 2 yellow, 3 green, 4 red+yellow |
-| `roadSignArrow` | 0–4 | 0 circle, 1 left, 2 right, 3 straight, 4 unknown |
-| `roadSignStopLineDist` | meters | -1 = unknown |
-| `roadSignControlActive` | 0/1 | Autopilot is acting on this sign |
 | `laneWidth`, `laneViewRange` | meters | `laneViewRange` 0 = no lane data |
 | `laneC0`…`laneC3` | m, slope, 1/m, 1/m² | lane center `y = C0 + C1·x + C2·x² + C3·x³`, x ahead. Sign not yet verified |
 
@@ -115,7 +106,7 @@ Values not received yet are `0` / `false`. For speed limit, stop line and energy
 | `laneDepartureWarning` | 0–4 | 0 none, 1 left, 2 right, 3 left severe, 4 right severe |
 | `sideCollisionWarning` | 0–3 | 0 none, 1 left, 2 right, 3 both |
 
-The vehicles only cover what's level with or ahead of the car. `leftBlindSpot` / `rightBlindSpot` cover beside and behind, so use both: a side vehicle under ~5 m while its blind spot is set is the same vehicle. Each slot refreshes about every 180 ms; ease positions between updates. [`web-lanes/`](web-lanes/) shows one way to draw them; open its `index.html?demo` in a browser to try it without the app.
+[`web-lanes/`](web-lanes/) shows one way to draw these; open its `index.html?demo` in a browser to try it without the app.
 
 **Battery**
 

@@ -51,32 +51,15 @@ typedef struct {
     double experimentalMode;
     double changingLane;
 
-    // DAS_object vehicles ahead, meters; Dx -1 = no vehicle.
-    double leadVehDx;
-    double leadVehDy;
-    double leadVehType;
-    double leftVehDx;
-    double leftVehDy;
-    double leftVehType;
-    double rightVehDx;
-    double rightVehDy;
-    double rightVehType;
-    double cutinVehDx;
-    double cutinVehDy;
-    double cutinVehType;
-    double leadVehVxRel;
-    double leftVehVxRel;
-    double rightVehVxRel;
-    double cutinVehVxRel;
-    double leadVehHeading;
-    double leftVehHeading;
-    double rightVehHeading;
-    double cutinVehHeading;
-    double roadSignId;
-    double roadSignColor;
-    double roadSignArrow;
-    double roadSignStopLineDist;
-    double roadSignControlActive;
+    // Tyre pressure (bar, -1 = no reading) and temperature (degC, -100 = none).
+    double tpmsPressureFL;
+    double tpmsPressureFR;
+    double tpmsPressureRL;
+    double tpmsPressureRR;
+    double tpmsTempFL;
+    double tpmsTempFR;
+    double tpmsTempRL;
+    double tpmsTempRR;
     double laneWidth;
     double laneViewRange;
     double laneC0;

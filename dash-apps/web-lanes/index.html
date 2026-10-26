@@ -6,16 +6,22 @@
   <title>Lanes</title>
   <style>
     :root {
-      --bg: #eef0f3;
-      --road: #d9dde3;
-      --fg: #15181d;
-      --muted: #6b7380;
+      --bg: #e9ecf0;
+      --fg: #11151a;
+      --muted: #69717d;
+      --glass: rgba(255, 255, 255, 0.62);
+      --glass-border: rgba(17, 21, 26, 0.08);
+      --accent: #2f7cf6;
+      --warn: #f5a623;
+      --alert: #ff3b30;
     }
     :root[data-theme="dark"] {
-      --bg: #0b0d10;
-      --road: #171a1f;
-      --fg: #f2f4f7;
-      --muted: #8a93a1;
+      --bg: #07090c;
+      --fg: #f3f5f8;
+      --muted: #8b94a3;
+      --glass: rgba(18, 22, 28, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.07);
+      --accent: #3d8bff;
     }
     html, body {
       margin: 0;
@@ -23,405 +29,891 @@
       overflow: hidden;
       background: var(--bg);
       color: var(--fg);
-      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
       -webkit-user-select: none;
       user-select: none;
     }
-    canvas {
+    canvas#scene {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
+      display: block;
     }
     .hud {
       position: absolute;
-      left: max(4vw, env(safe-area-inset-left));
+      left: max(3vw, env(safe-area-inset-left));
       top: 50%;
       transform: translateY(-50%);
       display: flex;
       flex-direction: column;
-      gap: 1vh;
+      gap: 1.6vh;
+      padding: 2.4vh 2.2vh;
+      border-radius: 2.4vh;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      min-width: 18vh;
       pointer-events: none;
     }
     .speed {
-      font-size: 22vh;
-      font-weight: 700;
-      line-height: 0.9;
+      font-size: 15vh;
+      font-weight: 650;
+      line-height: 0.88;
       font-variant-numeric: tabular-nums;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
     }
     .unit {
-      font-size: 4vh;
+      font-size: 2.6vh;
       color: var(--muted);
+      margin-top: -0.6vh;
     }
-    .gear {
-      font-size: 5vh;
+    .gears {
+      display: flex;
+      gap: 1.6vh;
+      font-size: 2.8vh;
       font-weight: 600;
       color: var(--muted);
+      opacity: 0.6;
+    }
+    .gears span.active {
+      color: var(--fg);
+      opacity: 1;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 1.4vh;
     }
     .limit {
-      width: 12vh;
-      height: 12vh;
+      width: 7.5vh;
+      height: 7.5vh;
       border-radius: 50%;
-      border: 1.6vh solid #d22;
+      border: 0.9vh solid #e0262b;
       background: #fff;
       color: #111;
       display: none;
       align-items: center;
       justify-content: center;
-      font-size: 5.2vh;
-      font-weight: 700;
+      font-size: 3vh;
+      font-weight: 750;
       box-sizing: border-box;
-      margin-top: 2vh;
+    }
+    .pill {
+      display: none;
+      align-items: center;
+      gap: 0.8vh;
+      padding: 0.8vh 1.4vh;
+      border-radius: 99px;
+      font-size: 2vh;
+      font-weight: 600;
+      background: color-mix(in srgb, var(--accent) 18%, transparent);
+      color: var(--accent);
+    }
+    .pill svg { width: 2.4vh; height: 2.4vh; }
+    .blinkers {
+      position: absolute;
+      top: max(3vh, env(safe-area-inset-top));
+      left: 62%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 26vw;
+      pointer-events: none;
+    }
+    .blinkers svg {
+      width: 5vh;
+      height: 5vh;
+      fill: #34c759;
+      opacity: 0;
+      transition: opacity 0.08s;
+    }
+    .chip {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      padding: 0.6vh 1.2vh;
+      border-radius: 99px;
+      font-size: 2vh;
+      font-weight: 600;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      white-space: nowrap;
+      pointer-events: none;
+      display: none;
+      font-variant-numeric: tabular-nums;
+    }
+    .signal {
+      position: absolute;
+      top: max(3vh, env(safe-area-inset-top));
+      right: max(3vw, env(safe-area-inset-right));
+      display: none;
+      align-items: center;
+      gap: 1.2vh;
+      padding: 1vh 1.6vh;
+      border-radius: 1.6vh;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      font-size: 2.2vh;
+      font-weight: 600;
+      pointer-events: none;
+    }
+    .signal .lamp {
+      width: 2.6vh;
+      height: 2.6vh;
+      border-radius: 50%;
+      box-shadow: 0 0 1.6vh currentColor;
+      background: currentColor;
+    }
+    .glow {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .glow.top {
+      left: 0; right: 0; top: 0; height: 22vh;
+      background: linear-gradient(to bottom, rgba(255, 59, 48, 0.55), transparent);
+      animation: pulse 0.5s ease-in-out infinite alternate;
+    }
+    .glow.left, .glow.right { top: 0; bottom: 0; width: 14vw; }
+    .glow.left { left: 0; background: linear-gradient(to right, rgba(255, 59, 48, 0.45), transparent); }
+    .glow.right { right: 0; background: linear-gradient(to left, rgba(255, 59, 48, 0.45), transparent); }
+    @keyframes pulse { from { filter: brightness(1); } to { filter: brightness(0.55); } }
+    .alert {
+      position: absolute;
+      top: 9vh;
+      left: 62%;
+      transform: translateX(-50%);
+      padding: 1vh 2vh;
+      border-radius: 99px;
+      background: var(--alert);
+      color: #fff;
+      font-size: 2.4vh;
+      font-weight: 700;
+      display: none;
+      pointer-events: none;
     }
   </style>
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three/three.module.min.js" } }
+  </script>
 </head>
 <body>
-  <canvas id="road"></canvas>
-  <div class="hud">
-    <div class="speed" id="speed">0</div>
-    <div class="unit" id="unit">km/h</div>
-    <div class="gear" id="gear">D</div>
-    <div class="limit" id="limit"></div>
+  <canvas id="scene"></canvas>
+  <div class="glow top" id="fcwGlow"></div>
+  <div class="glow left" id="leftGlow"></div>
+  <div class="glow right" id="rightGlow"></div>
+  <div class="blinkers">
+    <svg id="leftBlink" viewBox="0 0 24 24"><path d="M10 5 3 12l7 7v-4h11V9H10z"/></svg>
+    <svg id="rightBlink" viewBox="0 0 24 24"><path d="m14 5 7 7-7 7v-4H3V9h11z"/></svg>
   </div>
-  <script>
-    "use strict";
+  <div class="alert" id="alert">Collision warning</div>
+  <div class="hud">
+    <div>
+      <div class="speed" id="speed">0</div>
+      <div class="unit" id="unit">km/h</div>
+    </div>
+    <div class="gears" id="gears"><span>P</span><span>R</span><span>N</span><span>D</span></div>
+    <div class="row">
+      <div class="limit" id="limit"></div>
+      <div class="pill" id="assist">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 3a7 7 0 0 1 6.9 6h-3.1a4 4 0 0 0-7.6 0H5.1A7 7 0 0 1 12 5Zm-1 13.9A7 7 0 0 1 5.1 13H8a4 4 0 0 0 3 3v2.9Zm2 0V16a4 4 0 0 0 3-3h2.9a7 7 0 0 1-5.9 5.9Z"/></svg>
+        <span>Autosteer</span>
+      </div>
+    </div>
+  </div>
+  <div class="chip" id="leadChip"></div>
+  <div class="signal" id="signal"><div class="lamp" id="lamp"></div><span id="signalText"></span></div>
 
-    // ---- World model (meters). x: lateral, + = right on screen. z: forward from ego center.
-    const LANE_W = 3.5;
-    const EGO_HALF_LEN = 2.35;
-    const Z_NEAR = -9;
-    const Z_FAR = 70;
-    // DAS_object Dx is the gap ahead of the ego front bumper; the BSM zone sits
-    // beside and behind the ego car, up to just past its front bumper.
-    const BSM_Z_MIN = -7;
-    const BSM_Z_MAX = EGO_HALF_LEN + 1;
-    // A side car this close ahead is the one BSM is reporting: draw it once.
-    const HANDOFF_DX = 5;
-    const SMOOTH_TAU_S = 0.15;
-    const FADE_S = 0.25;
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "./vendor/three/GLTFLoader.js";
+    import { RoomEnvironment } from "./vendor/three/RoomEnvironment.js";
 
-    // DAS_object type codes -> footprint (width, length) in meters.
-    const SIZES = {
-      0: [1.9, 4.6],  // unknown: draw as car
-      1: [2.5, 11],   // truck
-      2: [1.9, 4.6],  // car
-      3: [0.9, 2.2],  // motorcycle
-      4: [0.7, 1.8],  // bicycle
-      5: [0.7, 0.7],  // pedestrian
+    // ---- Conventions -------------------------------------------------------
+    // Car data: x/dx forward (m), y/dy left (m). three.js world: -Z forward,
+    // +X right, +Y up; the ego car's center is the origin.
+    const toWorldX = (left) => -left;
+    const toWorldZ = (forward) => -forward;
+
+    const EGO_LENGTH = 4.75;            // Model Y (2020-2024)
+    const EGO_HALF = EGO_LENGTH / 2;
+    const DEFAULT_LANE_WIDTH = 3.6;
+    const ROAD_BEHIND = 18;             // m drawn behind the car
+    const ROAD_AHEAD = 90;
+    const ROAD_STEP = 1.5;
+    // Flip if the lane bends the wrong way on a real drive (DAS_lanes sign
+    // is not verified yet).
+    const LANE_SIGN = 1;
+
+    // Midnight Silver Metallic: dark grey with metallic flake and clear coat.
+    const EGO_PAINT = { color: 0x5a5d61, metalness: 0.78, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.06 };
+
+    // DAS_object type -> model files (cars rotate through variants so the
+    // traffic doesn't look cloned).
+    const CAR_MODELS = ["car-sedan", "car-suv", "car-hatchback", "car-ev", "car-pickup"];
+    const TYPE_MODELS = {
+      0: CAR_MODELS, 2: CAR_MODELS, 6: CAR_MODELS,
+      1: ["truck-box"], 3: ["motorcycle-sport"], 4: ["bike-road"], 5: ["pedestrian"],
     };
+    const PAINTS = [0xe9eaec, 0x1d2025, 0x9ea4ab, 0x2c4c7c, 0x7d2329, 0x4b5257, 0xc9c2b4];
 
-    const COLORS = {
-      dark: {
-        lane: "rgba(255,255,255,0.35)", edge: "rgba(255,255,255,0.6)",
-        ego: "#e9edf2", lead: "#4fa3ff", side: "#7c8694",
-        bsm: "#ffb020", urgent: "#ff3b30", label: "#f2f4f7",
-      },
-      light: {
-        lane: "rgba(0,0,0,0.3)", edge: "rgba(0,0,0,0.55)",
-        ego: "#2a2f37", lead: "#1f6fd1", side: "#8d96a3",
-        bsm: "#e08a00", urgent: "#e0241b", label: "#15181d",
-      },
-    };
+    // ---- Renderer, scene, lighting -----------------------------------------
+    const canvas = document.getElementById("scene");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
 
-    const GEARS = ["-", "P", "R", "N", "D"];
+    const scene = new THREE.Scene();
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.fog = new THREE.Fog(0x07090c, 40, 95);
 
-    const canvas = document.getElementById("road");
-    const ctx = canvas.getContext("2d");
-    const speedEl = document.getElementById("speed");
-    const unitEl = document.getElementById("unit");
-    const gearEl = document.getElementById("gear");
-    const limitEl = document.getElementById("limit");
+    const hemi = new THREE.HemisphereLight(0xdfe8ff, 0x1a1d22, 0.55);
+    scene.add(hemi);
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+    sun.position.set(-6, 12, 4);
+    scene.add(sun);
 
-    let car = {};
-    let viewW = 0, viewH = 0;
-    let dashOffset = 0;
-    let lastFrameMs = 0;
+    const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 200);
 
-    // Per DAS_object slot: displayed position eases toward the latest target
-    // so the ~180 ms group refresh doesn't make vehicles jump.
-    function makeSlot() { return { z: 0, x: 0, type: 2, alpha: 0, present: false }; }
-    const slots = { lead: makeSlot(), left: makeSlot(), right: makeSlot() };
-    const ghostAlpha = { left: 0, right: 0 };
-
-    function resize() {
-      const dpr = window.devicePixelRatio || 1;
-      viewW = window.innerWidth;
-      viewH = window.innerHeight;
-      canvas.width = Math.round(viewW * dpr);
-      canvas.height = Math.round(viewH * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    window.addEventListener("resize", resize);
-    resize();
-
-    // Pinhole camera behind and above the ego car. The road is drawn in the
-    // right ~60% of the screen; the HUD takes the left. y is height above road.
-    function project(x, z, y = 0) {
-      const camBack = 20;
-      const camH = 12;
-      const f = viewH;
-      const depth = Math.max(1, z + camBack);
-      const cx = viewW * 0.62;
-      const horizon = viewH * 0.08;
-      return {
-        x: cx + (f * x) / depth,
-        y: horizon + (f * (camH - y)) / depth,
-        s: f / depth,
-      };
-    }
-
-    function quad(x0, x1, z0, z1) {
-      const a = project(x0, z0), b = project(x1, z0), c = project(x1, z1), d = project(x0, z1);
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.lineTo(c.x, c.y);
-      ctx.lineTo(d.x, d.y);
-      ctx.closePath();
-    }
-
-    function drawRoad(c) {
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--road");
-      quad(-LANE_W * 1.5, LANE_W * 1.5, Z_NEAR, Z_FAR);
-      ctx.fill();
-
-      // Solid road edges.
-      ctx.strokeStyle = c.edge;
-      for (const x of [-LANE_W * 1.5, LANE_W * 1.5]) {
-        const a = project(x, Z_NEAR), b = project(x, Z_FAR);
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.stroke();
+    // ---- Smoothing --------------------------------------------------------
+    // Critically damped spring (SmoothDamp): continuous velocity, so values
+    // that step at the data rate (10-25 Hz) glide at the display rate.
+    class Smoother {
+      constructor(value) { this.value = value; this.velocity = 0; this.lastMs = undefined; }
+      update(target, smoothMs, now) {
+        if (this.lastMs === undefined) { this.lastMs = now; return this.value; }
+        const dt = Math.min(0.1, Math.max(0, (now - this.lastMs) / 1000));
+        this.lastMs = now;
+        const omega = 2 / Math.max(0.001, smoothMs / 1000);
+        const x = omega * dt;
+        const decay = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
+        const change = this.value - target;
+        const temp = (this.velocity + omega * change) * dt;
+        this.velocity = (this.velocity - omega * temp) * decay;
+        this.value = target + (change + temp) * decay;
+        return this.value;
       }
+    }
 
-      // Dashed lane lines, scrolling with ego speed.
-      ctx.fillStyle = c.lane;
-      const dash = 3, gap = 9, period = dash + gap;
-      for (const x of [-LANE_W / 2, LANE_W / 2]) {
-        for (let z = Z_NEAR - (dashOffset % period); z < Z_FAR; z += period) {
-          quad(x - 0.08, x + 0.08, z, Math.min(Z_FAR, z + dash));
-          ctx.fill();
+    // ---- Ribbons (road, lane lines, path, zones) ---------------------------
+    // A strip along a lateral function f(d) (m, + = left) at offsets
+    // [o0, o1] from it, sampled every ROAD_STEP. uv: u across, v = distance.
+    class Ribbon {
+      constructor(material, d0, d1, step = ROAD_STEP) {
+        this.d0 = d0; this.step = step;
+        this.n = Math.max(2, Math.round((d1 - d0) / step) + 1);
+        const g = new THREE.BufferGeometry();
+        this.pos = new Float32Array(this.n * 2 * 3);
+        const uv = new Float32Array(this.n * 2 * 2);
+        const idx = [];
+        for (let i = 0; i < this.n; i++) {
+          uv.set([0, d0 + i * step, 1, d0 + i * step], i * 4);
+          if (i < this.n - 1) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
         }
+        g.setAttribute("position", new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage));
+        g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+        // Flat road: every vertex faces up (lit materials need normals).
+        const normals = new Float32Array(this.n * 2 * 3);
+        for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
+        g.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+        g.setIndex(idx);
+        this.mesh = new THREE.Mesh(g, material);
+        this.mesh.frustumCulled = false;
+        this.uv = uv;
+      }
+      update(f, o0, o1, y = 0, d0 = this.d0) {
+        const h = 0.25;
+        for (let i = 0; i < this.n; i++) {
+          const d = d0 + i * this.step;
+          const c = f(d);
+          const slope = (f(d + h) - f(d - h)) / (2 * h);
+          const inv = 1 / Math.sqrt(1 + slope * slope);
+          for (const [k, o] of [[0, o0], [1, o1]]) {
+            const fwd = d - o * slope * inv;
+            const left = c + o * inv;
+            this.pos.set([toWorldX(left), y, toWorldZ(fwd)], (i * 2 + k) * 3);
+          }
+          this.uv[i * 4 + 1] = d; this.uv[i * 4 + 3] = d;
+        }
+        this.mesh.geometry.attributes.position.needsUpdate = true;
+        this.mesh.geometry.attributes.uv.needsUpdate = true;
       }
     }
 
-    function poly(points) {
-      ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
-      ctx.closePath();
-      ctx.fill();
+    // Unlit line/band shader: optional dashes scrolling with the car, fades
+    // out with distance, optional chevrons for the driving path.
+    function bandMaterial({ color, opacity, dashed = false, chevrons = false }) {
+      return new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        uniforms: {
+          uColor: { value: new THREE.Color(color) },
+          uOpacity: { value: opacity },
+          uScroll: { value: 0 },
+          uFar: { value: 80 },
+          uDashed: { value: dashed ? 1 : 0 },
+          uChevrons: { value: chevrons ? 1 : 0 },
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }`,
+        fragmentShader: `
+          uniform vec3 uColor;
+          uniform float uOpacity, uScroll, uFar, uDashed, uChevrons;
+          varying vec2 vUv;
+          void main() {
+            float d = vUv.y;
+            float a = uOpacity;
+            a *= 1.0 - smoothstep(uFar * 0.55, uFar, d);
+            a *= smoothstep(-14.0, -6.0, d);
+            if (uDashed > 0.5) {
+              float m = mod(d + uScroll, 9.0);
+              a *= smoothstep(0.0, 0.25, m) * (1.0 - smoothstep(3.0, 3.25, m));
+            }
+            vec3 col = uColor;
+            if (uChevrons > 0.5) {
+              float across = abs(vUv.x - 0.5);
+              float edge = smoothstep(0.5, 0.36, across);
+              float chev = fract((d + uScroll * 0.6 - across * 3.0) / 6.0);
+              float band = smoothstep(0.0, 0.08, chev) * (1.0 - smoothstep(0.22, 0.3, chev));
+              a *= edge * (0.55 + 0.45 * band);
+              col = mix(uColor, vec3(1.0), band * 0.18);
+            }
+            if (a < 0.003) discard;
+            gl_FragColor = vec4(col, a);
+          }`,
+      });
     }
 
-    // Vehicle as a box: the camera sits behind it, so the rear face, the roof
-    // and the side facing the road center are the visible ones.
-    function drawVehicle(x, zCenter, type, color, alpha) {
-      const [w, len] = SIZES[type] || SIZES[0];
-      const h = type === 1 ? 3.2 : type === 5 ? 1.7 : 1.4;
-      const z0 = zCenter - len / 2, z1 = zCenter + len / 2;
-      const x0 = x - w / 2, x1 = x + w / 2;
-      const P = (px, pz, py) => project(px, pz, py);
-      ctx.globalAlpha = alpha;
+    // Ground beyond the road, fading into the fog.
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x0d1014, roughness: 1, metalness: 0 });
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.02;
+    scene.add(ground);
 
-      const sideX = x1 < 0 ? x1 : x0 > 0 ? x0 : null;
-      if (sideX !== null) {
-        ctx.fillStyle = color;
-        poly([P(sideX, z0, 0), P(sideX, z1, 0), P(sideX, z1, h), P(sideX, z0, h)]);
-        ctx.fillStyle = "rgba(0,0,0,0.35)";
-        poly([P(sideX, z0, 0), P(sideX, z1, 0), P(sideX, z1, h), P(sideX, z0, h)]);
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x1a1d22, roughness: 0.92, metalness: 0 });
+    const road = new Ribbon(roadMat, -ROAD_BEHIND, ROAD_AHEAD);
+    scene.add(road.mesh);
+
+    // Lane lines: index -2..1 is the boundary at (i + 0.5) lanes from center.
+    const lineMats = {}, lines = {};
+    for (const i of [-2, -1, 1, 2]) {
+      const outer = Math.abs(i) === 2;
+      lineMats[i] = bandMaterial({ color: 0xf2f4f7, opacity: outer ? 0.55 : 0.8, dashed: !outer });
+      lines[i] = new Ribbon(lineMats[i], -ROAD_BEHIND, ROAD_AHEAD, 0.75);
+      lines[i].mesh.renderOrder = 2;
+      scene.add(lines[i].mesh);
+    }
+    const pathMat = bandMaterial({ color: 0x3d8bff, opacity: 0.55, chevrons: true });
+    const path = new Ribbon(pathMat, -3, 70, 0.75);
+    path.mesh.renderOrder = 1;
+    scene.add(path.mesh);
+    const zoneMats = { left: bandMaterial({ color: 0xf5a623, opacity: 0 }), right: bandMaterial({ color: 0xf5a623, opacity: 0 }) };
+    const zones = { left: new Ribbon(zoneMats.left, -9, 2, 0.5), right: new Ribbon(zoneMats.right, -9, 2, 0.5) };
+    for (const z of Object.values(zones)) { z.mesh.renderOrder = 1; scene.add(z.mesh); }
+    const stopLineMat = bandMaterial({ color: 0xffffff, opacity: 0 });
+    const stopLine = new Ribbon(stopLineMat, 0, 0.5, 0.5);
+    stopLine.mesh.renderOrder = 3;
+    scene.add(stopLine.mesh);
+
+    // ---- Models ------------------------------------------------------------
+    const loader = new GLTFLoader();
+    const prototypes = {};
+
+    // Soft contact shadow under a vehicle.
+    const shadowTex = (() => {
+      const c = document.createElement("canvas");
+      c.width = c.height = 128;
+      const g = c.getContext("2d");
+      const grd = g.createRadialGradient(64, 64, 8, 64, 64, 64);
+      grd.addColorStop(0, "rgba(0,0,0,0.75)");
+      grd.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = grd;
+      g.fillRect(0, 0, 128, 128);
+      return new THREE.CanvasTexture(c);
+    })();
+    function contactShadow(width, length) {
+      const m = new THREE.Mesh(
+        new THREE.PlaneGeometry(width * 1.35, length * 1.2),
+        new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false }),
+      );
+      m.rotation.x = -Math.PI / 2;
+      m.position.y = 0.01;
+      m.renderOrder = 4;
+      return m;
+    }
+
+    // Wraps a loaded glTF scene so it faces -Z (forward), sits on the ground
+    // and is centered; models in the pack face +Z, in meters.
+    function normalize(root, { targetLength = null, faceForwardZ = 1 } = {}) {
+      root.updateMatrixWorld(true);
+      const box = new THREE.Box3();
+      root.traverse((m) => { if (m.isMesh && m.visible) box.union(new THREE.Box3().setFromObject(m)); });
+      const size = box.getSize(new THREE.Vector3());
+      const lengthAxisX = size.x > size.z;
+      const length = Math.max(size.x, size.z);
+      const scale = targetLength ? targetLength / length : 1;
+      const center = box.getCenter(new THREE.Vector3());
+      const inner = new THREE.Group();
+      root.position.sub(new THREE.Vector3(center.x, box.min.y, center.z));
+      inner.add(root);
+      if (lengthAxisX) inner.rotation.y = -Math.PI / 2;
+      const outer = new THREE.Group();
+      inner.scale.setScalar(scale);
+      // Pack models face +Z; turn them to face -Z (forward).
+      if (faceForwardZ > 0) inner.rotation.y += Math.PI;
+      outer.add(inner);
+      outer.userData.length = length * scale;
+      outer.userData.width = Math.min(size.x, size.z) * scale;
+      return outer;
+    }
+
+    async function loadPrototype(name) {
+      if (prototypes[name]) return prototypes[name];
+      prototypes[name] = loader.loadAsync(`./models/${name}.glb`).then((g) => normalize(g.scene));
+      return prototypes[name];
+    }
+
+    async function loadEgo() {
+      // A user-supplied models/ego.glb (e.g. a purchased Model Y; glTF
+      // convention, front toward +Z) replaces the bundled stand-in.
+      try {
+        const g = await loader.loadAsync("./models/ego.glb");
+        return normalize(g.scene, { targetLength: EGO_LENGTH });
+      } catch (_err) {
+        const g = await loader.loadAsync("./models/ego-tesla.glb");
+        g.scene.traverse((m) => {
+          if (!m.isMesh) return;
+          if (m.name === "Cube" || m.parent?.name === "Cube") { m.visible = false; return; }
+          if (m.material?.name === "Vehicle") {
+            // The body shares one texture atlas with glass and tyres:
+            // tinting it turns the light paint texels Midnight Silver while
+            // dark glass and rubber stay dark.
+            m.material = new THREE.MeshPhysicalMaterial({ map: m.material.map, ...EGO_PAINT });
+          }
+        });
+        return normalize(g.scene, { targetLength: EGO_LENGTH, faceForwardZ: EGO_FALLBACK_FACES_Z });
       }
-      ctx.fillStyle = color;
-      poly([P(x0, z0, h), P(x1, z0, h), P(x1, z1, h), P(x0, z1, h)]);
-      poly([P(x0, z0, 0), P(x1, z0, 0), P(x1, z0, h), P(x0, z0, h)]);
-      ctx.fillStyle = "rgba(0,0,0,0.22)";
-      poly([P(x0, z0, 0), P(x1, z0, 0), P(x1, z0, h), P(x0, z0, h)]);
-      ctx.globalAlpha = 1;
+    }
+    // The bundled Tesla stand-in's nose points toward +Z in its file, like
+    // the pack models.
+    const EGO_FALLBACK_FACES_Z = 1;
+
+    let ego = null;
+    loadEgo().then((m) => {
+      ego = m;
+      ego.add(contactShadow(ego.userData.width, ego.userData.length));
+      scene.add(ego);
+    }).catch((err) => console.error("ego model failed", err));
+
+    // ---- Vehicle tracks ----------------------------------------------------
+    class Track {
+      constructor(id) { this.id = id; this.obj = null; this.modelName = null; this.loading = null; }
+      async setModel(type, variant) {
+        const names = TYPE_MODELS[type] || CAR_MODELS;
+        const name = names[variant % names.length];
+        if (name === this.modelName || this.loading === name) return;
+        this.loading = name;
+        const proto = await loadPrototype(name);
+        if (this.loading !== name) return;
+        const obj = proto.clone(true);
+        const paint = PAINTS[variant % PAINTS.length];
+        obj.traverse((m) => {
+          if (m.isMesh && /paint/i.test(m.material?.name || "")) {
+            m.material = m.material.clone();
+            m.material.color = new THREE.Color(paint);
+            m.material.metalness = Math.max(m.material.metalness, 0.45);
+            m.material.roughness = Math.min(m.material.roughness, 0.4);
+            m.userData.paint = m.material;
+          }
+        });
+        obj.add(contactShadow(proto.userData.width, proto.userData.length));
+        obj.userData.length = proto.userData.length;
+        if (this.obj) scene.remove(this.obj);
+        this.obj = obj;
+        this.modelName = name;
+        this.loading = null;
+        scene.add(obj);
+      }
+      place(forwardCenter, left, heading, visible) {
+        if (!this.obj) return;
+        this.obj.visible = visible;
+        this.obj.position.set(toWorldX(left), 0, toWorldZ(forwardCenter));
+        this.obj.rotation.y = heading;
+      }
+      hide() { if (this.obj) this.obj.visible = false; }
+      warn(level, now) {
+        if (!this.obj) return;
+        const pulse = level > 0 ? 0.55 + 0.45 * Math.sin(now / 90) : 0;
+        this.obj.traverse((m) => {
+          if (m.userData?.paint) {
+            m.userData.paint.emissive = new THREE.Color(level >= 2 ? 0xff2a1f : 0xf5a623);
+            m.userData.paint.emissiveIntensity = level > 0 ? 0.35 * pulse : 0;
+          }
+        });
+      }
     }
 
-    function drawBsmZone(side, level, color) {
-      const xc = side * LANE_W;
-      ctx.globalAlpha = level >= 2 ? 0.45 : 0.28;
-      ctx.fillStyle = color;
-      quad(xc - LANE_W / 2 + 0.2, xc + LANE_W / 2 - 0.2, BSM_Z_MIN, BSM_Z_MAX);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    }
+    const tracks = {
+      lead: new Track("lead"), cutin: new Track("cutin"),
+      left: new Track("left"), right: new Track("right"),
+      leftGhost: new Track("leftGhost"), rightGhost: new Track("rightGhost"),
+    };
+    let spawnCounter = 0;
 
-    function label(text, x, z, color) {
-      const p = project(x, z);
-      ctx.fillStyle = color;
-      ctx.font = "600 " + Math.round(viewH * 0.035) + "px -apple-system, Roboto, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(text, p.x, p.y - p.s * 2.4);
-    }
+    // ---- State helpers -----------------------------------------------------
+    const num = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
+    const dasDx = (v) => num(v, -1);
 
-    function num(v, fallback) {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : fallback;
-    }
-
-    function formatDistance(m) {
-      if (car.isImperial) return Math.round(m * 3.28084) + " ft";
-      return Math.round(m) + " m";
-    }
-
-    function egoSpeedMs() {
-      const v = Math.max(0, num(car.egoSpeed, 0));
+    function egoSpeedMs(car) {
+      const v = Math.max(0, num(car.egoSpeed));
       return car.isImperial ? v * 0.44704 : v / 3.6;
     }
 
-    function updateSlot(slot, dx, dy, type, laneX, dt) {
-      const present = dx >= 0;
-      if (present) {
-        const zTarget = EGO_HALF_LEN + dx + (SIZES[type] || SIZES[0])[1] / 2;
-        // Lead keeps its small lateral offset; side cars snap to lane center
-        // because the sign of DAS Dy is not verified yet.
-        const xTarget = laneX === 0 ? Math.max(-1.2, Math.min(1.2, -dy)) : laneX;
-        if (!slot.present && slot.alpha <= 0) {
-          slot.z = zTarget;
-          slot.x = xTarget;
-        } else {
-          const k = 1 - Math.exp(-dt / SMOOTH_TAU_S);
-          slot.z += (zTarget - slot.z) * k;
-          slot.x += (xTarget - slot.x) * k;
-        }
-        slot.type = type;
-        slot.alpha = Math.min(1, slot.alpha + dt / FADE_S);
-      } else {
-        slot.alpha = Math.max(0, slot.alpha - dt / FADE_S);
-      }
-      slot.present = present;
+    // Lane center (m, + = left) at distance d, from DAS_lanes.
+    function laneFn(car) {
+      if (!(num(car.laneViewRange) > 0)) return () => 0;
+      const c0 = num(car.laneC0), c1 = num(car.laneC1), c2 = num(car.laneC2), c3 = num(car.laneC3);
+      return (d) => LANE_SIGN * (c0 + d * (c1 + d * (c2 + d * c3)));
     }
 
-    function frame(nowMs) {
-      const dt = lastFrameMs ? Math.min(0.1, (nowMs - lastFrameMs) / 1000) : 0;
-      lastFrameMs = nowMs;
-      dashOffset += egoSpeedMs() * dt;
+    // Path the car will drive at its steering angle (bicycle model).
+    const STEER_RATIO = 12.0, WHEELBASE_M = 2.89, UNDERSTEER = 0.0012, MAX_K = 0.1;
+    function steeringCurvature(car) {
+      const wheelDeg = -num(car.egoSteeringAngle) / STEER_RATIO;  // car: negative = left
+      const v = egoSpeedMs(car);
+      const k = Math.tan(wheelDeg * Math.PI / 180) / (WHEELBASE_M * (1 + UNDERSTEER * v * v));
+      return Math.max(-MAX_K, Math.min(MAX_K, k));
+    }
 
-      const theme = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
-      const c = COLORS[theme];
+    // ---- Side tracks (BSM <-> DAS_object hand-off) -------------------------
+    // Same model as the vanilla dashboard: one tracked vehicle per side,
+    // following DAS ahead and the blind spot zone beside/behind, sliding in
+    // from off-screen behind when only BSM sees it.
+    const BSM_FORWARD = -3, OFFSCREEN = -18, GONE = -15, HANDOFF_DX = 5, CLASS_MEMORY_MS = 5000;
+    const side = {
+      left: { x: undefined, sm: null, source: undefined, switchUntil: 0, enter: false, cls: 2, clsMs: 0, variant: 0 },
+      right: { x: undefined, sm: null, source: undefined, switchUntil: 0, enter: false, cls: 2, clsMs: 0, variant: 0 },
+    };
 
-      updateSlot(slots.lead, num(car.leadVehDx, -1), num(car.leadVehDy, 0), num(car.leadVehType, 2), 0, dt);
-      updateSlot(slots.left, num(car.leftVehDx, -1), num(car.leftVehDy, 0), num(car.leftVehType, 2), -LANE_W, dt);
-      updateSlot(slots.right, num(car.rightVehDx, -1), num(car.rightVehDy, 0), num(car.rightVehType, 2), LANE_W, dt);
-
-      ctx.clearRect(0, 0, viewW, viewH);
-      drawRoad(c);
-
+    function bsmLevel(car, s) {
       const alwaysOn = car.alwaysOnBlindSpotMonitor !== false;
-      const sides = [
-        { dir: -1, bsm: num(car.leftBlindSpot, 0), blinker: num(car.leftBlinker, 0) > 0, slot: slots.left, dx: num(car.leftVehDx, -1) },
-        { dir: 1, bsm: num(car.rightBlindSpot, 0), blinker: num(car.rightBlinker, 0) > 0, slot: slots.right, dx: num(car.rightVehDx, -1) },
-      ];
+      const blinker = num(car[s + "Blinker"]) > 0;
+      const warn = Math.round(num(car.sideCollisionWarning));
+      const sideWarn = s === "left" ? warn === 1 || warn === 3 : warn === 2 || warn === 3;
+      const bsm = num(car[s + "BlindSpot"]);
+      if (sideWarn) return 2;
+      if (bsm > 0 && (alwaysOn || blinker)) return bsm >= 2 || blinker ? 2 : 1;
+      return 0;
+    }
 
-      // Far to near so nearer vehicles overdraw farther ones.
-      const drawList = [];
-      for (const s of sides) {
-        const key = s.dir < 0 ? "left" : "right";
-        const level = s.bsm > 0 ? (s.bsm >= 2 || s.blinker ? 2 : 1) : 0;
-        const visible = level > 0 && (alwaysOn || s.blinker);
-        const bsmColor = level >= 2 ? c.urgent : c.bsm;
-        if (visible) drawBsmZone(s.dir, level, bsmColor);
-        const handoff = visible && s.dx >= 0 && s.dx < HANDOFF_DX;
-        if (s.slot.alpha > 0) {
-          drawList.push({ x: s.slot.x, z: s.slot.z, type: s.slot.type, alpha: s.slot.alpha,
-                          color: handoff ? bsmColor : c.side });
-        }
-        // BSM alone gives no position: park a ghost car mid-zone unless the
-        // DAS_object car is already the one in it.
-        const ghostOn = visible && !handoff;
-        ghostAlpha[key] = Math.max(0, Math.min(0.85, ghostAlpha[key] + (ghostOn ? 1 : -1) * dt / FADE_S));
-        if (ghostAlpha[key] > 0) {
-          drawList.push({ x: s.dir * LANE_W, z: -3.5, type: 2, alpha: ghostAlpha[key], color: bsmColor });
-        }
+    function updateSide(car, s, lane, laneWidth, now) {
+      const t = side[s];
+      const sign = s === "left" ? 1 : -1;
+      const dx = dasDx(car[s + "VehDx"]);
+      const level = bsmLevel(car, s);
+      const das = dx >= 0;
+      let target = null;
+      if (das) {
+        t.cls = Math.round(num(car[s + "VehType"], 2));
+        t.clsMs = now;
       }
-      if (slots.lead.alpha > 0) {
-        drawList.push({ x: slots.lead.x, z: slots.lead.z, type: slots.lead.type,
-                        alpha: slots.lead.alpha, color: c.lead });
+      const len = 4.7;
+      if (das) target = { x: EGO_HALF + dx + len / 2, source: "das" };
+      else if (level > 0) target = { x: BSM_FORWARD, source: "bsm" };
+      else if (t.x !== undefined && t.x < EGO_HALF + HANDOFF_DX + len && t.x > GONE) target = { x: OFFSCREEN, source: "exit" };
+
+      const ghost = das && level > 0 && dx >= HANDOFF_DX;
+      const gtrack = tracks[s + "Ghost"];
+      if (ghost) {
+        gtrack.setModel(2, 1 + (s === "left" ? 0 : 2));
+        gtrack.place(BSM_FORWARD, lane(BSM_FORWARD) + sign * laneWidth, 0, true);
+        gtrack.warn(level, now);
+      } else gtrack.hide();
+
+      const tr = tracks[s];
+      if (!target) { t.x = undefined; t.source = undefined; tr.hide(); return; }
+      if (t.x === undefined) {
+        t.variant = ++spawnCounter;
+        t.sm = new Smoother(target.source === "bsm" ? OFFSCREEN : target.x);
+        if (target.source === "bsm") { t.switchUntil = now + 1200; t.enter = true; }
+      } else if (t.source !== target.source) {
+        t.switchUntil = now + 1200;
+        t.enter = target.source === "exit";
       }
-      drawList.sort((a, b) => b.z - a.z);
-      for (const v of drawList) drawVehicle(v.x, v.z, v.type, v.color, v.alpha);
+      const smoothMs = now < t.switchUntil ? (t.enter ? 600 : 800) : 250;
+      t.x = t.sm.update(target.x, smoothMs, now);
+      t.source = target.source;
+      const cls = now - t.clsMs < CLASS_MEMORY_MS ? t.cls : 2;
+      tr.setModel(cls, t.variant);
+      const heading = das ? num(car[s + "VehHeading"]) : 0;
+      tr.place(t.x, lane(t.x) + sign * laneWidth, heading, true);
+      tr.warn(ghost ? 0 : level, now);
+    }
 
-      drawVehicle(0, 0, 2, c.ego, 1);
+    // Lead and cut-in.
+    const slot = {
+      lead: { sm: null, smy: null, variant: 0 },
+      cutin: { sm: null, smy: null, variant: 0 },
+    };
+    function updateAhead(car, key, maxDy, lane, now, warnLevel) {
+      const t = slot[key], tr = tracks[key];
+      const dx = dasDx(car[key + "VehDx"]);
+      if (dx < 0) { t.sm = null; tr.hide(); return null; }
+      const type = Math.round(num(car[key + "VehType"], 2));
+      const len = type === 1 ? 8.8 : type === 3 || type === 4 ? 2 : type === 5 ? 0.5 : 4.7;
+      const forward = EGO_HALF + dx + len / 2;
+      const dy = Math.max(-maxDy, Math.min(maxDy, num(car[key + "VehDy"])));
+      if (!t.sm) { t.variant = ++spawnCounter; t.sm = new Smoother(forward); t.smy = new Smoother(dy); }
+      const f = t.sm.update(forward, 250, now);
+      const y = t.smy.update(dy, 250, now);
+      tr.setModel(type, t.variant);
+      // The lead/cut-in sit in the ego lane (plus their own offset), which
+      // bends with the road.
+      tr.place(f, lane(f) + y, num(car[key + "VehHeading"]), true);
+      tr.warn(warnLevel, now);
+      return { forward: f, left: lane(f) + y, dx };
+    }
 
-      const leadDx = num(car.leadVehDx, -1);
-      if (leadDx >= 0 && slots.lead.alpha > 0.5) {
-        const v = egoSpeedMs();
-        const gap = v > 1.5 ? "  " + (leadDx / v).toFixed(1) + " s" : "";
-        label(formatDistance(leadDx) + gap, slots.lead.x, slots.lead.z, c.label);
-      }
+    // ---- Per-frame world update --------------------------------------------
+    const laneSm = { c0: new Smoother(0), c1: new Smoother(0), c2: new Smoother(0), c3: new Smoother(0), w: new Smoother(DEFAULT_LANE_WIDTH) };
+    const pathSm = new Smoother(0);
+    const CAM = { back: 12.5, up: 5.6, backBlink: 14.5, upBlink: 6.6, lookAhead: 22 };
+    const camSm = { back: new Smoother(CAM.back), up: new Smoother(CAM.up) };
+    let scroll = 0;
+    let lastFrameMs = 0;
+    let latestCar = null;
 
+    function smoothedLane(car, now) {
+      const has = num(car.laneViewRange) > 0;
+      const c = has ? [num(car.laneC0), num(car.laneC1), num(car.laneC2), num(car.laneC3)] : [0, 0, 0, 0];
+      const c0 = laneSm.c0.update(c[0], 200, now), c1 = laneSm.c1.update(c[1], 200, now);
+      const c2 = laneSm.c2.update(c[2], 200, now), c3 = laneSm.c3.update(c[3], 200, now);
+      const w = laneSm.w.update(has ? num(car.laneWidth, DEFAULT_LANE_WIDTH) || DEFAULT_LANE_WIDTH : DEFAULT_LANE_WIDTH, 300, now);
+      return { fn: (d) => LANE_SIGN * (c0 + d * (c1 + d * (c2 + d * c3))), width: w, has };
+    }
+
+    function frame(now) {
       requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
+      const dt = lastFrameMs ? Math.min(0.1, (now - lastFrameMs) / 1000) : 0;
+      lastFrameMs = now;
+      const car = latestCar || {};
+      const v = egoSpeedMs(car);
+      scroll += v * dt;
 
-    function render(state) {
-      car = state;
-      if (typeof state.darkMode === "boolean") {
-        document.documentElement.setAttribute("data-theme", state.darkMode ? "dark" : "light");
+      const lane = smoothedLane(car, now);
+      const L = lane.fn, W = lane.width;
+
+      road.update(L, -1.5 * W - 0.6, 1.5 * W + 0.6, 0);
+      const ldw = Math.round(num(car.laneDepartureWarning));
+      for (const i of [-2, -1, 1, 2]) {
+        const o = (i > 0 ? i - 0.5 : i + 0.5) * W;  // i: -2,-1 right side; 1,2 left side
+        lines[i].update(L, o - 0.06, o + 0.06, 0.02);
+        lineMats[i].uniforms.uScroll.value = scroll;
+        const departing = (i === 1 && (ldw === 1 || ldw === 3)) || (i === -1 && (ldw === 2 || ldw === 4));
+        lineMats[i].uniforms.uColor.value.set(departing ? 0xff3b30 : 0xf2f4f7);
+        lineMats[i].uniforms.uOpacity.value = departing ? 1 : Math.abs(i) === 2 ? 0.55 : 0.8;
       }
-      speedEl.textContent = String(Math.max(0, Math.round(num(state.egoSpeed, 0))));
-      unitEl.textContent = state.isImperial ? "mph" : "km/h";
-      gearEl.textContent = GEARS[Math.round(num(state.gear, 0))] || "-";
-      const limit = Math.round(num(state.fusedSpeedLimit, 0));
-      limitEl.style.display = limit > 0 ? "flex" : "none";
-      limitEl.textContent = String(limit);
+
+      // Driving path: the lane under lane keeping, otherwise the steering
+      // prediction in D.
+      const assist = !!(car.adasOn || car.madsActive);
+      const gear = Math.round(num(car.gear));
+      const k = pathSm.update(assist && lane.has ? 0 : gear === 4 ? steeringCurvature(car) : 0, 200, now);
+      const pathFn = assist && lane.has ? L : (d) => (k * d * Math.max(d, 0)) / 2;
+      const pathRange = Math.min(70, Math.abs(k) > 1e-4 ? 1 / Math.abs(k) : 70);
+      path.update(pathFn, -1.05, 1.05, 0.03);
+      pathMat.uniforms.uFar.value = Math.max(12, pathRange);
+      pathMat.uniforms.uScroll.value = scroll;
+      pathMat.uniforms.uColor.value.set(assist ? 0x3d8bff : 0xc8ced8);
+      pathMat.uniforms.uOpacity.value = gear === 4 ? (assist ? 0.6 : 0.32) : 0;
+
+      // Blind spot zones.
+      for (const s of ["left", "right"]) {
+        const level = bsmLevel(car, s);
+        const sign = s === "left" ? 1 : -1;
+        zones[s].update(L, sign * W * 0.5 + 0.15 * sign, sign * W * 1.5 - 0.15 * sign, 0.025);
+        zoneMats[s].uniforms.uColor.value.set(level >= 2 ? 0xff3b30 : 0xf5a623);
+        zoneMats[s].uniforms.uOpacity.value = level > 0 ? (level >= 2 ? 0.45 : 0.36) : 0;
+        updateSide(car, s, L, W, now);
+      }
+
+      const fcw = num(car.forwardCollisionWarning) > 0;
+      const lead = updateAhead(car, "lead", 1.2, L, now, fcw ? 2 : 0);
+      updateAhead(car, "cutin", 5, L, now, fcw ? 2 : 1);
+
+      // Stop line from the road sign (DAS_object), else DAS_road.
+      const signDist = num(car.roadSignStopLineDist, -1);
+      const stopDist = signDist >= 0 ? signDist : num(car.stopLineDist);
+      if (stopDist > 0.5 && stopDist < 80) {
+        stopLine.update(L, -W / 2 + 0.1, W / 2 - 0.1, 0.035, EGO_HALF + stopDist);
+        stopLineMat.uniforms.uOpacity.value = 0.95;
+      } else stopLineMat.uniforms.uOpacity.value = 0;
+
+      // Camera: pulls back while a blinker is on.
+      const blinking = num(car.leftBlinker) > 0 || num(car.rightBlinker) > 0;
+      const back = camSm.back.update(blinking ? CAM.backBlink : CAM.back, 700, now);
+      const up = camSm.up.update(blinking ? CAM.upBlink : CAM.up, 700, now);
+      camera.position.set(0, up, back);
+      // Look a little into the bend so the road ahead stays framed.
+      camera.lookAt(toWorldX(L(CAM.lookAhead) * 0.35), 0.4, toWorldZ(CAM.lookAhead));
+
+      updateLeadChip(car, lead);
+      renderer.render(scene, camera);
     }
 
-    // ---- Data intake: iOS pushes a plain object, Android exposes getters.
-    window.receiveMessage = render;
+    // ---- HUD ---------------------------------------------------------------
+    const $ = (id) => document.getElementById(id);
+    const leadChip = $("leadChip");
+    function updateLeadChip(car, lead) {
+      if (!lead) { leadChip.style.display = "none"; return; }
+      const p = new THREE.Vector3(toWorldX(lead.left), 2.2, toWorldZ(lead.forward)).project(camera);
+      if (p.z > 1) { leadChip.style.display = "none"; return; }
+      const v = egoSpeedMs(car);
+      const dist = car.isImperial ? Math.round(lead.dx * 3.28084) + " ft" : Math.round(lead.dx) + " m";
+      leadChip.textContent = v > 1.5 ? `${dist} · ${(lead.dx / v).toFixed(1)} s` : dist;
+      leadChip.style.left = ((p.x + 1) / 2) * innerWidth + "px";
+      leadChip.style.top = ((1 - p.y) / 2) * innerHeight + "px";
+      leadChip.style.display = "block";
+    }
 
-    const ANDROID_KEYS = [
-      "egoSpeed", "gear", "fusedSpeedLimit", "leftBlinker", "rightBlinker",
-      "leftBlindSpot", "rightBlindSpot",
-      "leadVehDx", "leadVehDy", "leadVehType",
-      "leftVehDx", "leftVehDy", "leftVehType",
-      "rightVehDx", "rightVehDy", "rightVehType",
-      "isImperial", "darkMode", "alwaysOnBlindSpotMonitor",
+    const GEARS = { 1: 0, 2: 1, 3: 2, 4: 3 };
+    function updateHud(car) {
+      if (typeof car.darkMode === "boolean") {
+        document.documentElement.setAttribute("data-theme", car.darkMode ? "dark" : "light");
+      }
+      const dark = document.documentElement.getAttribute("data-theme") !== "light";
+      const bg = dark ? 0x07090c : 0xe9ecf0;
+      scene.fog.color.set(bg);
+      renderer.setClearColor(bg);
+      roadMat.color.set(dark ? 0x1c2026 : 0x8f959e);
+      groundMat.color.set(dark ? 0x0d1014 : 0xd5d9df);
+
+      $("speed").textContent = String(Math.max(0, Math.round(num(car.egoSpeed))));
+      $("unit").textContent = car.isImperial ? "mph" : "km/h";
+      const g = GEARS[Math.round(num(car.gear))];
+      [...$("gears").children].forEach((el, i) => el.classList.toggle("active", i === g));
+      const limit = Math.round(num(car.fusedSpeedLimit));
+      $("limit").style.display = limit > 0 ? "flex" : "none";
+      $("limit").textContent = String(limit);
+      $("assist").style.display = car.adasOn || car.madsActive ? "flex" : "none";
+
+      const blink = (v, el) => { el.style.opacity = num(v) === 2 ? "1" : num(v) === 1 ? "0.25" : "0"; };
+      blink(car.leftBlinker, $("leftBlink"));
+      blink(car.rightBlinker, $("rightBlink"));
+
+      const fcw = num(car.forwardCollisionWarning) > 0;
+      $("fcwGlow").style.opacity = fcw ? "1" : "0";
+      $("alert").style.display = fcw ? "block" : "none";
+      for (const s of ["left", "right"]) $(s + "Glow").style.opacity = bsmLevel(car, s) >= 2 ? "1" : "0";
+
+      // Traffic light / stop sign from DAS_object, else DAS_road.
+      const signId = Math.round(num(car.roadSignId, -1));
+      const signDist = num(car.roadSignStopLineDist, -1);
+      const colors = { 1: "#ff3b30", 2: "#ffcc00", 3: "#34c759", 4: "#ff3b30" };
+      const roadColors = { 1: "#ff3b30", 2: "#34c759", 3: "#ffcc00" };
+      const arrows = { 1: "←", 2: "→", 3: "↑" };
+      let color = null, text = "";
+      const dist = (m) => (car.isImperial ? Math.round(m * 3.28084) + " ft" : Math.round(m) + " m");
+      if (signId === 0) { color = "#ff3b30"; text = "STOP" + (signDist > 0 ? " · " + dist(signDist) : ""); }
+      else if (signId === 1 && colors[Math.round(num(car.roadSignColor))]) {
+        color = colors[Math.round(num(car.roadSignColor))];
+        text = (arrows[Math.round(num(car.roadSignArrow))] || "") + (signDist > 0 ? " " + dist(signDist) : "");
+      } else if (roadColors[Math.round(num(car.trafficLightColor))]) {
+        color = roadColors[Math.round(num(car.trafficLightColor))];
+        text = num(car.stopLineDist) > 0 ? dist(num(car.stopLineDist)) : "";
+      }
+      $("signal").style.display = color ? "flex" : "none";
+      if (color) { $("lamp").style.color = color; $("signalText").textContent = text.trim(); }
+
+      const q = Math.round(num(car.renderQuality, 3));
+      const ratio = q <= 1 ? 1 : q === 2 ? 1.5 : Math.min(2.5, devicePixelRatio || 1);
+      if (renderer.getPixelRatio() !== ratio) { renderer.setPixelRatio(ratio); resize(); }
+    }
+
+    function resize() {
+      renderer.setSize(innerWidth, innerHeight, false);
+      camera.aspect = innerWidth / innerHeight;
+      // Keep the road framed on the right of the HUD on wide screens.
+      camera.setViewOffset(innerWidth, innerHeight, -innerWidth * 0.12, 0, innerWidth, innerHeight);
+      camera.updateProjectionMatrix();
+    }
+    addEventListener("resize", resize);
+    resize();
+
+    function receive(car) {
+      latestCar = car;
+      updateHud(car);
+    }
+
+    // ---- Data intake: iOS pushes an object, Android exposes getters ---------
+    window.receiveMessage = receive;
+    const KEYS = [
+      "egoSpeed", "egoSteeringAngle", "gear", "fusedSpeedLimit", "leftBlinker", "rightBlinker",
+      "leftBlindSpot", "rightBlindSpot", "adasOn", "madsActive", "accSetSpeed",
+      "trafficLightColor", "stopLineDist",
+      "leadVehDx", "leadVehDy", "leadVehType", "leadVehHeading",
+      "leftVehDx", "leftVehType", "leftVehHeading",
+      "rightVehDx", "rightVehType", "rightVehHeading",
+      "cutinVehDx", "cutinVehDy", "cutinVehType", "cutinVehHeading",
+      "roadSignId", "roadSignColor", "roadSignArrow", "roadSignStopLineDist",
+      "laneWidth", "laneViewRange", "laneC0", "laneC1", "laneC2", "laneC3",
+      "forwardCollisionWarning", "laneDepartureWarning", "sideCollisionWarning",
+      "isImperial", "darkMode", "alwaysOnBlindSpotMonitor", "renderQuality",
     ];
-
     function fromAndroid() {
       const n = window.NativeCarState, s = {};
-      for (const k of ANDROID_KEYS) {
+      for (const k of KEYS) {
         const cap = k[0].toUpperCase() + k.slice(1);
         const m = k === "isImperial" ? k : n["get" + cap] ? "get" + cap : "is" + cap;
-        try {
-          if (typeof n[m] === "function") s[k] = n[m]();
-        } catch (_err) {
-          // Older app builds lack the DAS_object getters: leave them unset.
-        }
+        try { if (typeof n[m] === "function") s[k] = n[m](); } catch (_err) { /* older app build */ }
       }
       return s;
     }
+    window.onCarStateUpdate = () => receive(fromAndroid());
 
-    window.onCarStateUpdate = () => render(fromAndroid());
-
-    // ---- Standalone preview: open index.html?demo in a desktop browser.
-    if (new URLSearchParams(location.search).has("demo")) {
+    // ---- Standalone demo: open index.html?demo in a browser ----------------
+    const params = new URLSearchParams(location.search);
+    if (params.has("demo")) {
       const t0 = performance.now();
       setInterval(() => {
         const t = (performance.now() - t0) / 1000;
-        const lm = t % 23, rm = t % 29;
-        // Side cars overlap the 3 s BSM windows by 1 s at 0 m: the hand-off.
+        const lap = t % 60, lm = t % 23, rm = t % 29, cm = t % 41;
+        const turning = lap >= 20 && lap < 28;
+        const ease = turning ? Math.sin(((lap - 20) / 8) * Math.PI) : 0;
         const leftDx = lm >= 2 && lm <= 11 ? Math.max(0, lm - 3) * 7.5 : -1;
         const rightDx = rm >= 19 ? (29 - rm) * 5 : rm < 1 ? 0 : -1;
-        render({
-          egoSpeed: 95 + 10 * Math.sin(t * 0.1), gear: 4, fusedSpeedLimit: 100,
+        const cut = !turning && cm < 4 ? { dx: 22 - 8 * (cm / 4), dy: -3.5 * (1 - cm / 4) } : null;
+        receive({
+          egoSpeed: 92 - 25 * ease, gear: 4, fusedSpeedLimit: 100,
+          egoSteeringAngle: -60 * ease, adasOn: !turning,
+          leftBlinker: turning ? (t % 1 < 0.5 ? 2 : 1) : 0, rightBlinker: 0,
           leftBlindSpot: lm < 3 ? 1 : 0, rightBlindSpot: rm < 3 ? 1 : 0,
-          leftBlinker: 0, rightBlinker: 0,
-          leadVehDx: 35 + 10 * Math.sin(t * 0.15), leadVehDy: 0.3 * Math.sin(t * 0.4), leadVehType: 2,
-          leftVehDx: leftDx, leftVehDy: leftDx >= 0 ? 3.5 : 0, leftVehType: leftDx >= 0 ? 2 : 0,
-          rightVehDx: rightDx, rightVehDy: rightDx >= 0 ? -3.5 : 0, rightVehType: rightDx >= 0 ? 1 : 0,
-          isImperial: false, darkMode: !new URLSearchParams(location.search).has("light"),
-          alwaysOnBlindSpotMonitor: true,
+          leadVehDx: turning ? -1 : 32 + 9 * Math.sin(t * 0.15), leadVehDy: 0.25 * Math.sin(t * 0.4), leadVehType: 2,
+          leftVehDx: leftDx, leftVehType: 2, rightVehDx: rightDx, rightVehType: 1,
+          cutinVehDx: cut ? cut.dx : -1, cutinVehDy: cut ? cut.dy : 0, cutinVehType: 2, cutinVehHeading: cut ? 0.12 : 0,
+          forwardCollisionWarning: cut && cut.dy > -1 ? 1 : 0,
+          laneDepartureWarning: t % 37 < 1.5 ? 1 : 0,
+          laneWidth: 3.6, laneViewRange: 60, laneC2: 0.003 * ease + 0.0004 * Math.sin(t * 0.05),
+          isImperial: false, darkMode: !params.has("light"), alwaysOnBlindSpotMonitor: true, renderQuality: 3,
         });
       }, 100);
     } else {
-      render({});
+      receive({ gear: 4 });
     }
+
+    requestAnimationFrame(frame);
   </script>
 </body>
 </html>

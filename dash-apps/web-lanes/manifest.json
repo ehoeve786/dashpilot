@@ -2,5 +2,5 @@
   "$schema": "../manifest.schema.json",
   "manifestVersion": 1,
   "id": "lanes",
-  "settings": ["alwaysOnBlindSpotMonitor", "useImperial", "darkMode"]
+  "settings": ["alwaysOnBlindSpotMonitor", "useImperial", "darkMode", "renderQuality"]
 }

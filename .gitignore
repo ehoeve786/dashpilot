@@ -10,3 +10,6 @@ dashpilot-ios/dashpilot/Assets.xcassets/preview_*.imageset/preview_*
 xcuserdata/
 
 .vscode/
+
+# Optional user-supplied car model for the lanes dashboard (often not redistributable)
+dash-apps/web-lanes/models/ego.glb

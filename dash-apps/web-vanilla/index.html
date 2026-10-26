@@ -843,7 +843,7 @@
       }
     }
 
-    // Tyre pressures (bar from the car; psi when imperial). Amber below
+    // Tyre pressures are shown in psi whatever the units setting. Amber below
     // TPMS_LOW_BAR, red below TPMS_CRITICAL_BAR (Model Y placard: 2.9 bar).
     const TPMS_LOW_BAR = 2.5;
     const TPMS_CRITICAL_BAR = 2.2;
@@ -860,7 +860,7 @@
         const temp = Number(car["tpmsTemp" + w]);
         const known = Number.isFinite(bar) && bar >= 0;
         el.querySelector(".p").textContent = !known ? "--"
-          : car.isImperial ? Math.round(bar * BAR_TO_PSI) + " psi" : bar.toFixed(1) + " bar";
+          : Math.round(bar * BAR_TO_PSI) + " psi";
         el.querySelector(".t").textContent = Number.isFinite(temp) && temp > -100
           ? (car.isImperial ? Math.round(temp * 9 / 5 + 32) + "°F" : Math.round(temp) + "°C") : "";
         el.classList.toggle("critical", known && bar < TPMS_CRITICAL_BAR);

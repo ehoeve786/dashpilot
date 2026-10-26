@@ -587,6 +587,35 @@
         }
       }
 
+    // Critically damped spring toward a moving target (Game Programming Gems 4
+    // "SmoothDamp"). Unlike exponential easing it keeps velocity continuous,
+    // so a target that steps at the data rate (10-25 Hz) still glides when
+    // evaluated every display frame. smoothTimeMs ~ time to catch up.
+    class Smoother {
+      constructor(value) {
+        this.value = value;
+        this.velocity = 0;
+        this.lastMs = undefined;
+      }
+
+      update(target, smoothTimeMs, now) {
+        if (this.lastMs === undefined) {
+          this.lastMs = now;
+          return this.value;
+        }
+        const dt = Math.min(0.1, Math.max(0, (now - this.lastMs) / 1000));
+        this.lastMs = now;
+        const omega = 2 / Math.max(0.001, smoothTimeMs / 1000);
+        const x = omega * dt;
+        const decay = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
+        const change = this.value - target;
+        const temp = (this.velocity + omega * change) * dt;
+        this.velocity = (this.velocity - omega * temp) * decay;
+        this.value = target + (change + temp) * decay;
+        return this.value;
+      }
+    }
+
     // DAS_object vehicles ahead (lead, left lane, right lane). Dx from the car
     // is the gap ahead of the front bumper; the world model's Dx is measured
     // from the ego origin, so shift by DAS_DX_OFFSET. Side cars sit at the
@@ -594,7 +623,7 @@
     // verified yet, so only the lead car uses it (clamped to its lane).
     const DAS_DX_OFFSET = 5.0;
     const DAS_LEAD_MAX_DY = 1.2;
-    const DAS_SMOOTH_TAU_MS = 150;
+    const DAS_SMOOTH_MS = 250;
     // A side car this close while that side's blind spot is set is the car
     // BSM reports: draw it once, at its DAS position.
     const DAS_HANDOFF_DX = 5.0;
@@ -610,7 +639,6 @@
     const DAS_CUTIN_MAX_DY = 5.0;
     const DAS_CLASSES = ["Car", "Truck", "Car", "Motorcycle", "Bicycle", "Pedestrian", "Ipso"];
     const dasSmoothed = {};
-    let dasLastMs = 0;
 
     function dasDx(v) {
       const n = Number(v);
@@ -631,8 +659,6 @@
     // group only every ~180 ms, which would otherwise make vehicles jump.
     function buildDasObjectState(car, world) {
       const now = performance.now();
-      const k = dasLastMs ? 1 - Math.exp(-(now - dasLastMs) / DAS_SMOOTH_TAU_MS) : 1;
-      dasLastMs = now;
 
       for (const slot of DAS_SLOTS) {
         const dx = dasDx(car[slot.key + "VehDx"]);
@@ -643,11 +669,9 @@
         const raw = Number(car[slot.key + "VehDy"]) || 0;
         const max = slot.key === "lead" ? DAS_LEAD_MAX_DY : DAS_CUTIN_MAX_DY;
         const dy = Math.max(-max, Math.min(max, raw));
-        const prev = dasSmoothed[slot.key];
-        const cur = prev
-          ? { dx: prev.dx + (dx - prev.dx) * k, dy: prev.dy + (dy - prev.dy) * k }
-          : { dx, dy };
-        dasSmoothed[slot.key] = cur;
+        if (!dasSmoothed[slot.key]) dasSmoothed[slot.key] = { dx: new Smoother(dx), dy: new Smoother(dy) };
+        const sm = dasSmoothed[slot.key];
+        const cur = { dx: sm.dx.update(dx, DAS_SMOOTH_MS, now), dy: sm.dy.update(dy, DAS_SMOOTH_MS, now) };
 
         world.objects.push({
           id: slot.id,
@@ -671,9 +695,8 @@
     // assets/shaders/lane_fill_material.wgsl measures the fill mesh in whole
     // steps of this size so its animation follows curves; keep in sync.
     const LANE_VIEW_RANGE_STEP = 10;
-    const LANE_SMOOTH_TAU_MS = 120;
-    let laneSmoothed = null;
-    let laneLastMs = 0;
+    const LANE_SMOOTH_MS = 200;
+    let laneSmoothers = null;
 
     // While driving manually the fill and lines show where the car will go
     // from the current steering angle (kinematic bicycle model), since the
@@ -738,17 +761,19 @@
           lanePolyC3: LANE_SIGN * (Number(car.laneC3) || 0),
         };
       } else {
-        laneSmoothed = null;
+        laneSmoothers = null;
         return { lane: { ...LANE_DEFAULT }, steeringPath: false };
       }
 
       // Same keys in every mode, so switching modes eases instead of jumping.
-      const k = laneSmoothed && laneLastMs ? 1 - Math.exp(-(now - laneLastMs) / LANE_SMOOTH_TAU_MS) : 1;
-      laneLastMs = now;
-      if (!laneSmoothed) laneSmoothed = { ...target };
-      for (const key of Object.keys(target)) laneSmoothed[key] += (target[key] - laneSmoothed[key]) * k;
+      if (!laneSmoothers) {
+        laneSmoothers = {};
+        for (const key of Object.keys(target)) laneSmoothers[key] = new Smoother(target[key]);
+      }
+      const lane = {};
+      for (const key of Object.keys(target)) lane[key] = laneSmoothers[key].update(target[key], LANE_SMOOTH_MS, now);
       // View range is not smoothed: the fill shader needs it in whole steps.
-      return { lane: { ...laneSmoothed, viewRange: steppedRange }, steeringPath };
+      return { lane: { ...lane, viewRange: steppedRange }, steeringPath };
     }
 
     // DAS_status warnings -> viz events. The viz's lane departure names are
@@ -811,16 +836,12 @@
     // Pull the camera back while a blinker is on so more of the next lane
     // shows, easing in and out instead of snapping.
     const LANE_CHANGE_ZOOM = 1.25;
-    const CAMERA_ZOOM_TAU_MS = 400;
-    let cameraZoom = 1.0;
-    let cameraZoomLastMs = 0;
+    const CAMERA_ZOOM_MS = 700;
+    const cameraZoom = new Smoother(1.0);
 
     function laneChangeZoom(active) {
       const now = performance.now();
-      const k = cameraZoomLastMs ? 1 - Math.exp(-(now - cameraZoomLastMs) / CAMERA_ZOOM_TAU_MS) : 1;
-      cameraZoomLastMs = now;
-      cameraZoom += ((active ? LANE_CHANGE_ZOOM : 1.0) - cameraZoom) * k;
-      return cameraZoom;
+      return cameraZoom.update(active ? LANE_CHANGE_ZOOM : 1.0, CAMERA_ZOOM_MS, now);
     }
 
     const BS_DX = -3.0;
@@ -837,8 +858,8 @@
     // keeping the last DAS vehicle class for a while. A separate placeholder
     // is drawn only when both see something but DAS's car is further ahead
     // than DAS_HANDOFF_DX, i.e. they are two different vehicles.
-    const SIDE_TAU_MS = 150;
-    const SIDE_SWITCH_TAU_MS = 450;
+    const SIDE_SMOOTH_MS = 250;
+    const SIDE_SWITCH_SMOOTH_MS = 800;
     const SIDE_SWITCH_MS = 1200;
     const SIDE_CLASS_MEMORY_MS = 5000;
     // A car only the blind spot monitor sees came up from behind, so it
@@ -846,7 +867,7 @@
     // and when the blind spot clears with no DAS car it drops back out the
     // same way. One DAS loses far ahead just disappears: it went ahead.
     const SIDE_OFFSCREEN_DX = -16;
-    const SIDE_ENTER_TAU_MS = 350;
+    const SIDE_ENTER_SMOOTH_MS = 600;
     const SIDE_GONE_DX = -14;
     const sideTracks = { left: { ghost: false }, right: { ghost: false } };
 
@@ -897,24 +918,22 @@
         }
         if (t.x === undefined) {
           if (target.source === "bsm") {
-            t.x = SIDE_OFFSCREEN_DX;
+            t.smoother = new Smoother(SIDE_OFFSCREEN_DX);
             t.switchUntil = now + SIDE_SWITCH_MS;
-            t.enterTau = true;
+            t.enterEase = true;
           } else {
-            t.x = target.x;
+            t.smoother = new Smoother(target.x);
           }
-        } else {
-          if (t.source && t.source !== target.source) {
-            t.switchUntil = now + SIDE_SWITCH_MS;
-            // Leaving off-screen moves as briskly as arriving.
-            t.enterTau = target.source === "exit";
-          }
-          const tau = now < (t.switchUntil || 0) ? (t.enterTau ? SIDE_ENTER_TAU_MS : SIDE_SWITCH_TAU_MS) : SIDE_TAU_MS;
-          const k = t.lastMs !== undefined ? 1 - Math.exp(-(now - t.lastMs) / tau) : 1;
-          t.x += (target.x - t.x) * k;
+        } else if (t.source && t.source !== target.source) {
+          t.switchUntil = now + SIDE_SWITCH_MS;
+          // Leaving off-screen moves as briskly as arriving.
+          t.enterEase = target.source === "exit";
         }
+        const smoothMs = now < (t.switchUntil || 0)
+          ? (t.enterEase ? SIDE_ENTER_SMOOTH_MS : SIDE_SWITCH_SMOOTH_MS)
+          : SIDE_SMOOTH_MS;
+        t.x = t.smoother.update(target.x, smoothMs, now);
         t.source = target.source;
-        t.lastMs = now;
 
         const remembered = t.cls && now - (t.clsMs || 0) < SIDE_CLASS_MEMORY_MS;
         world.objects.push({
@@ -929,6 +948,91 @@
       }
     }
 
+    // The 3D world is rebuilt and sent every display frame from the latest
+    // car state, rather than once per message (10 Hz demo, ~25 Hz DashKit),
+    // so the smoothed vehicles, lane and camera move at the display rate.
+    let latestCar = null;
+
+    function buildWorld(car) {
+      const gear = parseInt(car.gear);
+      const leftBlinker = parseInt(car.leftBlinker);
+      const rightBlinker = parseInt(car.rightBlinker);
+      const speed = parseInt(car.egoSpeed);
+      const roundedSpeed = Math.floor(speed / 10) * 10;
+
+      // Build world object for ADAS viz
+      const world = {
+        ego_steering_angle: 0,
+        ego_speed: car.egoSpeed,
+        gear: car.gear,
+        adas_on: car.adasOn,
+        objects: [],
+        traffic_lights:[],
+        speed_limits:[],
+        stop_signs:[],
+        road_signs:[],
+        pedestrians:[],
+        events: [],
+        lane: {laneWidth:4,viewRange:50,lanePolyC0:0,lanePolyC1:0,lanePolyC2:0,lanePolyC3:0},
+        viz_config: {
+          dark_mode: car.darkMode,
+          lane_boundary_color: [1.0, 1.0, 1.0, 1.0],
+          lane_fill_color: [0.1, 0.7, 0.9, 0.55],
+          use_dark_ego_model: car.darkMode,
+          dark_mode_background_color: [car.darkModeBackgroundGray / 255.0, car.darkModeBackgroundGray / 255.0, car.darkModeBackgroundGray / 255.0],
+          render_quality: car.renderQuality
+        },
+      };
+
+      buildTrafficLightState(car, world);
+      buildSideVehicles(car, world);
+      buildDasObjectState(car, world);
+      buildWarningEvents(car, world);
+
+      const speedKmh    = car.isImperial ? roundedSpeed * 1.60934 : roundedSpeed;
+      const cappedKmh   = Math.min(speedKmh, 70);
+      const speedMs     = cappedKmh / 3.6;
+
+      // The viz yaws the whole car model by this angle; the steering now
+      // shows as the predicted path instead (buildLaneState).
+      world.ego_steering_angle = 0;
+      world.ego_speed = speedMs;
+
+      const laneState = buildLaneState(car, gear === 4);
+      world.lane = laneState.lane;
+      // adas_on is what shows the fill, so keep it on for the steering path.
+      world.adas_on = !!car.adasOn || laneState.steeringPath;
+      world.viz_config.lane_fill_color = laneState.steeringPath && !car.adasOn ? FILL_COLOR_MANUAL : FILL_COLOR_ASSIST;
+
+      const gearMap = { 1: "P", 2: "R", 3: "N", 4: "D" };
+
+      buildSpeedLimitSign(car, world, speedMs, gearMap[gear] == "D");
+
+      if (gearMap[gear] == "D") {
+        world.camera_view = { view: "back", zoom: laneChangeZoom(leftBlinker > 0 || rightBlinker > 0) };
+      } else if (gearMap[gear] == "P") {
+        world.camera_view = { view: "left_side", zoom: 0.9 };
+      } else if (gearMap[gear] == "R") {
+        world.camera_view = { view: "top", zoom: 0.9 };
+      } else {
+        world.camera_view = { view: "back", zoom: 0.9 };
+      }
+
+      return world;
+    }
+
+    function vizFrame() {
+      if (window._assetsReady && latestCar && window._setWorldModel) {
+        try {
+          window._setWorldModel(buildWorld(latestCar));
+        } catch (err) {
+          console.error("Failed to build world model", err);
+        }
+      }
+      requestAnimationFrame(vizFrame);
+    }
+    requestAnimationFrame(vizFrame);
+
     var receiveMessage = function(car) {
       if (!window._assetsReady) return;
       try {
@@ -942,67 +1046,11 @@
         const speedLimit = parseInt(car.fusedSpeedLimit);
         const roundedSpeed = Math.floor(speed / 10) * 10;
 
-        // Build world object for ADAS viz
-        const world = {
-          ego_steering_angle: angle,
-          ego_speed: car.egoSpeed,
-          gear: car.gear,
-          adas_on: car.adasOn,
-          objects: [],
-          traffic_lights:[],
-          speed_limits:[],
-          stop_signs:[],
-          road_signs:[],
-          pedestrians:[],
-          events: [],
-          lane: {laneWidth:4,viewRange:50,lanePolyC0:0,lanePolyC1:0,lanePolyC2:0,lanePolyC3:0},
-          viz_config: {
-            dark_mode: car.darkMode,
-            lane_boundary_color: [1.0, 1.0, 1.0, 1.0],
-            lane_fill_color: [0.1, 0.7, 0.9, 0.55],
-            use_dark_ego_model: car.darkMode,
-            dark_mode_background_color: [car.darkModeBackgroundGray / 255.0, car.darkModeBackgroundGray / 255.0, car.darkModeBackgroundGray / 255.0],
-            render_quality: car.renderQuality
-          },
-        };
-
-        buildTrafficLightState(car, world);
-        buildSideVehicles(car, world);
-        buildDasObjectState(car, world);
-        buildWarningEvents(car, world);
-
-        const speedKmh    = car.isImperial ? roundedSpeed * 1.60934 : roundedSpeed;
-        const cappedKmh   = Math.min(speedKmh, 70);
-        const speedMs     = cappedKmh / 3.6;
-
-        // The viz yaws the whole car model by this angle; the steering now
-        // shows as the predicted path instead (buildLaneState).
-        world.ego_steering_angle = 0;
-        world.ego_speed = speedMs;
-
-        const laneState = buildLaneState(car, gear === 4);
-        world.lane = laneState.lane;
-        // adas_on is what shows the fill, so keep it on for the steering path.
-        world.adas_on = !!car.adasOn || laneState.steeringPath;
-        world.viz_config.lane_fill_color = laneState.steeringPath && !car.adasOn ? FILL_COLOR_MANUAL : FILL_COLOR_ASSIST;
+        latestCar = car;
 
         // Show gears
         const gearMap = { 1: "P", 2: "R", 3: "N", 4: "D" };
         gearText.textContent = gearMap[gear] || "-";
-
-        buildSpeedLimitSign(car, world, speedMs, gearMap[gear] == "D");
-
-        if (gearMap[gear] == "D") {
-          world.camera_view = { view: "back", zoom: laneChangeZoom(leftBlinker > 0 || rightBlinker > 0) };
-        } else if (gearMap[gear] == "P") {
-          world.camera_view = { view: "left_side", zoom: 0.9 };
-        } else if (gearMap[gear] == "R") {
-          world.camera_view = { view: "top", zoom: 0.9 };
-        } else {
-          world.camera_view = { view: "back", zoom: 0.9 };
-        }
-
-        window._setWorldModel?.(world);
 
 
         showBlinker(leftBlinker,  leftBlinkerIcon);

@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -39,3 +41,26 @@ jobs:
           path: dashpilot-android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
+
+      # Artifacts download as a zip and need a signed-in browser; a release
+      # asset is a plain .apk link that a phone can install directly. One
+      # rolling pre-release per PR (or per manual run), replaced on each push.
+      # Fork PRs get a read-only token, so they skip this.
+      - name: Rename APK for release
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        run: cp dashpilot-android/app/build/outputs/apk/debug/app-debug.apk dashpilot-debug.apk
+
+      - name: Publish test pre-release
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "${{ github.event_name == 'pull_request' && format('test-pr-{0}', github.event.pull_request.number) || format('test-run-{0}', github.run_number) }}"
+          target_commitish: "${{ github.event.pull_request.head.sha || github.sha }}"
+          name: "${{ github.event_name == 'pull_request' && format('Test build: PR #{0}', github.event.pull_request.number) || format('Test build: run {0}', github.run_number) }}"
+          body: |
+            Debug build of ${{ github.event.pull_request.head.sha || github.sha }} for testing. Not for release.
+            Uninstall the store version first: the debug signature can't install over it.
+          prerelease: true
+          make_latest: false
+          files: dashpilot-debug.apk
+          fail_on_unmatched_files: true

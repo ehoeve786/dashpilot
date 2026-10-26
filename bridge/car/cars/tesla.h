@@ -152,7 +152,9 @@ public:
             if (location >= 0 && location < 4) {
                 double pressure = get(cp, "VCSEC_TPMSPressure" + n);
                 double temp = get(cp, "VCSEC_TPMSTemperature" + n);
-                if (pressure < PRESSURE_SNA) pressure_[location] = pressure;
+                // A tyre cannot read 0 bar while driving: a zero is a sensor
+                // fault or a bad frame, so it keeps the previous reading.
+                if (pressure >= PRESSURE_MIN && pressure < PRESSURE_SNA) pressure_[location] = pressure;
                 if (temp < TEMP_SNA) temp_[location] = temp;
             }
         }
@@ -168,6 +170,7 @@ public:
 
 private:
     // SNA after DBC scaling: raw 255.
+    static constexpr double PRESSURE_MIN = 0.5;    // below this: not a real reading
     static constexpr double PRESSURE_SNA = 6.36;   // raw 255 * 0.025 bar = 6.375
     static constexpr double TEMP_SNA = 214.5;      // raw 255 - 40 = 215 degC
 

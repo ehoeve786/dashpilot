@@ -146,6 +146,16 @@ void tpms_ignores_sna_and_unlocated_sensors() {
     CHECK(h.cs.tpmsPressureRR == -1.0);
 }
 
+void tpms_ignores_zero_bar_readings() {
+    Harness h;
+    h.feedTpms(tpmsFrame(0, 0, 116, 65));  // FL 2.9 bar
+    h.feedTpms(tpmsFrame(0, 0, 0, 70));    // 0 bar, 30 C: a fault, not a flat tyre
+    CHECK(near(h.cs.tpmsPressureFL, 2.9));
+    CHECK(h.cs.tpmsTempFL == 30.0);
+    h.feedTpms(tpmsFrame(0, 0, 19, 70));   // 0.475 bar: still below the floor
+    CHECK(near(h.cs.tpmsPressureFL, 2.9));
+}
+
 void lanes_convert_to_si_and_expire() {
     Harness h;
     std::string lanes(8, '\0');
@@ -219,6 +229,7 @@ int main() {
     tpms_unknown_until_first_reading();
     tpms_maps_sensors_by_location_and_keeps_them();
     tpms_ignores_sna_and_unlocated_sensors();
+    tpms_ignores_zero_bar_readings();
     lanes_convert_to_si_and_expire();
     dashkit_mapper_reads_das_status_warnings();
     dashkit_mapper_publishes_through_the_double_array();

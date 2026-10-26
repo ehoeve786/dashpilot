@@ -30,6 +30,8 @@ class DashKitDataSource(
         // `adb logcat -s DashKitRx` shows whether e.g. 0x219 arrives at all.
         private const val RX_LOG_TAG = "DashKitRx"
         private const val RX_LOG_MS = 10_000L
+        // VCSEC_TPMSData: every frame is logged raw, one sensor per frame.
+        private const val TPMS_ADDRESS = 0x219
     }
 
     private val rxCounts = HashMap<Long, Int>()
@@ -78,7 +80,13 @@ class DashKitDataSource(
     private fun parseAndEmit(payload: ByteArray) {
         if (payload.isEmpty()) return
         for (frame in parseCanPacket(payload)) {
-            if (BuildConfig.DEBUG) countRx(frame.bus, frame.address)
+            if (BuildConfig.DEBUG) {
+                countRx(frame.bus, frame.address)
+                if (frame.address == TPMS_ADDRESS) {
+                    val hex = frame.data.joinToString(" ") { "%02x".format(it) }
+                    Log.i(RX_LOG_TAG, "tpms raw bus=${frame.bus} len=${frame.data.size} $hex")
+                }
+            }
             currentState = decoder.decodeFrame(frame.bus, frame.address, frame.data) ?: return
         }
         _incoming.tryEmit(currentState)

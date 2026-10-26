@@ -47,6 +47,8 @@ class DashKitDataSource(
     private val tpmsByLocation = arrayOfNulls<String>(8)
     private val tpmsLocationMs = LongArray(8)
     private var tpmsFrames = 0
+    // Frames received per vehicle-bus CAN ID since connecting, for the debug readout.
+    private val busOneCounts = sortedMapOf<Int, Int>()
 
     override fun connect(address: String) {
         manager.addGattListener(this)
@@ -93,6 +95,7 @@ class DashKitDataSource(
                 }
             }
             if (frame.address == TPMS_ADDRESS && frame.data.size >= 5) noteTpms(frame.data)
+            if (frame.bus == 1) busOneCounts[frame.address] = (busOneCounts[frame.address] ?: 0) + 1
             currentState = (decoder.decodeFrame(frame.bus, frame.address, frame.data) ?: return)
                 .copy(tpmsDebug = tpmsDebugText())
         }
@@ -115,10 +118,12 @@ class DashKitDataSource(
 
     private fun tpmsDebugText(): String {
         val now = SystemClock.elapsedRealtime()
-        return "tpms frames=$tpmsFrames\n" + tpmsByLocation.mapIndexed { loc, s ->
+        val locations = tpmsByLocation.mapIndexed { loc, s ->
             if (s == null) "loc$loc --"
             else "loc$loc $s age ${(now - tpmsLocationMs[loc]) / 1000}s"
         }.joinToString("\n")
+        val ids = busOneCounts.entries.joinToString(" ") { "0x%03X:%d".format(it.key, it.value) }
+        return "tpms frames=$tpmsFrames\n$locations\nbus1 ids: $ids"
     }
 
     private fun countRx(bus: Int, address: Int) {

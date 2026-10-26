@@ -142,8 +142,10 @@ struct BlinkerHold {
 // while driving), so readings are not expired.
 class TpmsLatch {
 public:
-    // A wheel's reading is dropped once its sensor hasn't reported for this
-    // long, so a stale tyre shows "no reading" instead of an old value.
+    // A reading is dropped once it hasn't been refreshed for this long, so a
+    // stale tyre shows "no reading" instead of an old value. Pressure and
+    // temperature age separately: a frame that only carries a rejected
+    // pressure must not keep an old pressure alive.
     static constexpr std::chrono::seconds STALE{60};
     using Clock = std::chrono::steady_clock;
 
@@ -159,16 +161,25 @@ public:
                 double pressure = get(cp, "VCSEC_TPMSPressure" + n);
                 double temp = get(cp, "VCSEC_TPMSTemperature" + n);
                 // A tyre cannot read 0 bar while driving: a zero is a sensor
-                // fault or a bad frame, so it keeps the previous reading.
-                if (pressure >= PRESSURE_MIN && pressure < PRESSURE_SNA) pressure_[location] = pressure;
-                if (temp < TEMP_SNA) temp_[location] = temp;
-                seen_[location] = now;
-                seenValid_[location] = true;
+                // fault or a bad frame, so it neither replaces the previous
+                // reading nor refreshes its timer.
+                if (pressure >= PRESSURE_MIN && pressure < PRESSURE_SNA) {
+                    pressure_[location] = pressure;
+                    pressureSeen_[location] = now;
+                    pressureValid_[location] = true;
+                }
+                if (temp < TEMP_SNA) {
+                    temp_[location] = temp;
+                    tempSeen_[location] = now;
+                    tempValid_[location] = true;
+                }
             }
         }
         for (int w = 0; w < 4; w++) {
-            if (!seenValid_[w] || now - seen_[w] > STALE) {
+            if (!pressureValid_[w] || now - pressureSeen_[w] > STALE) {
                 pressure_[w] = -1;
+            }
+            if (!tempValid_[w] || now - tempSeen_[w] > STALE) {
                 temp_[w] = -100;
             }
         }
@@ -195,8 +206,10 @@ private:
     uint32_t lastSeq_ = 0;
     double pressure_[4] = {-1, -1, -1, -1};
     double temp_[4] = {-100, -100, -100, -100};
-    Clock::time_point seen_[4] = {};
-    bool seenValid_[4] = {};
+    Clock::time_point pressureSeen_[4] = {};
+    Clock::time_point tempSeen_[4] = {};
+    bool pressureValid_[4] = {};
+    bool tempValid_[4] = {};
 };
 
 // DAS_lanes (0x239, chassis bus, 10 Hz): the Autopilot's virtual lane as a

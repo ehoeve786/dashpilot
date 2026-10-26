@@ -160,6 +160,17 @@ void tpms_expires_a_wheel_that_stops_reporting() {
     CHECK(near(h.cs.tpmsPressureFR, 2.2));
 }
 
+void tpms_zero_bar_frames_do_not_keep_an_old_pressure_alive() {
+    Harness h;
+    h.feedTpms(tpmsFrame(0, 0, 116, 65));  // FL 2.9 bar, 25 C
+    for (int i = 0; i < 7; i++) {           // 70 s of 0 bar frames, temp still valid
+        h.advance(10000);
+        h.feedTpms(tpmsFrame(0, 0, 0, 70));
+    }
+    CHECK(h.cs.tpmsPressureFL == -1.0);     // pressure expired
+    CHECK(h.cs.tpmsTempFL == 30.0);         // temperature kept refreshing
+}
+
 void tpms_ignores_zero_bar_readings() {
     Harness h;
     h.feedTpms(tpmsFrame(0, 0, 116, 65));  // FL 2.9 bar
@@ -245,6 +256,7 @@ int main() {
     tpms_ignores_sna_and_unlocated_sensors();
     tpms_ignores_zero_bar_readings();
     tpms_expires_a_wheel_that_stops_reporting();
+    tpms_zero_bar_frames_do_not_keep_an_old_pressure_alive();
     lanes_convert_to_si_and_expire();
     dashkit_mapper_reads_das_status_warnings();
     dashkit_mapper_publishes_through_the_double_array();

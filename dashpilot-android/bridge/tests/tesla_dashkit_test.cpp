@@ -40,6 +40,16 @@ const char* kChassisDbc =
     " SG_ DAS_sideCollisionWarning: 32|2@1+ (1,0) [0|0] \"\" X\n"
     " SG_ DAS_laneDepartureWarning: 37|3@1+ (1,0) [0|0] \"\" X\n"
     "\n"
+    "BO_ 799 TPMS_data: 8 CH\n"
+    " SG_ TPMS_pressureFL: 0|8@1+ (0.025,0) [0|0] \"bar\" X\n"
+    " SG_ TPMS_pressureFR: 16|8@1+ (0.025,0) [0|0] \"bar\" X\n"
+    " SG_ TPMS_pressureRL: 32|8@1+ (0.025,0) [0|0] \"bar\" X\n"
+    " SG_ TPMS_pressureRR: 48|8@1+ (0.025,0) [0|0] \"bar\" X\n"
+    " SG_ TPMS_temperatureFL: 8|8@1+ (1,-40) [0|0] \"degC\" X\n"
+    " SG_ TPMS_temperatureFR: 24|8@1+ (1,-40) [0|0] \"degC\" X\n"
+    " SG_ TPMS_temperatureRL: 40|8@1+ (1,-40) [0|0] \"degC\" X\n"
+    " SG_ TPMS_temperatureRR: 56|8@1+ (1,-40) [0|0] \"degC\" X\n"
+    "\n"
     "BO_ 599 DI_speed: 8 VEH\n"
     " SG_ DI_uiSpeed : 24|9@1+ (1,0) [0|510] \"\" X\n";
 
@@ -80,6 +90,21 @@ std::string tpmsFrame(uint32_t index, uint32_t location, uint32_t rawPressure, u
 
 bool near(double a, double b, double tol = 1e-6) { return std::fabs(a - b) < tol; }
 
+// TPMS_data (0x31F): all four wheels in one frame, pressure raw and temperature raw per wheel.
+std::string tpms31fFrame(uint32_t flP, uint32_t flT, uint32_t frP, uint32_t frT,
+                         uint32_t rlP, uint32_t rlT, uint32_t rrP, uint32_t rrT) {
+    std::string frame(8, '\0');
+    setBits(frame, 0, 8, flP);
+    setBits(frame, 8, 8, flT);
+    setBits(frame, 16, 8, frP);
+    setBits(frame, 24, 8, frT);
+    setBits(frame, 32, 8, rlP);
+    setBits(frame, 40, 8, rlT);
+    setBits(frame, 48, 8, rrP);
+    setBits(frame, 56, 8, rrT);
+    return frame;
+}
+
 struct Harness {
     CANParsers cp;
     TpmsLatch tpms;
@@ -106,6 +131,11 @@ struct Harness {
     }
 
 };
+
+void feed31f(Harness& h, const std::string& data) {
+    h.cp.updateFrame(0, 799, reinterpret_cast<const uint8_t*>(data.data()), data.size());
+    h.tpms.update(h.cp, h.cs, h.now);
+}
 
 void tpms_unknown_until_first_reading() {
     Harness h;
@@ -143,6 +173,30 @@ void tpms_ignores_sna_and_unlocated_sensors() {
     CHECK(h.cs.tpmsTempFL == 25.0);
     h.feedTpms(tpmsFrame(1, 4, 40, 65));    // location unknown
     CHECK(h.cs.tpmsPressureFR == -1.0);
+    CHECK(h.cs.tpmsPressureRL == -1.0);
+    CHECK(h.cs.tpmsPressureRR == -1.0);
+}
+
+void tpms_all_four_wheels_from_0x31f() {
+    Harness h;
+    // FL 2.9 bar 25 C, FR 2.2 bar 20 C, RL 2.8 bar 30 C, RR 0 bar (rejected) at -40 C raw 0
+    feed31f(h, tpms31fFrame(116, 65, 88, 60, 112, 70, 0, 0));
+    CHECK(near(h.cs.tpmsPressureFL, 2.9));
+    CHECK(h.cs.tpmsTempFL == 25.0);
+    CHECK(near(h.cs.tpmsPressureFR, 2.2));
+    CHECK(h.cs.tpmsTempFR == 20.0);
+    CHECK(near(h.cs.tpmsPressureRL, 2.8));
+    CHECK(h.cs.tpmsTempRL == 30.0);
+    CHECK(h.cs.tpmsPressureRR == -1.0);  // zero bar rejected
+}
+
+void tpms_31f_expires_per_wheel() {
+    Harness h;
+    feed31f(h, tpms31fFrame(116, 65, 88, 60, 112, 70, 116, 65));
+    h.advance(61000);
+    feed31f(h, tpms31fFrame(0, 65, 88, 60, 0, 70, 0, 65));  // FR still reads; others not valid
+    CHECK(h.cs.tpmsPressureFL == -1.0);
+    CHECK(near(h.cs.tpmsPressureFR, 2.2));
     CHECK(h.cs.tpmsPressureRL == -1.0);
     CHECK(h.cs.tpmsPressureRR == -1.0);
 }
@@ -256,6 +310,8 @@ int main() {
     tpms_ignores_sna_and_unlocated_sensors();
     tpms_ignores_zero_bar_readings();
     tpms_expires_a_wheel_that_stops_reporting();
+    tpms_all_four_wheels_from_0x31f();
+    tpms_31f_expires_per_wheel();
     tpms_zero_bar_frames_do_not_keep_an_old_pressure_alive();
     lanes_convert_to_si_and_expire();
     dashkit_mapper_reads_das_status_warnings();

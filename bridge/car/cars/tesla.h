@@ -175,6 +175,27 @@ public:
                 }
             }
         }
+        // TPMS_data (0x31F, chassis bus): all four wheels in one frame, no
+        // multiplexer. Same acceptance rules as the per-sensor frames above.
+        uint32_t seq31f = cp.frameSeq(0, "TPMS_data");
+        if (seq31f != lastSeq31f_) {
+            lastSeq31f_ = seq31f;
+            static const char* const kWheels[4] = {"FL", "FR", "RL", "RR"};
+            for (int w = 0; w < 4; w++) {
+                double pressure = cp.get(0, "TPMS_data", std::string("TPMS_pressure") + kWheels[w]);
+                double temp = cp.get(0, "TPMS_data", std::string("TPMS_temperature") + kWheels[w]);
+                if (pressure >= PRESSURE_MIN && pressure < PRESSURE_SNA) {
+                    pressure_[w] = pressure;
+                    pressureSeen_[w] = now;
+                    pressureValid_[w] = true;
+                }
+                if (temp < TEMP_SNA) {
+                    temp_[w] = temp;
+                    tempSeen_[w] = now;
+                    tempValid_[w] = true;
+                }
+            }
+        }
         for (int w = 0; w < 4; w++) {
             if (!pressureValid_[w] || now - pressureSeen_[w] > STALE) {
                 pressure_[w] = -1;
@@ -204,6 +225,7 @@ private:
     }
 
     uint32_t lastSeq_ = 0;
+    uint32_t lastSeq31f_ = 0;
     double pressure_[4] = {-1, -1, -1, -1};
     double temp_[4] = {-100, -100, -100, -100};
     Clock::time_point pressureSeen_[4] = {};

@@ -37,6 +37,8 @@ class DashKitDataSource(
         private const val RX_LOG_MS = 10_000L
         // VCSEC_TPMSData: every frame is logged raw, one sensor per frame.
         private const val TPMS_ADDRESS = 0x219
+        // TPMS_data: all four wheels in one frame on the chassis bus.
+        private const val TPMS_DATA_ADDRESS = 0x31F
         // Stop writing the CAN log at about 50 MB (a few minutes of traffic).
         private const val CAN_LOG_MAX_BYTES = 50L * 1024 * 1024
     }
@@ -54,6 +56,9 @@ class DashKitDataSource(
     private val tpmsByLocation = arrayOfNulls<String>(8)
     private val tpmsLocationMs = LongArray(8)
     private var tpmsFrames = 0
+    // Last TPMS_data frame (0x31F, chassis bus) for the debug readout.
+    private var tpms31fHex = ""
+    private var tpms31fMs = 0L
     // Frames received per vehicle-bus CAN ID since connecting, for the debug readout.
     private val busOneCounts = sortedMapOf<Int, Int>()
 
@@ -113,6 +118,10 @@ class DashKitDataSource(
             }
             if (frame.address == TPMS_ADDRESS && frame.data.size >= 5) noteTpms(frame.data)
             if (frame.bus == 1) busOneCounts[frame.address] = (busOneCounts[frame.address] ?: 0) + 1
+            if (frame.bus == 0 && frame.address == TPMS_DATA_ADDRESS) {
+                tpms31fHex = frame.data.joinToString(" ") { "%02x".format(it) }
+                tpms31fMs = SystemClock.elapsedRealtime()
+            }
             if (BuildConfig.DEBUG) writeCanLog(frame.bus, frame.address, frame.data)
             currentState = (decoder.decodeFrame(frame.bus, frame.address, frame.data) ?: return)
                 .copy(tpmsDebug = tpmsDebugText())
@@ -177,7 +186,9 @@ class DashKitDataSource(
             else "loc$loc $s age ${(now - tpmsLocationMs[loc]) / 1000}s"
         }.joinToString("\n")
         val ids = busOneCounts.entries.joinToString(" ") { "0x%03X:%d".format(it.key, it.value) }
-        return "tpms frames=$tpmsFrames\n$locations\nbus1 ids: $ids"
+        val all = if (tpms31fHex.isEmpty()) "tpms31f --"
+            else "tpms31f [$tpms31fHex] age ${(now - tpms31fMs) / 1000}s"
+        return "tpms frames=$tpmsFrames\n$locations\n$all\nbus1 ids: $ids"
     }
 
     private fun countRx(bus: Int, address: Int) {

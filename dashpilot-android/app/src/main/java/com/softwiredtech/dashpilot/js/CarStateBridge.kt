@@ -68,6 +68,7 @@ class CarStateBridge(
     @Volatile private var forwardCollisionWarning: Float = 0f
     @Volatile private var laneDepartureWarning: Float = 0f
     @Volatile private var sideCollisionWarning: Float = 0f
+    @Volatile private var tyreSpeedWarning: Float = 0f
     @Volatile private var speedCameraDistance: Int = -1
     @Volatile private var dataSourceType: String = ""
 
@@ -118,6 +119,7 @@ class CarStateBridge(
         forwardCollisionWarning = state.forwardCollisionWarning
         laneDepartureWarning = state.laneDepartureWarning
         sideCollisionWarning = state.sideCollisionWarning
+        tyreSpeedWarning = state.tyreSpeedWarning
     }
 
     @JavascriptInterface fun getEgoSteeringAngle(): Float = egoSteeringAngle
@@ -176,6 +178,7 @@ class CarStateBridge(
     @JavascriptInterface fun getForwardCollisionWarning(): Float = forwardCollisionWarning
     @JavascriptInterface fun getLaneDepartureWarning(): Float = laneDepartureWarning
     @JavascriptInterface fun getSideCollisionWarning(): Float = sideCollisionWarning
+    @JavascriptInterface fun getTyreSpeedWarning(): Float = tyreSpeedWarning
     @JavascriptInterface fun getSpeedCameraDistance(): Int = speedCameraDistance
 
     fun updateSpeedCameraDistance(distanceMeters: Int) {

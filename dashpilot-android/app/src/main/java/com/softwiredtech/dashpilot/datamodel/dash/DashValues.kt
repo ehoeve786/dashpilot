@@ -40,6 +40,7 @@ fun DashState.dashValues(systemDarkMode: Boolean? = null): Map<String, Any> {
         "forwardCollisionWarning" to c.forwardCollisionWarning,
         "laneDepartureWarning" to c.laneDepartureWarning,
         "sideCollisionWarning" to c.sideCollisionWarning,
+        "tyreSpeedWarning" to c.tyreSpeedWarning,
         "madsActive" to c.madsActive,
         "experimentalMode" to c.experimentalMode,
         "selfdriveActive" to c.selfdriveActive,

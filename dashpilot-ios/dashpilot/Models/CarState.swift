@@ -61,6 +61,7 @@ struct CarState: Codable {
     var forwardCollisionWarning: Float = 0
     var laneDepartureWarning: Float = 0
     var sideCollisionWarning: Float = 0
+    var tyreSpeedWarning: Float = 0
 
     init() {}
 
@@ -118,6 +119,7 @@ struct CarState: Codable {
         forwardCollisionWarning = Float(bridge.forwardCollisionWarning)
         laneDepartureWarning = Float(bridge.laneDepartureWarning)
         sideCollisionWarning = Float(bridge.sideCollisionWarning)
+        tyreSpeedWarning = Float(bridge.tyreSpeedWarning)
     }
 
     private static let kmToMiles: Float = 0.621371
@@ -197,5 +199,6 @@ struct CarState: Codable {
         forwardCollisionWarning = try c.decodeIfPresent(Float.self, forKey: .forwardCollisionWarning) ?? 0
         laneDepartureWarning = try c.decodeIfPresent(Float.self, forKey: .laneDepartureWarning) ?? 0
         sideCollisionWarning = try c.decodeIfPresent(Float.self, forKey: .sideCollisionWarning) ?? 0
+        tyreSpeedWarning = try c.decodeIfPresent(Float.self, forKey: .tyreSpeedWarning) ?? 0
     }
 }

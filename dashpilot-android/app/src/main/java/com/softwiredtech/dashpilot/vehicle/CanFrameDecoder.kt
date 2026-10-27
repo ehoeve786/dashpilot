@@ -84,7 +84,8 @@ class CanFrameDecoder(
                 forwardCollisionWarning = values[50].toFloat(),
                 laneDepartureWarning = values[51].toFloat(),
                 sideCollisionWarning = values[52].toFloat(),
-                vin = decodeVin(values, offset = 53)
+                tyreSpeedWarning = values[53].toFloat(),
+                vin = decodeVin(values, offset = 54)
             )
         }
 

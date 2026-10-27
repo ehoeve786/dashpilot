@@ -69,6 +69,7 @@ typedef struct {
     double forwardCollisionWarning;
     double laneDepartureWarning;
     double sideCollisionWarning;
+    double tyreSpeedWarning;
 } BridgeCarState;
 
 // Context

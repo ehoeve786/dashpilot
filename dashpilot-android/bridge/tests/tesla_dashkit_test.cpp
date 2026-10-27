@@ -50,6 +50,12 @@ const char* kChassisDbc =
     " SG_ TPMS_temperatureRL: 40|8@1+ (1,-40) [0|0] \"degC\" X\n"
     " SG_ TPMS_temperatureRR: 56|8@1+ (1,-40) [0|0] \"degC\" X\n"
     "\n"
+    "BO_ 373 ESP_wheelSpeed: 8 CH\n"
+    " SG_ ESP_wheelSpeedFL : 0|13@1+ (0.04,0) [0|327.64] \"RPM\" X\n"
+    " SG_ ESP_wheelSpeedFR : 13|13@1+ (0.04,0) [0|327.64] \"RPM\" X\n"
+    " SG_ ESP_wheelSpeedRL : 26|13@1+ (0.04,0) [0|327.64] \"RPM\" X\n"
+    " SG_ ESP_wheelSpeedRR : 39|13@1+ (0.04,0) [0|327.64] \"RPM\" X\n"
+    "\n"
     "BO_ 599 DI_speed: 8 VEH\n"
     " SG_ DI_uiSpeed : 24|9@1+ (1,0) [0|510] \"\" X\n";
 
@@ -135,6 +141,67 @@ struct Harness {
 void feed31f(Harness& h, const std::string& data) {
     h.cp.updateFrame(0, 799, reinterpret_cast<const uint8_t*>(data.data()), data.size());
     h.tpms.update(h.cp, h.cs, h.now);
+}
+
+// ESP_wheelSpeed: raw wheel speeds, 0.04 per count (FL, FR, RL, RR).
+std::string wheelFrame(uint32_t fl, uint32_t fr, uint32_t rl, uint32_t rr) {
+    std::string frame(8, '\0');
+    setBits(frame, 0, 13, fl);
+    setBits(frame, 13, 13, fr);
+    setBits(frame, 26, 13, rl);
+    setBits(frame, 39, 13, rr);
+    return frame;
+}
+
+// Drives straight at 60 km/h (raw 1500 = 60 km/h) for `seconds`, feeding one
+// wheel frame per second, and returns the warning at the end.
+double driveWheels(TyreSpeedWarning& tw, CANParsers& cp, CarState& cs,
+                   Clock::time_point& now, uint32_t fl, uint32_t fr, uint32_t rl,
+                   uint32_t rr, int seconds, double steer = 0.0) {
+    for (int i = 0; i < seconds; i++) {
+        std::string f = wheelFrame(fl, fr, rl, rr);
+        cp.updateFrame(0, 373, reinterpret_cast<const uint8_t*>(f.data()), f.size());
+        cs.egoSpeed = 60.0;
+        cs.egoSteeringAngle = steer;
+        tw.update(cp, cs, now);
+        now += std::chrono::seconds(1);
+    }
+    return cs.tyreSpeedWarning;
+}
+
+void tyre_speed_no_warning_when_wheels_match() {
+    CANParsers cp;
+    cp.addBus(0, kChassisDbc);
+    cp.buildCache();
+    TyreSpeedWarning tw;
+    CarState cs;
+    Clock::time_point now = Clock::time_point{} + std::chrono::seconds(100);
+    CHECK(driveWheels(tw, cp, cs, now, 1500, 1500, 1500, 1500, 60) == 0.0);
+}
+
+void tyre_speed_flags_fast_wheel_after_hold() {
+    CANParsers cp;
+    cp.addBus(0, kChassisDbc);
+    cp.buildCache();
+    TyreSpeedWarning tw;
+    CarState cs;
+    Clock::time_point now = Clock::time_point{} + std::chrono::seconds(100);
+    // FL 4% fast: not yet, then after the 20 s hold, it's FL (1).
+    CHECK(driveWheels(tw, cp, cs, now, 1560, 1500, 1500, 1500, 10) == 0.0);
+    CHECK(driveWheels(tw, cp, cs, now, 1560, 1500, 1500, 1500, 15) == 1.0);
+    // Back to matching: the warning clears.
+    CHECK(driveWheels(tw, cp, cs, now, 1500, 1500, 1500, 1500, 2) == 0.0);
+}
+
+void tyre_speed_ignores_turns() {
+    CANParsers cp;
+    cp.addBus(0, kChassisDbc);
+    cp.buildCache();
+    TyreSpeedWarning tw;
+    CarState cs;
+    Clock::time_point now = Clock::time_point{} + std::chrono::seconds(100);
+    // Wheel differences in a turn are normal: no warning while steering.
+    CHECK(driveWheels(tw, cp, cs, now, 1600, 1500, 1500, 1500, 40, 10.0) == 0.0);
 }
 
 void tpms_unknown_until_first_reading() {
@@ -299,7 +366,7 @@ void dashkit_mapper_publishes_through_the_double_array() {
     CHECK(out[41] == 30.0);         // tpmsTempFR
     CHECK(out[43] == -100.0);       // tpmsTempRR
     CHECK(out[45] == 0.0);          // laneViewRange
-    CHECK(CarState::VIN_OFFSET == 53 && CarState::FIELD_COUNT == 56);
+    CHECK(CarState::VIN_OFFSET == 54 && CarState::FIELD_COUNT == 57);
 }
 
 } // namespace
@@ -311,6 +378,9 @@ int main() {
     tpms_ignores_zero_bar_readings();
     tpms_expires_a_wheel_that_stops_reporting();
     tpms_all_four_wheels_from_0x31f();
+    tyre_speed_no_warning_when_wheels_match();
+    tyre_speed_flags_fast_wheel_after_hold();
+    tyre_speed_ignores_turns();
     tpms_31f_expires_per_wheel();
     tpms_zero_bar_frames_do_not_keep_an_old_pressure_alive();
     lanes_convert_to_si_and_expire();

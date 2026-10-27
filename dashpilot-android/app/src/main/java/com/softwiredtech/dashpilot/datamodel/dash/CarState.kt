@@ -66,6 +66,8 @@ data class CarState(
     val forwardCollisionWarning: Float = 0f,
     val laneDepartureWarning: Float = 0f,
     val sideCollisionWarning: Float = 0f,
+    // Low-tyre warning from wheel speeds: 0 none, 1 FL, 2 FR, 3 RL, 4 RR.
+    val tyreSpeedWarning: Float = 0f,
 
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = ""
@@ -80,7 +82,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 56
+        const val FIELD_COUNT = 57
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

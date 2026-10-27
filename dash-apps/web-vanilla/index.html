@@ -861,8 +861,11 @@
         const known = Number.isFinite(bar) && bar >= 0;
         el.querySelector(".p").textContent = !known ? "--"
           : Math.round(bar * BAR_TO_PSI) + " psi";
-        el.querySelector(".t").textContent = Number.isFinite(temp) && temp > -100
+        const tempText = Number.isFinite(temp) && temp > -100
           ? (car.isImperial ? Math.round(temp * 9 / 5 + 32) + "°F" : Math.round(temp) + "°C") : "";
+        // Wheel-speed warning: this wheel turns faster than the others.
+        const slow = Number(car.tyreSpeedWarning) === wheels.indexOf(w) + 1;
+        el.querySelector(".t").textContent = [tempText, slow ? "slow wheel" : ""].filter(Boolean).join(" · ");
         el.classList.toggle("critical", known && bar < TPMS_CRITICAL_BAR);
         el.classList.toggle("low", known && bar >= TPMS_CRITICAL_BAR && bar < TPMS_LOW_BAR);
       }

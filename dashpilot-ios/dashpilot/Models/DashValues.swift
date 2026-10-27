@@ -44,6 +44,7 @@ extension DashState {
             ("forwardCollisionWarning", .number(c.forwardCollisionWarning)),
             ("laneDepartureWarning", .number(c.laneDepartureWarning)),
             ("sideCollisionWarning", .number(c.sideCollisionWarning)),
+            ("tyreSpeedWarning", .number(c.tyreSpeedWarning)),
             ("madsActive", .bool(c.madsActive)),
             ("experimentalMode", .bool(c.experimentalMode)),
             ("selfdriveActive", .bool(c.selfdriveActive)),

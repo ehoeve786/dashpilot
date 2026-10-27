@@ -60,6 +60,7 @@ static void carStateToBridge(const CarState& cs, BridgeCarState* out) {
     out->forwardCollisionWarning = cs.forwardCollisionWarning;
     out->laneDepartureWarning = cs.laneDepartureWarning;
     out->sideCollisionWarning = cs.sideCollisionWarning;
+    out->tyreSpeedWarning = cs.tyreSpeedWarning;
 }
 
 static std::atomic<bool> receiveLoopRunning{false};

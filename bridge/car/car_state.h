@@ -73,12 +73,15 @@ struct CarState {
     double laneDepartureWarning = 0;
     double sideCollisionWarning = 0;
 
+    // Low-tyre warning from wheel speeds: 0 none, 1 FL, 2 FR, 3 RL, 4 RR.
+    double tyreSpeedWarning = 0;
+
     // Vehicle VIN, empty until fully assembled by the mapper.
     static constexpr size_t VIN_LENGTH = 17;
     char vin[VIN_LENGTH + 1] = {};
 
     static constexpr size_t VIN_DOUBLE_COUNT = 3;
-    static constexpr size_t VIN_OFFSET = 53;
+    static constexpr size_t VIN_OFFSET = 54;
     static constexpr size_t FIELD_COUNT = VIN_OFFSET + VIN_DOUBLE_COUNT;
 
     void toArray(double* out) const {
@@ -145,6 +148,7 @@ struct CarState {
         out[50] = forwardCollisionWarning;
         out[51] = laneDepartureWarning;
         out[52] = sideCollisionWarning;
+        out[53] = tyreSpeedWarning;
 
         // VIN chars ride the double array as raw bit patterns, 8 bytes per
         // double; decoded by CanFrameDecoder.arrayToCarState.

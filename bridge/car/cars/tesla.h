@@ -288,6 +288,64 @@ public:
     }
 };
 
+// Low-tyre warning from wheel speeds (ESP_wheelSpeed, chassis bus). A
+// deflated tyre has a smaller rolling radius, so its wheel turns faster than
+// the others. Compares each wheel with the mean of the four while driving
+// straight, and warns when one stays about 2% above the mean for HOLD. This
+// is a relative check only: it doesn't know pressure, and a mismatched tyre
+// or spare shows up as a constant offset.
+class TyreSpeedWarning {
+public:
+    using Clock = std::chrono::steady_clock;
+    static constexpr double DEVIATION = 0.02;   // clear to warn above this
+    static constexpr double CLEAR = 0.01;       // back to normal below this
+    static constexpr std::chrono::seconds HOLD{20};
+    static constexpr double MIN_SPEED = 30.0;   // km/h
+    static constexpr double MAX_STEER = 5.0;    // deg
+
+    void update(const CANParsers& cp, CarState& cs,
+                Clock::time_point now = Clock::now()) {
+        static const char* const kSignals[4] = {
+            "ESP_wheelSpeedFL", "ESP_wheelSpeedFR", "ESP_wheelSpeedRL", "ESP_wheelSpeedRR"};
+        double w[4];
+        bool valid = true;
+        for (int i = 0; i < 4; i++) {
+            w[i] = cp.get(0, "ESP_wheelSpeed", kSignals[i]);
+            valid = valid && w[i] > 0;
+        }
+        bool driving = valid && cs.egoSpeed >= MIN_SPEED && std::fabs(cs.egoSteeringAngle) < MAX_STEER;
+        if (!driving) {
+            // Only continuous straight driving counts toward the hold time.
+            // Keep the current warning until there's data to judge it by.
+            for (int i = 0; i < 4; i++) hasSince_[i] = false;
+            if (!valid) flagged_ = -1;
+            cs.tyreSpeedWarning = flagged_ + 1;
+            return;
+        }
+
+        double mean = (w[0] + w[1] + w[2] + w[3]) / 4.0;
+        for (int i = 0; i < 4; i++) {
+            double dev = w[i] / mean - 1.0;
+            if (dev > DEVIATION) {
+                if (!hasSince_[i]) {
+                    since_[i] = now;
+                    hasSince_[i] = true;
+                }
+                if (flagged_ < 0 && now - since_[i] >= HOLD) flagged_ = i;
+            } else if (dev < CLEAR) {
+                hasSince_[i] = false;
+                if (flagged_ == i) flagged_ = -1;
+            }
+        }
+        cs.tyreSpeedWarning = flagged_ + 1;
+    }
+
+private:
+    int flagged_ = -1;
+    bool hasSince_[4] = {};
+    Clock::time_point since_[4] = {};
+};
+
 class TeslaDashKitMapper : public CarStateMapper {
 public:
     void update(const CANParsers &cp, CarState &cs) override {
@@ -336,12 +394,14 @@ public:
         updateVehicleBus(cp, cs);
         vin_.update(cp, cs);
         tpms_.update(cp, cs);
+        tyreSpeed_.update(cp, cs);
     }
 
 private:
     BlinkerHold leftBlinkerHold_;
     BlinkerHold rightBlinkerHold_;
     TpmsLatch tpms_;
+    TyreSpeedWarning tyreSpeed_;
     DasLanesLatch lanes_;
     TeslaVinUpdater vin_;
 };

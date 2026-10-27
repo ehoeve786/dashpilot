@@ -52,9 +52,12 @@ class DashKitDataSource(
 
     private var currentState = CarState()
 
-    // Last TPMS frame per location code (0..7), for the debug readout.
-    private val tpmsByLocation = arrayOfNulls<String>(8)
-    private val tpmsLocationMs = LongArray(8)
+    // Last reading per wheel (0 FL, 1 FR, 2 RL, 3 RR), for the debug readout.
+    private val tpmsByWheel = arrayOfNulls<String>(4)
+    private val tpmsWheelMs = LongArray(4)
+    // Last mux 4 frame (not a wheel reading), for the debug readout.
+    private var tpmsMux4Hex = ""
+    private var tpmsMux4Ms = 0L
     private var tpmsFrames = 0
     // Last TPMS_data frame (0x31F, chassis bus) for the debug readout.
     private var tpms31fHex = ""
@@ -116,7 +119,7 @@ class DashKitDataSource(
                     Log.i(RX_LOG_TAG, "tpms raw bus=${frame.bus} len=${frame.data.size} $hex")
                 }
             }
-            if (frame.address == TPMS_ADDRESS && frame.data.size >= 5) noteTpms(frame.data)
+            if (frame.address == TPMS_ADDRESS && frame.data.size >= 7) noteTpms(frame.data)
             if (frame.bus == 1) busOneCounts[frame.address] = (busOneCounts[frame.address] ?: 0) + 1
             if (frame.bus == 0 && frame.address == TPMS_DATA_ADDRESS) {
                 tpms31fHex = frame.data.joinToString(" ") { "%02x".format(it) }
@@ -165,30 +168,53 @@ class DashKitDataSource(
         canLog = null
     }
 
-    // Decodes the VCSEC_TPMSData layout from bus_1_tesla_vehicle.dbc:
-    // index 0|2, pressure 8|8 (x0.025 bar), temperature 16|8 (-40 C),
-    // location 32|3 (0 FL, 1 FR, 2 RL, 3 RR).
+    // Decodes the 7-byte VCSEC_TPMSData layout from bus_1_tesla_vehicle.dbc.
+    // Mux 5 carries FL, FR, RL, RR pressures in bytes 2-5 (x0.025 bar).
+    // Muxes 0-3 each carry one sensor: mux 0 RR, 1 RL, 2 FR, 3 FL, with pressure
+    // in byte 2 (x0.05 - 1 bar gauge), temperature in byte 3 (-40 C) and sensor
+    // battery in byte 4 (x0.01 + 1.5 V). Raw 0xFF in a mux 0-3 frame is no reading.
     private fun noteTpms(d: ByteArray) {
-        val index = d[0].toInt() and 0x3
-        val location = d[4].toInt() and 0x7
-        val pressure = ((d[1].toInt() and 0xFF) * 0.025)
-        val temp = (d[2].toInt() and 0xFF) - 40
+        val mux = d[0].toInt() and 0x7
         val hex = d.joinToString(" ") { "%02x".format(it) }
-        tpmsByLocation[location] = "slot$index %.3f bar %d C [$hex]".format(pressure, temp)
-        tpmsLocationMs[location] = SystemClock.elapsedRealtime()
+        val now = SystemClock.elapsedRealtime()
         tpmsFrames++
+        when (mux) {
+            5 -> for (w in 0 until 4) {
+                val raw = d[2 + w].toInt() and 0xFF
+                tpmsByWheel[w] = "%.3f bar [%s]".format(raw * 0.025, hex)
+                tpmsWheelMs[w] = now
+            }
+            0, 1, 2, 3 -> {
+                val w = intArrayOf(3, 2, 1, 0)[mux]
+                val raw = d[2].toInt() and 0xFF
+                tpmsByWheel[w] = if (raw == 0xFF) "mux$mux no reading [$hex]" else
+                    "mux$mux %.2f bar %d C %.2f V [$hex]".format(
+                        raw * 0.05 - 1.0,
+                        (d[3].toInt() and 0xFF) - 40,
+                        (d[4].toInt() and 0xFF) * 0.01 + 1.5,
+                    )
+                tpmsWheelMs[w] = now
+            }
+            else -> {
+                tpmsMux4Hex = hex
+                tpmsMux4Ms = now
+            }
+        }
     }
 
     private fun tpmsDebugText(): String {
         val now = SystemClock.elapsedRealtime()
-        val locations = tpmsByLocation.mapIndexed { loc, s ->
-            if (s == null) "loc$loc --"
-            else "loc$loc $s age ${(now - tpmsLocationMs[loc]) / 1000}s"
+        val wheels = listOf("FL", "FR", "RL", "RR").mapIndexed { w, name ->
+            val s = tpmsByWheel[w]
+            if (s == null) "$name --"
+            else "$name $s age ${(now - tpmsWheelMs[w]) / 1000}s"
         }.joinToString("\n")
+        val mux4 = if (tpmsMux4Hex.isEmpty()) "mux4 --"
+            else "mux4 [$tpmsMux4Hex] age ${(now - tpmsMux4Ms) / 1000}s"
         val ids = busOneCounts.entries.joinToString(" ") { "0x%03X:%d".format(it.key, it.value) }
         val all = if (tpms31fHex.isEmpty()) "tpms31f --"
             else "tpms31f [$tpms31fHex] age ${(now - tpms31fMs) / 1000}s"
-        return "tpms frames=$tpmsFrames\n$locations\n$all\nbus1 ids: $ids"
+        return "tpms frames=$tpmsFrames\n$wheels\n$mux4\n$all\nbus1 ids: $ids"
     }
 
     private fun countRx(bus: Int, address: Int) {

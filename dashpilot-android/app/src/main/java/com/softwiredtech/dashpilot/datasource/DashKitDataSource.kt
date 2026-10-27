@@ -21,6 +21,8 @@ import java.util.UUID
 class DashKitDataSource(
     private val manager: DashKitBleManager,
     private val decoder: CanFrameDecoder,
+    // Debug builds write the CAN log here (the app's internal files directory).
+    private val canLogFile: File,
 ) : IDataSource, GattListener {
 
     companion object {
@@ -57,8 +59,7 @@ class DashKitDataSource(
 
     // Debug builds: every forwarded frame, both buses, as CSV
     // (ms since connect, bus, id, hex data). Overwritten on each connection and
-    // capped in size. Readable from the phone at CAN_LOG_PATH.
-    private val canLogFile = File("/sdcard/Android/data/${BuildConfig.APPLICATION_ID}/files/can-log.csv")
+    // capped in size. Readable with run-as on debug builds.
     private var canLog: BufferedWriter? = null
     private var canLogBytes = 0L
     private var canLogStartMs = 0L

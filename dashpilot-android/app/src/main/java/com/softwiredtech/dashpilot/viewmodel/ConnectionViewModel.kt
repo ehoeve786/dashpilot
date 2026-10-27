@@ -86,6 +86,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.File
 import kotlin.coroutines.resume
 import com.softwiredtech.dashpilot.R
 
@@ -422,7 +423,7 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
                         }
                     }
                     val decoder = CanFrameDecoder(bridge, profile)
-                    DashKitDataSource(manager, decoder)
+                    DashKitDataSource(manager, decoder, File(context.filesDir, "can-log.csv"))
                 }
                 DataSourceType.WEBSOCKET -> WebsocketDataSource()
                 DataSourceType.DEMO -> DemoDataSource()

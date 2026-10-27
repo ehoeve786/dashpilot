@@ -60,20 +60,24 @@ const char* kChassisDbc =
     " SG_ DI_uiSpeed : 24|9@1+ (1,0) [0|510] \"\" X\n";
 
 const char* kVehicleDbc =
-    "BO_ 537 VCSEC_TPMSData: 5 CH\n"
-    " SG_ VCSEC_TPMSDataIndex M : 0|2@1+ (1,0) [0|3] \"\" X\n"
-    " SG_ VCSEC_TPMSLocation0 m0 : 32|3@1+ (1,0) [0|4] \"\" X\n"
-    " SG_ VCSEC_TPMSLocation1 m1 : 32|3@1+ (1,0) [0|4] \"\" X\n"
-    " SG_ VCSEC_TPMSLocation2 m2 : 32|3@1+ (1,0) [0|4] \"\" X\n"
-    " SG_ VCSEC_TPMSLocation3 m3 : 32|3@1+ (1,0) [0|4] \"\" X\n"
-    " SG_ VCSEC_TPMSPressure0 m0 : 8|8@1+ (0.025,0) [0|6.35] \"bar\" X\n"
-    " SG_ VCSEC_TPMSPressure1 m1 : 8|8@1+ (0.025,0) [0|6.35] \"bar\" X\n"
-    " SG_ VCSEC_TPMSPressure2 m2 : 8|8@1+ (0.025,0) [0|6.35] \"bar\" X\n"
-    " SG_ VCSEC_TPMSPressure3 m3 : 8|8@1+ (0.025,0) [0|6.35] \"bar\" X\n"
-    " SG_ VCSEC_TPMSTemperature0 m0 : 16|8@1+ (1,-40) [-40|214] \"C\" X\n"
-    " SG_ VCSEC_TPMSTemperature1 m1 : 16|8@1+ (1,-40) [-40|214] \"C\" X\n"
-    " SG_ VCSEC_TPMSTemperature2 m2 : 16|8@1+ (1,-40) [-40|214] \"C\" X\n"
-    " SG_ VCSEC_TPMSTemperature3 m3 : 16|8@1+ (1,-40) [-40|214] \"C\" X\n";
+    "BO_ 537 VCSEC_TPMSData: 7 CH\n"
+    " SG_ VCSEC_TPMSDataIndex M : 0|3@1+ (1,0) [0|5] \"\"  Receiver\n"
+    " SG_ VCSEC_TPMSPressureFL m5 : 16|8@1+ (0.025,0) [0|6.375] \"bar\" X\n"
+    " SG_ VCSEC_TPMSPressureFR m5 : 24|8@1+ (0.025,0) [0|6.375] \"bar\" X\n"
+    " SG_ VCSEC_TPMSPressureRL m5 : 32|8@1+ (0.025,0) [0|6.375] \"bar\" X\n"
+    " SG_ VCSEC_TPMSPressureRR m5 : 40|8@1+ (0.025,0) [0|6.375] \"bar\" X\n"
+    " SG_ VCSEC_TPMSPressure0 m0 : 16|8@1+ (0.05,-1) [-1|11.75] \"bar\" X\n"
+    " SG_ VCSEC_TPMSPressure1 m1 : 16|8@1+ (0.05,-1) [-1|11.75] \"bar\" X\n"
+    " SG_ VCSEC_TPMSPressure2 m2 : 16|8@1+ (0.05,-1) [-1|11.75] \"bar\" X\n"
+    " SG_ VCSEC_TPMSPressure3 m3 : 16|8@1+ (0.05,-1) [-1|11.75] \"bar\" X\n"
+    " SG_ VCSEC_TPMSTemperature0 m0 : 24|8@1+ (1,-40) [-40|215] \"C\" X\n"
+    " SG_ VCSEC_TPMSTemperature1 m1 : 24|8@1+ (1,-40) [-40|215] \"C\" X\n"
+    " SG_ VCSEC_TPMSTemperature2 m2 : 24|8@1+ (1,-40) [-40|215] \"C\" X\n"
+    " SG_ VCSEC_TPMSTemperature3 m3 : 24|8@1+ (1,-40) [-40|215] \"C\" X\n"
+    " SG_ VCSEC_TPMSBatVoltage0 m0 : 32|8@1+ (0.01,1.5) [1.5|4.04] \"V\" X\n"
+    " SG_ VCSEC_TPMSBatVoltage1 m1 : 32|8@1+ (0.01,1.5) [1.5|4.04] \"V\" X\n"
+    " SG_ VCSEC_TPMSBatVoltage2 m2 : 32|8@1+ (0.01,1.5) [1.5|4.04] \"V\" X\n"
+    " SG_ VCSEC_TPMSBatVoltage3 m3 : 32|8@1+ (0.01,1.5) [1.5|4.04] \"V\" X\n";
 
 void setBits(std::string& frame, int start, int len, uint32_t raw) {
     for (int i = 0; i < len; i++) {
@@ -84,13 +88,24 @@ void setBits(std::string& frame, int start, int len, uint32_t raw) {
     }
 }
 
-// One TPMS sensor slot; rawPressure * 0.025 bar, rawTemp - 40 degC.
-std::string tpmsFrame(uint32_t index, uint32_t location, uint32_t rawPressure, uint32_t rawTemp) {
-    std::string frame(5, '\0');
-    setBits(frame, 0, 2, index);
-    setBits(frame, 8, 8, rawPressure);
-    setBits(frame, 16, 8, rawTemp);
-    setBits(frame, 32, 3, location);
+// Muxes 0-3: one sensor record. rawPressure * 0.05 - 1 bar, rawTemp - 40 degC.
+std::string tpmsSensorFrame(uint32_t mux, uint32_t rawPressure, uint32_t rawTemp) {
+    std::string frame(7, '\0');
+    setBits(frame, 0, 3, mux);
+    setBits(frame, 16, 8, rawPressure);
+    setBits(frame, 24, 8, rawTemp);
+    setBits(frame, 32, 8, 50);  // sensor battery, unused here
+    return frame;
+}
+
+// Mux 5: all four wheels, rawPressure * 0.025 bar, in FL, FR, RL, RR order.
+std::string tpmsWheelFrame(uint32_t fl, uint32_t fr, uint32_t rl, uint32_t rr) {
+    std::string frame(7, '\0');
+    setBits(frame, 0, 3, 5);
+    setBits(frame, 16, 8, fl);
+    setBits(frame, 24, 8, fr);
+    setBits(frame, 32, 8, rl);
+    setBits(frame, 40, 8, rr);
     return frame;
 }
 
@@ -206,20 +221,20 @@ void tyre_speed_ignores_turns() {
 
 void tpms_unknown_until_first_reading() {
     Harness h;
-    h.feedTpms(tpmsFrame(0, 0, 116, 65));
+    h.feedTpms(tpmsSensorFrame(3, 78, 65));  // FL 2.9 bar 25 C
     CHECK(near(h.cs.tpmsPressureFL, 2.9));
     CHECK(h.cs.tpmsTempFL == 25.0);
     CHECK(h.cs.tpmsPressureFR == -1.0);
     CHECK(h.cs.tpmsTempRR == -100.0);
 }
 
-void tpms_maps_sensors_by_location_and_keeps_them() {
+void tpms_sensor_muxes_map_to_wheels() {
     Harness h;
-    // Sensor slots don't have to match wheel positions.
-    h.feedTpms(tpmsFrame(0, 3, 112, 70));  // RR 2.8 bar 30 C
-    h.feedTpms(tpmsFrame(1, 2, 114, 68));  // RL 2.85 bar 28 C
-    h.feedTpms(tpmsFrame(2, 1, 88, 60));   // FR 2.2 bar 20 C
-    h.feedTpms(tpmsFrame(3, 0, 116, 65));  // FL 2.9 bar 25 C
+    // Mux 0 RR, 1 RL, 2 FR, 3 FL.
+    h.feedTpms(tpmsSensorFrame(0, 76, 70));  // RR 2.8 bar 30 C
+    h.feedTpms(tpmsSensorFrame(1, 77, 68));  // RL 2.85 bar 28 C
+    h.feedTpms(tpmsSensorFrame(2, 64, 60));  // FR 2.2 bar 20 C
+    h.feedTpms(tpmsSensorFrame(3, 78, 65));  // FL 2.9 bar 25 C
     CHECK(near(h.cs.tpmsPressureRR, 2.8));
     CHECK(near(h.cs.tpmsPressureRL, 2.85));
     CHECK(near(h.cs.tpmsPressureFR, 2.2));
@@ -227,18 +242,29 @@ void tpms_maps_sensors_by_location_and_keeps_them() {
     CHECK(h.cs.tpmsTempRR == 30.0);
     CHECK(h.cs.tpmsTempFR == 20.0);
     // A later reading of one wheel leaves the others alone.
-    h.feedTpms(tpmsFrame(2, 1, 80, 61));
+    h.feedTpms(tpmsSensorFrame(2, 60, 61));  // FR 2.0 bar 21 C
     CHECK(near(h.cs.tpmsPressureFR, 2.0));
     CHECK(near(h.cs.tpmsPressureFL, 2.9));
 }
 
-void tpms_ignores_sna_and_unlocated_sensors() {
+void tpms_mux5_reports_all_four_pressures() {
     Harness h;
-    h.feedTpms(tpmsFrame(0, 0, 116, 65));
-    h.feedTpms(tpmsFrame(0, 0, 255, 255));  // SNA keeps the last reading
+    // FL 2.9, FR 2.775, RL 2.85 bar; RR raw 0 is a zero-bar fault and is rejected.
+    h.feedTpms(tpmsWheelFrame(116, 111, 114, 0));
+    CHECK(near(h.cs.tpmsPressureFL, 2.9));
+    CHECK(near(h.cs.tpmsPressureFR, 2.775));
+    CHECK(near(h.cs.tpmsPressureRL, 2.85));
+    CHECK(h.cs.tpmsPressureRR == -1.0);
+    CHECK(h.cs.tpmsTempFL == -100.0);  // mux 5 carries no temperature
+}
+
+void tpms_ignores_sna_and_other_muxes() {
+    Harness h;
+    h.feedTpms(tpmsSensorFrame(3, 78, 65));
+    h.feedTpms(tpmsSensorFrame(3, 255, 255));  // SNA keeps the last reading
     CHECK(near(h.cs.tpmsPressureFL, 2.9));
     CHECK(h.cs.tpmsTempFL == 25.0);
-    h.feedTpms(tpmsFrame(1, 4, 40, 65));    // location unknown
+    h.feedTpms(tpmsSensorFrame(4, 78, 65));    // mux 4 is not a wheel reading
     CHECK(h.cs.tpmsPressureFR == -1.0);
     CHECK(h.cs.tpmsPressureRL == -1.0);
     CHECK(h.cs.tpmsPressureRR == -1.0);
@@ -270,12 +296,12 @@ void tpms_31f_expires_per_wheel() {
 
 void tpms_expires_a_wheel_that_stops_reporting() {
     Harness h;
-    h.feedTpms(tpmsFrame(0, 0, 116, 65));  // FL 2.9 bar
+    h.feedTpms(tpmsSensorFrame(3, 78, 65));  // FL 2.9 bar
     h.advance(30000);
-    h.feedTpms(tpmsFrame(2, 1, 88, 60));   // FR reports, FL does not
+    h.feedTpms(tpmsSensorFrame(2, 64, 60));  // FR reports, FL does not
     CHECK(near(h.cs.tpmsPressureFL, 2.9));
-    h.advance(31000);                      // FL silent for 61 s
-    h.feedTpms(tpmsFrame(2, 1, 88, 60));
+    h.advance(31000);                        // FL silent for 61 s
+    h.feedTpms(tpmsSensorFrame(2, 64, 60));
     CHECK(h.cs.tpmsPressureFL == -1.0);
     CHECK(h.cs.tpmsTempFL == -100.0);
     CHECK(near(h.cs.tpmsPressureFR, 2.2));
@@ -283,22 +309,22 @@ void tpms_expires_a_wheel_that_stops_reporting() {
 
 void tpms_zero_bar_frames_do_not_keep_an_old_pressure_alive() {
     Harness h;
-    h.feedTpms(tpmsFrame(0, 0, 116, 65));  // FL 2.9 bar, 25 C
-    for (int i = 0; i < 7; i++) {           // 70 s of 0 bar frames, temp still valid
+    h.feedTpms(tpmsSensorFrame(3, 78, 65));  // FL 2.9 bar, 25 C
+    for (int i = 0; i < 7; i++) {            // 70 s of 0 bar frames, temp still valid
         h.advance(10000);
-        h.feedTpms(tpmsFrame(0, 0, 0, 70));
+        h.feedTpms(tpmsSensorFrame(3, 20, 70));  // raw 20 = 0 bar
     }
-    CHECK(h.cs.tpmsPressureFL == -1.0);     // pressure expired
-    CHECK(h.cs.tpmsTempFL == 30.0);         // temperature kept refreshing
+    CHECK(h.cs.tpmsPressureFL == -1.0);      // pressure expired
+    CHECK(h.cs.tpmsTempFL == 30.0);          // temperature kept refreshing
 }
 
 void tpms_ignores_zero_bar_readings() {
     Harness h;
-    h.feedTpms(tpmsFrame(0, 0, 116, 65));  // FL 2.9 bar
-    h.feedTpms(tpmsFrame(0, 0, 0, 70));    // 0 bar, 30 C: a fault, not a flat tyre
+    h.feedTpms(tpmsSensorFrame(3, 78, 65));  // FL 2.9 bar
+    h.feedTpms(tpmsSensorFrame(3, 20, 70));  // 0 bar, 30 C: a fault, not a flat tyre
     CHECK(near(h.cs.tpmsPressureFL, 2.9));
     CHECK(h.cs.tpmsTempFL == 30.0);
-    h.feedTpms(tpmsFrame(0, 0, 19, 70));   // 0.475 bar: still below the floor
+    h.feedTpms(tpmsSensorFrame(3, 29, 70));  // 0.45 bar: still below the floor
     CHECK(near(h.cs.tpmsPressureFL, 2.9));
 }
 
@@ -355,7 +381,7 @@ void dashkit_mapper_publishes_through_the_double_array() {
     cp.buildCache();
     TeslaDashKitMapper mapper;
     CarState cs;
-    std::string frame = tpmsFrame(0, 1, 112, 70);  // FR 2.8 bar 30 C
+    std::string frame = tpmsSensorFrame(2, 76, 70);  // FR 2.8 bar 30 C
     cp.updateFrame(1, 537, reinterpret_cast<const uint8_t*>(frame.data()), frame.size());
     mapper.update(cp, cs);
 
@@ -373,8 +399,9 @@ void dashkit_mapper_publishes_through_the_double_array() {
 
 int main() {
     tpms_unknown_until_first_reading();
-    tpms_maps_sensors_by_location_and_keeps_them();
-    tpms_ignores_sna_and_unlocated_sensors();
+    tpms_sensor_muxes_map_to_wheels();
+    tpms_mux5_reports_all_four_pressures();
+    tpms_ignores_sna_and_other_muxes();
     tpms_ignores_zero_bar_readings();
     tpms_expires_a_wheel_that_stops_reporting();
     tpms_all_four_wheels_from_0x31f();

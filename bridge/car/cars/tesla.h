@@ -136,10 +136,10 @@ struct BlinkerHold {
     }
 };
 
-// VCSEC_TPMSData (0x219, vehicle bus) carries one tyre sensor per frame,
-// selected by VCSEC_TPMSDataIndex, with that sensor's wheel position. Keep
-// the last reading per wheel: sensors report rarely (tens of seconds apart
-// while driving), so readings are not expired.
+// VCSEC_TPMSData (0x219, vehicle bus), 7 bytes. Mux 5 carries all four wheels
+// (pressure only). Muxes 0-3 carry one sensor each: mux 0 RR, 1 RL, 2 FR, 3 FL,
+// with pressure, temperature and sensor battery. Keep the last reading per
+// wheel and expire it when it stops reporting.
 class TpmsLatch {
 public:
     // A reading is dropped once it hasn't been refreshed for this long, so a
@@ -154,26 +154,22 @@ public:
         uint32_t seq = cp.frameSeq(1, "VCSEC_TPMSData");
         if (seq != lastSeq_) {
             lastSeq_ = seq;
-            const std::string n = std::to_string(static_cast<int>(get(cp, "VCSEC_TPMSDataIndex")));
-            int location = static_cast<int>(get(cp, "VCSEC_TPMSLocation" + n));
-            // 0 FL, 1 FR, 2 RL, 3 RR; anything else is an unlocated sensor.
-            if (location >= 0 && location < 4) {
-                double pressure = get(cp, "VCSEC_TPMSPressure" + n);
-                double temp = get(cp, "VCSEC_TPMSTemperature" + n);
-                // A tyre cannot read 0 bar while driving: a zero is a sensor
-                // fault or a bad frame, so it neither replaces the previous
-                // reading nor refreshes its timer.
-                if (pressure >= PRESSURE_MIN && pressure < PRESSURE_SNA) {
-                    pressure_[location] = pressure;
-                    pressureSeen_[location] = now;
-                    pressureValid_[location] = true;
-                }
-                if (temp < TEMP_SNA) {
-                    temp_[location] = temp;
-                    tempSeen_[location] = now;
-                    tempValid_[location] = true;
-                }
+            int index = static_cast<int>(get(cp, "VCSEC_TPMSDataIndex"));
+            if (index == 5) {
+                // Mux 5: FL, FR, RL, RR pressures in bytes 2-5. No temperature.
+                acceptPressure(0, get(cp, "VCSEC_TPMSPressureFL"), now);
+                acceptPressure(1, get(cp, "VCSEC_TPMSPressureFR"), now);
+                acceptPressure(2, get(cp, "VCSEC_TPMSPressureRL"), now);
+                acceptPressure(3, get(cp, "VCSEC_TPMSPressureRR"), now);
+            } else if (index >= 0 && index <= 3) {
+                // Muxes 0-3: one sensor per mux. Index into pressure_ is FL 0, FR 1, RL 2, RR 3.
+                static const int kWheelOfMux[4] = {3, 2, 1, 0};
+                const std::string n = std::to_string(index);
+                int w = kWheelOfMux[index];
+                acceptPressure(w, get(cp, "VCSEC_TPMSPressure" + n), now);
+                acceptTemp(w, get(cp, "VCSEC_TPMSTemperature" + n), now);
             }
+            // Mux 4 and any other index is not a wheel reading.
         }
         // TPMS_data (0x31F, chassis bus): all four wheels in one frame, no
         // multiplexer. Same acceptance rules as the per-sensor frames above.
@@ -217,8 +213,25 @@ public:
 private:
     // SNA after DBC scaling: raw 255.
     static constexpr double PRESSURE_MIN = 0.5;    // below this: not a real reading
-    static constexpr double PRESSURE_SNA = 6.36;   // raw 255 * 0.025 bar = 6.375
+    // Mux 5 raw 255 * 0.025 = 6.375 bar; muxes 0-3 raw 255 * 0.05 - 1 = 11.75 bar. Both are SNA.
+    static constexpr double PRESSURE_SNA = 6.36;
     static constexpr double TEMP_SNA = 214.5;      // raw 255 - 40 = 215 degC
+
+    void acceptPressure(int w, double pressure, Clock::time_point now) {
+        if (pressure >= PRESSURE_MIN && pressure < PRESSURE_SNA) {
+            pressure_[w] = pressure;
+            pressureSeen_[w] = now;
+            pressureValid_[w] = true;
+        }
+    }
+
+    void acceptTemp(int w, double temp, Clock::time_point now) {
+        if (temp < TEMP_SNA) {
+            temp_[w] = temp;
+            tempSeen_[w] = now;
+            tempValid_[w] = true;
+        }
+    }
 
     static double get(const CANParsers& cp, const std::string& sig) {
         return cp.get(1, "VCSEC_TPMSData", sig);

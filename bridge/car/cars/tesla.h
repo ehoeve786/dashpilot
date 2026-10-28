@@ -265,12 +265,22 @@ public:
 
         updateVehicleBus(cp, cs);
         vin_.update(cp, cs);
+        tpms_.update(cp);
+        cs.tpmsPressureFL = tpms_.pressureBar(0);
+        cs.tpmsPressureFR = tpms_.pressureBar(1);
+        cs.tpmsPressureRL = tpms_.pressureBar(2);
+        cs.tpmsPressureRR = tpms_.pressureBar(3);
+        cs.tpmsTempFL = tpms_.tempC(0);
+        cs.tpmsTempFR = tpms_.tempC(1);
+        cs.tpmsTempRL = tpms_.tempC(2);
+        cs.tpmsTempRR = tpms_.tempC(3);
     }
 
 private:
     BlinkerHold leftBlinkerHold_;
     BlinkerHold rightBlinkerHold_;
     TeslaVinUpdater vin_;
+    TpmsLatch tpms_;
 };
 
 // New-gen Model Y (Juniper) with new_gen_juniper.dbc on both buses. Comma and

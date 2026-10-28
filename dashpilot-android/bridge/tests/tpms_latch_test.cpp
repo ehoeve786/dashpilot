@@ -123,6 +123,21 @@ void new_frame_refreshes_reading() {
     CHECK(latch.pressureBar(0, t0 + seconds(111)) < 0);                 // 61 s after refresh
 }
 
+// TPMS values land after the VIN slots in the CarState array, in FL FR RL RR order.
+void carstate_array_carries_tpms_after_vin() {
+    CarState cs;
+    cs.tpmsPressureFL = 2.75; cs.tpmsPressureRR = 2.85;
+    cs.tpmsTempFR = 17;
+    double out[CarState::FIELD_COUNT];
+    cs.toArray(out);
+    CHECK(CarState::TPMS_OFFSET == CarState::VIN_OFFSET + CarState::VIN_DOUBLE_COUNT);
+    CHECK(CarState::FIELD_COUNT == CarState::TPMS_OFFSET + 8);
+    CHECK(out[CarState::TPMS_OFFSET + 0] == 2.75);   // FL pressure
+    CHECK(out[CarState::TPMS_OFFSET + 3] == 2.85);   // RR pressure
+    CHECK(out[CarState::TPMS_OFFSET + 5] == 17);     // FR temperature
+    CHECK(out[CarState::TPMS_OFFSET + 4] == -100);   // FL temperature: no reading by default
+}
+
 }  // namespace
 
 int main() {
@@ -132,6 +147,7 @@ int main() {
     mux4_is_ignored();
     reread_does_not_refresh_timer();
     new_frame_refreshes_reading();
+    carstate_array_carries_tpms_after_vin();
     if (failures) {
         std::printf("%d failure(s)\n", failures);
         return 1;

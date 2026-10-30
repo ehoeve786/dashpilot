@@ -30,3 +30,9 @@ jobs:
       - name: Build debug APK
         working-directory: dashpilot-android
         run: ./gradlew assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashpilot-debug-apk
+          path: dashpilot-android/app/build/outputs/apk/debug/*.apk

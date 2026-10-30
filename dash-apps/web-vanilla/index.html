@@ -368,6 +368,7 @@
       color: #f2f2f2;
     }
 
+    #tpmsText { font-size: 14px; margin-left: 12px; white-space: nowrap; }
     body.dark-mode #speedText {
       color: #ffffff;
     }
@@ -441,6 +442,7 @@
       <span class="battery-percent" id="phoneBatteryPercent"></span>
     </div>
     <div class="status-separator" id="statusSeparator"></div>
+    <span id="tpmsText"></span>
     <div class="battery-group" id="carBatteryGroup" style="display: none;">
       <span class="battery-label" id="carBatteryLabel">Car</span>
       <div class="battery-shell" id="carBatteryShell">
@@ -703,6 +705,15 @@
         document.getElementById("statusSeparator").style.display =
           (car.showPhoneBattery && car.showCarBattery) ? "block" : "none";
 
+        // TEMP TPMS TEST (remove before PR)
+        if (car.tpms) {
+          const names = ["FL", "FR", "RL", "RR"];
+          const p = car.tpms;
+          document.getElementById("tpmsText").textContent = names.map((n, i) =>
+            n + " " + (p[i] < 0 ? "--" : p[i].toFixed(2)) + "b " +
+            (p[i + 4] <= -100 ? "--" : p[i + 4].toFixed(0)) + "C").join("  ");
+        }
+
         // Battery SOC + temperature widget
         if (car.showCarBattery) {
           const fullPack = car.fullPackEnergy;
@@ -836,6 +847,7 @@
         madsActive: NativeCarState.isMadsActive?.() ?? false,
         renderQuality: NativeCarState.getRenderQuality?.() ?? 3,
         darkModeBackgroundGray: NativeCarState.getDarkModeBackgroundGray?.() ?? 0,
+        tpms: [0, 1, 2, 3, 4, 5, 6, 7].map(i => NativeCarState.getTpms(i)),
       };
       receiveMessage(car);
     }

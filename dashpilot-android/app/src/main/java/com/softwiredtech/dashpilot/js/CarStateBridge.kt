@@ -35,6 +35,7 @@ class CarStateBridge(
     @Volatile private var packCurrent: Float = 0f
     @Volatile private var powerLevel: Float = 0f
     @Volatile private var packTMin: Float = 0f
+    @Volatile private var tpms: FloatArray = FloatArray(8) { if (it < 4) -1f else -100f }
     @Volatile private var packTMax: Float = 0f
     @Volatile private var odometer: Float = 0f
     @Volatile private var experimentalMode: Boolean = false
@@ -82,6 +83,8 @@ class CarStateBridge(
         experimentalMode = state.experimentalMode
         madsActive = state.madsActive
         changingLane = state.changingLane
+        tpms = floatArrayOf(state.tpmsPressureFL, state.tpmsPressureFR, state.tpmsPressureRL, state.tpmsPressureRR,
+            state.tpmsTempFL, state.tpmsTempFR, state.tpmsTempRL, state.tpmsTempRR)
     }
 
     @JavascriptInterface fun getEgoSteeringAngle(): Float = egoSteeringAngle
@@ -107,6 +110,7 @@ class CarStateBridge(
     @JavascriptInterface fun getPackCurrent(): Float = packCurrent
     @JavascriptInterface fun getPowerLevel(): Float = powerLevel
     @JavascriptInterface fun getPackTMin(): Float = packTMin
+    @JavascriptInterface fun getTpms(i: Int): Float = tpms.getOrElse(i) { 0f }
     @JavascriptInterface fun getPackTMax(): Float = packTMax
     @JavascriptInterface fun getOdometer(): Float = odometer
     @JavascriptInterface fun isExperimentalMode(): Boolean = experimentalMode

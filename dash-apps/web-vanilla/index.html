@@ -727,7 +727,7 @@
           ["FL", "FR", "RL", "RR"].forEach((n, i) => {
             const cell = document.getElementById("tp" + n);
             cell.querySelector("b").textContent = p[i] < 0 ? "--" : Math.round(p[i] * 14.5038) + " psi";
-            cell.querySelector("small").textContent = p[i + 4] <= -100 ? "" : Math.round(p[i + 4]) + "°C";
+            cell.querySelector("small").textContent = (p[i] < 0 || p[i + 4] <= -100) ? "" : Math.round(p[i + 4]) + "°C";
           });
         }
 

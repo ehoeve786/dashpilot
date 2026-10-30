@@ -135,85 +135,6 @@ struct BlinkerHold {
     }
 };
 
-// VCSEC_TPMSData (0x219, vehicle bus), 7 bytes. Mux 5 carries all four wheels
-// (pressure only). Muxes 0-3 carry one sensor each: mux 0 RR, 1 RL, 2 FR, 3 FL,
-// with pressure, temperature and sensor battery. A reading expires STALE after
-// its last refresh. Wheels: 0 FL, 1 FR, 2 RL, 3 RR.
-class TpmsLatch {
-public:
-    static constexpr std::chrono::seconds STALE{60};
-    using Clock = std::chrono::steady_clock;
-
-    void update(const CANParsers& cp, Clock::time_point now = Clock::now()) {
-        uint32_t seq = cp.frameSeq(1, "VCSEC_TPMSData");
-        if (seq == lastSeq_) return;  // re-read of the last frame: must not refresh timers
-        lastSeq_ = seq;
-        int index = static_cast<int>(get(cp, "VCSEC_TPMSDataIndex"));
-        if (index == 5) {
-            acceptPressure(0, get(cp, "VCSEC_TPMSPressureFL"), now);
-            acceptPressure(1, get(cp, "VCSEC_TPMSPressureFR"), now);
-            acceptPressure(2, get(cp, "VCSEC_TPMSPressureRL"), now);
-            acceptPressure(3, get(cp, "VCSEC_TPMSPressureRR"), now);
-        } else if (index >= 0 && index <= 3) {
-            static const int kWheelOfMux[4] = {3, 2, 1, 0};
-            const std::string n = std::to_string(index);
-            int w = kWheelOfMux[index];
-            acceptPressure(w, get(cp, "VCSEC_TPMSPressure" + n), now);
-            acceptTemp(w, get(cp, "VCSEC_TPMSTemperature" + n), now);
-        }
-        // Mux 4 and any other index is not a wheel reading.
-    }
-
-    // Last accepted pressure (bar) for wheel w, or -1 if none within STALE.
-    double pressureBar(int w, Clock::time_point now = Clock::now()) const {
-        return fresh(pressureValid_[w], pressureSeen_[w], pressure_[w], -1.0, now);
-    }
-
-    // Last accepted temperature (degC) for wheel w, or -100 if none within STALE.
-    double tempC(int w, Clock::time_point now = Clock::now()) const {
-        return fresh(tempValid_[w], tempSeen_[w], temp_[w], -100.0, now);
-    }
-
-private:
-    // SNA after DBC scaling: mux 5 raw 255 * 0.025 = 6.375 bar; muxes 0-3 raw 255 * 0.05 - 1 = 11.75 bar.
-    static constexpr double PRESSURE_MIN = 0.5;    // below this: not a real reading
-    static constexpr double PRESSURE_SNA = 6.36;
-    static constexpr double TEMP_SNA = 214.5;      // raw 255 - 40 = 215 degC
-
-    static double fresh(bool valid, Clock::time_point seen, double value, double none,
-                        Clock::time_point now) {
-        return (valid && now - seen <= STALE) ? value : none;
-    }
-
-    void acceptPressure(int w, double pressure, Clock::time_point now) {
-        if (pressure >= PRESSURE_MIN && pressure < PRESSURE_SNA) {
-            pressure_[w] = pressure;
-            pressureSeen_[w] = now;
-            pressureValid_[w] = true;
-        }
-    }
-
-    void acceptTemp(int w, double temp, Clock::time_point now) {
-        if (temp < TEMP_SNA) {
-            temp_[w] = temp;
-            tempSeen_[w] = now;
-            tempValid_[w] = true;
-        }
-    }
-
-    static double get(const CANParsers& cp, const std::string& sig) {
-        return cp.get(1, "VCSEC_TPMSData", sig);
-    }
-
-    uint32_t lastSeq_ = 0;
-    double pressure_[4] = {-1, -1, -1, -1};
-    double temp_[4] = {-100, -100, -100, -100};
-    Clock::time_point pressureSeen_[4] = {};
-    Clock::time_point tempSeen_[4] = {};
-    bool pressureValid_[4] = {};
-    bool tempValid_[4] = {};
-};
-
 class TeslaCommaPartyMapper : public CarStateMapper {
 public:
     void update(const CANParsers& cp, CarState& cs) override {
@@ -265,22 +186,32 @@ public:
 
         updateVehicleBus(cp, cs);
         vin_.update(cp, cs);
-        tpms_.update(cp);
-        cs.tpmsPressureFL = tpms_.pressureBar(0);
-        cs.tpmsPressureFR = tpms_.pressureBar(1);
-        cs.tpmsPressureRL = tpms_.pressureBar(2);
-        cs.tpmsPressureRR = tpms_.pressureBar(3);
-        cs.tpmsTempFL = tpms_.tempC(0);
-        cs.tpmsTempFR = tpms_.tempC(1);
-        cs.tpmsTempRL = tpms_.tempC(2);
-        cs.tpmsTempRR = tpms_.tempC(3);
+        // TPMS: mux 5 carries all four pressures; muxes 0-3 carry one sensor each.
+        // Fields keep their last value until a frame carries that wheel again.
+        int tpmsIndex = static_cast<int>(cp.get(1, "VCSEC_TPMSData", "VCSEC_TPMSDataIndex"));
+        double* pressures[4] = {&cs.tpmsPressureFL, &cs.tpmsPressureFR, &cs.tpmsPressureRL, &cs.tpmsPressureRR};
+        double* temps[4] = {&cs.tpmsTempFL, &cs.tpmsTempFR, &cs.tpmsTempRL, &cs.tpmsTempRR};
+        if (tpmsIndex == 5) {
+            static const char* const kP[4] = {"FL", "FR", "RL", "RR"};
+            for (int w = 0; w < 4; w++) {
+                double v = cp.get(1, "VCSEC_TPMSData", std::string("VCSEC_TPMSPressure") + kP[w]);
+                if (v >= 0.5 && v < 6.36) *pressures[w] = v;
+            }
+        } else if (tpmsIndex >= 0 && tpmsIndex <= 3) {
+            static const int kWheelOfMux[4] = {2, 3, 1, 0};  // mux 0 RL, 1 RR, 2 FR, 3 FL
+            int w = kWheelOfMux[tpmsIndex];
+            std::string n = std::to_string(tpmsIndex);
+            double p = cp.get(1, "VCSEC_TPMSData", "VCSEC_TPMSPressure" + n);
+            double t = cp.get(1, "VCSEC_TPMSData", "VCSEC_TPMSTemperature" + n);
+            if (p >= 0.5 && p < 6.36) *pressures[w] = p;
+            if (t < 214.5) *temps[w] = t;
+        }
     }
 
 private:
     BlinkerHold leftBlinkerHold_;
     BlinkerHold rightBlinkerHold_;
     TeslaVinUpdater vin_;
-    TpmsLatch tpms_;
 };
 
 // New-gen Model Y (Juniper) with new_gen_juniper.dbc on both buses. Comma and

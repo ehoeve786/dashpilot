@@ -23,12 +23,9 @@ public:
     // Must be called once after all addBus() calls.
     void buildCache() {
         busSignalCache_.clear();
-        busMessageAddr_.clear();
         for (const auto& [busIdx, dbc] : busDbcFiles_) {
             auto& cache = busSignalCache_[busIdx & 3];
-            auto& addrs = busMessageAddr_[busIdx & 3];
             for (const auto& [addr, msg] : dbc->getMessages()) {
-                addrs[msg.name] = msg.address;
                 for (const auto* sig : msg.getSignals()) {
                     std::string key = msg.name + "::" + sig->name;
                     cache[key] = { msg.address, sig };
@@ -42,20 +39,6 @@ public:
         auto& stored = latestFrames_[key];
         stored.resize(len);
         std::memcpy(stored.data(), data, len);
-        frameSeq_[key]++;
-    }
-
-    // Number of frames received for msgName on bus (wraps). Lets a mapper,
-    // which runs after every frame of any message, tell a fresh frame of
-    // msgName from a re-read of the last one.
-    uint32_t frameSeq(int bus, const std::string& msgName) const {
-        int maskedBus = bus & 3;
-        auto busIt = busMessageAddr_.find(maskedBus);
-        if (busIt == busMessageAddr_.end()) return 0;
-        auto it = busIt->second.find(msgName);
-        if (it == busIt->second.end()) return 0;
-        auto seqIt = frameSeq_.find(frameKey(maskedBus, it->second));
-        return seqIt == frameSeq_.end() ? 0 : seqIt->second;
     }
 
     double get(int bus, const std::string& msgName, const std::string& sigName) const {
@@ -104,7 +87,5 @@ private:
 
     std::map<int, DBCFile*> busDbcFiles_;
     std::map<uint64_t, std::vector<uint8_t>> latestFrames_;
-    std::map<uint64_t, uint32_t> frameSeq_;
-    std::map<int, std::unordered_map<std::string, uint32_t>> busMessageAddr_;
     std::map<int, std::unordered_map<std::string, CachedSignal>> busSignalCache_;
 };

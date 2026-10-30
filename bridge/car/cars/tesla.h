@@ -137,55 +137,48 @@ struct BlinkerHold {
 
 // VCSEC_TPMSData (0x219): mux 5 = all four pressures; muxes 0-3 = one sensor each
 // (mux 0 RR, 1 RL, 2 FR, 3 FL). Wheels: 0 FL, 1 FR, 2 RL, 3 RR.
+// A frame is new when its mux differs from the previous frame's mux, so re-reads of the
+// same frame do not refresh timers. Readings expire after STALE without a refresh.
 class TpmsLatch {
 public:
     using Clock = std::chrono::steady_clock;
     static constexpr std::chrono::seconds STALE{60};
 
     void update(const CANParsers& cp, Clock::time_point now = Clock::now()) {
-        uint32_t seq = cp.frameSeq(1, "VCSEC_TPMSData");
-        if (seq == lastSeq_) return;  // re-read of last frame must not refresh timers
-        lastSeq_ = seq;
         int index = static_cast<int>(cp.get(1, "VCSEC_TPMSData", "VCSEC_TPMSDataIndex"));
-        if (index == 5) {
-            static const char* const kP[4] = {"FL", "FR", "RL", "RR"};
-            for (int w = 0; w < 4; w++)
-                setPressure(w, cp.get(1, "VCSEC_TPMSData", std::string("VCSEC_TPMSPressure") + kP[w]), now);
-        } else if (index >= 0 && index <= 3) {
-            int w = 3 - index;
-            std::string n = std::to_string(index);
-            setPressure(w, cp.get(1, "VCSEC_TPMSData", "VCSEC_TPMSPressure" + n), now);
-            setTemp(w, cp.get(1, "VCSEC_TPMSData", "VCSEC_TPMSTemperature" + n), now);
+        if (index != lastIndex_) {
+            lastIndex_ = index;
+            if (index == 5) {
+                static const char* const kP[4] = {"FL", "FR", "RL", "RR"};
+                for (int w = 0; w < 4; w++)
+                    setPressure(w, cp.get(1, "VCSEC_TPMSData", std::string("VCSEC_TPMSPressure") + kP[w]), now);
+            } else if (index >= 0 && index <= 3) {
+                int w = 3 - index;
+                std::string n = std::to_string(index);
+                setPressure(w, cp.get(1, "VCSEC_TPMSData", "VCSEC_TPMSPressure" + n), now);
+                setTemp(w, cp.get(1, "VCSEC_TPMSData", "VCSEC_TPMSTemperature" + n), now);
+            }
+        }
+        for (int w = 0; w < 4; w++) {
+            if (now - pSeen_[w] > STALE) pressure[w] = -1;
+            if (now - tSeen_[w] > STALE) temp[w] = -100;
         }
     }
 
-    // Pressure (bar) for wheel w, -1 if no reading within STALE.
-    double pressureBar(int w, Clock::time_point now = Clock::now()) const {
-        return read(pressure_[w], -1.0, now);
-    }
-
-    // Temperature (degC) for wheel w, -100 if no reading within STALE.
-    double tempC(int w, Clock::time_point now = Clock::now()) const {
-        return read(temp_[w], -100.0, now);
-    }
+    double pressure[4] = {-1, -1, -1, -1};      // bar, -1 = no reading within STALE
+    double temp[4] = {-100, -100, -100, -100};  // degC, -100 = no reading within STALE
 
 private:
-    struct Reading { double value = 0; Clock::time_point seen{}; bool valid = false; };
-
-    // Pressure SNA is 6.36 bar (mux 5 raw 255); temperature SNA is 214.5 degC (raw 255 - 40).
+    // SNA: pressure raw 255 -> 6.36 bar at mux 5; temp raw 255 -> 214.5 degC.
     void setPressure(int w, double v, Clock::time_point now) {
-        if (v >= 0.5 && v < 6.36) store(pressure_[w], v, now);
+        if (v >= 0.5 && v < 6.36) { pressure[w] = v; pSeen_[w] = now; }
     }
     void setTemp(int w, double v, Clock::time_point now) {
-        if (v < 214.5) store(temp_[w], v, now);
-    }
-    static void store(Reading& r, double v, Clock::time_point now) { r = {v, now, true}; }
-    static double read(const Reading& r, double none, Clock::time_point now) {
-        return (r.valid && now - r.seen <= STALE) ? r.value : none;
+        if (v < 214.5) { temp[w] = v; tSeen_[w] = now; }
     }
 
-    uint32_t lastSeq_ = 0;
-    Reading pressure_[4], temp_[4];
+    int lastIndex_ = -1;
+    Clock::time_point pSeen_[4] = {}, tSeen_[4] = {};
 };
 
 class TeslaCommaPartyMapper : public CarStateMapper {
@@ -240,14 +233,14 @@ public:
         updateVehicleBus(cp, cs);
         vin_.update(cp, cs);
         tpms_.update(cp);
-        cs.tpmsPressureFL = tpms_.pressureBar(0);
-        cs.tpmsPressureFR = tpms_.pressureBar(1);
-        cs.tpmsPressureRL = tpms_.pressureBar(2);
-        cs.tpmsPressureRR = tpms_.pressureBar(3);
-        cs.tpmsTempFL = tpms_.tempC(0);
-        cs.tpmsTempFR = tpms_.tempC(1);
-        cs.tpmsTempRL = tpms_.tempC(2);
-        cs.tpmsTempRR = tpms_.tempC(3);
+        cs.tpmsPressureFL = tpms_.pressure[0];
+        cs.tpmsPressureFR = tpms_.pressure[1];
+        cs.tpmsPressureRL = tpms_.pressure[2];
+        cs.tpmsPressureRR = tpms_.pressure[3];
+        cs.tpmsTempFL = tpms_.temp[0];
+        cs.tpmsTempFR = tpms_.temp[1];
+        cs.tpmsTempRL = tpms_.temp[2];
+        cs.tpmsTempRR = tpms_.temp[3];
     }
 
 private:

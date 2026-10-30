@@ -136,7 +136,7 @@ struct BlinkerHold {
 };
 
 // VCSEC_TPMSData (0x219): mux 5 = all four pressures; muxes 0-3 = one sensor each
-// (mux 0 RR, 1 RL, 2 FR, 3 FL). Wheels: 0 FL, 1 FR, 2 RL, 3 RR.
+// (mux 0 RL, 1 RR, 2 FR, 3 FL). Wheels: 0 FL, 1 FR, 2 RL, 3 RR.
 // A frame is new when its mux differs from the previous frame's mux, so re-reads of the
 // same frame do not refresh timers. Readings expire after STALE without a refresh.
 class TpmsLatch {
@@ -153,7 +153,8 @@ public:
                 for (int w = 0; w < 4; w++)
                     setPressure(w, cp.get(1, "VCSEC_TPMSData", std::string("VCSEC_TPMSPressure") + kP[w]), now);
             } else if (index >= 0 && index <= 3) {
-                int w = 3 - index;
+                static const int kWheelOfMux[4] = {2, 3, 1, 0};
+            int w = kWheelOfMux[index];
                 std::string n = std::to_string(index);
                 setPressure(w, cp.get(1, "VCSEC_TPMSData", "VCSEC_TPMSPressure" + n), now);
                 setTemp(w, cp.get(1, "VCSEC_TPMSData", "VCSEC_TPMSTemperature" + n), now);

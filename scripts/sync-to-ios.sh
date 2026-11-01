@@ -30,6 +30,8 @@ for folder in "${PREVIEW_FOLDERS[@]}"; do
   cp -f "$APPS_DIR/$folder/preview.jpg" "$XCASSETS_DIR/preview_$name.imageset/preview_$name.jpg"
   echo "Copied preview $folder -> $XCASSETS_DIR/preview_$name.imageset/preview_$name.jpg"
 done
+cp -f "$APPS_DIR/rive/dash-sport/preview.jpg" "$XCASSETS_DIR/preview_sport.imageset/preview_sport.jpg"
+echo "Copied preview rive/dash-sport -> $XCASSETS_DIR/preview_sport.imageset/preview_sport.jpg"
 
 for name in "${FOLDERS[@]}"; do
   src="$APPS_DIR/$name"

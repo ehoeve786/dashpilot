@@ -20,6 +20,7 @@
     <string name="dashboard_name_analog">Analog</string>
     <string name="dashboard_name_compose">Eigenes</string>
     <string name="dashboard_name_rive">Rive</string>
+    <string name="dashboard_name_sport">Sport</string>
     <string name="dashboard_name_dev_rive">Rive-Datei</string>
     <string name="dashboard_name_dev_url">Dash-App-URL</string>
     <string name="settings_section_developer">Entwickler</string>

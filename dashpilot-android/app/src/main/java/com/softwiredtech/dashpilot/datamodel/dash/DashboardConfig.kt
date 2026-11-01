@@ -72,6 +72,15 @@ val availableDashboards = buildList {
             screenshotRes = R.drawable.preview_rive
         )
     )
+    add(
+        DashboardConfig(
+            id = "sport",
+            nameRes = R.string.dashboard_name_sport,
+            url = "dash_sport",
+            type = DashboardType.RIVE,
+            screenshotRes = R.drawable.preview_sport
+        )
+    )
 }
 
 const val DEV_RIVE_DASHBOARD_ID = "dev_rive"

@@ -45,6 +45,12 @@ fun DashState.dashValues(systemDarkMode: Boolean? = null): Map<String, Any> {
         "tpmsTempFR" to c.tpmsTempFR,
         "tpmsTempRL" to c.tpmsTempRL,
         "tpmsTempRR" to c.tpmsTempRR,
+        "doorOpenFL" to c.doorOpenFL,
+        "doorOpenFR" to c.doorOpenFR,
+        "doorOpenRL" to c.doorOpenRL,
+        "doorOpenRR" to c.doorOpenRR,
+        "frunkOpen" to c.frunkOpen,
+        "trunkOpen" to c.trunkOpen,
         // Rive numbers are 32-bit floats, too coarse for epoch milliseconds.
         "currentTime" to secondsSinceLocalMidnight(currentTime),
         "phoneBattery" to phoneBattery.toFloat(),

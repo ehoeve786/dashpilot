@@ -48,6 +48,12 @@ extension DashState {
             ("tpmsTempFR", .number(c.tpmsTempFR)),
             ("tpmsTempRL", .number(c.tpmsTempRL)),
             ("tpmsTempRR", .number(c.tpmsTempRR)),
+            ("doorOpenFL", .number(c.doorOpenFL)),
+            ("doorOpenFR", .number(c.doorOpenFR)),
+            ("doorOpenRL", .number(c.doorOpenRL)),
+            ("doorOpenRR", .number(c.doorOpenRR)),
+            ("frunkOpen", .number(c.frunkOpen)),
+            ("trunkOpen", .number(c.trunkOpen)),
             // Rive numbers are 32-bit floats, too coarse for epoch milliseconds.
             ("currentTime", .number(Self.secondsSinceLocalMidnight(currentTime))),
             ("phoneBattery", .number(Float(phoneBattery))),

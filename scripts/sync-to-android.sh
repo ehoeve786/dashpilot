@@ -26,6 +26,8 @@ for folder in "${PREVIEW_FOLDERS[@]}"; do
   cp -f "$APPS_DIR/$folder/preview.jpg" "$DRAWABLES_DIR/preview_${folder#web-}.jpg"
   echo "Copied preview $folder -> $DRAWABLES_DIR/preview_${folder#web-}.jpg"
 done
+cp -f "$APPS_DIR/rive/dash-sport/preview.jpg" "$DRAWABLES_DIR/preview_sport.jpg"
+echo "Copied preview rive/dash-sport -> $DRAWABLES_DIR/preview_sport.jpg"
 
 mkdir -p "$RAW_DIR"
 for riv in "$APPS_DIR"/rive/*.riv; do

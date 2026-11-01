@@ -60,6 +60,14 @@ typedef struct {
     double tpmsTempFR;
     double tpmsTempRL;
     double tpmsTempRR;
+
+    // Doors, frunk and trunk: 1 = open, 0 = closed.
+    double doorOpenFL;
+    double doorOpenFR;
+    double doorOpenRL;
+    double doorOpenRR;
+    double frunkOpen;
+    double trunkOpen;
 } BridgeCarState;
 
 // Context

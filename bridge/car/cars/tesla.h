@@ -165,10 +165,21 @@ public:
             cp.get(1, "VCRIGHT_lightStatus", "VCRIGHT_turnSignalStatus"));
 
 
-        // VCFRONT_status is multiplexed: VCFRONT_anyDoorOpen lives on mux 0
+        // Latch status: OPENED, CLOSING, OPENING and AJAR count as open; CLOSED, SNA
+        // (also what an unseen frame reads as) and the fault states as closed.
+        auto latchOpen = [](double s) { return (s == 1 || s == 3 || s == 4 || s == 5) ? 1.0 : 0.0; };
+
+        // VCFRONT_status is multiplexed: VCFRONT_anyDoorOpen and the frunk latch live on mux 0
         if (static_cast<int>(cp.get(1, "VCFRONT_status", "VCFRONT_statusIndex")) == 0) {
             cs.anyDoorOpen = cp.get(1, "VCFRONT_status", "VCFRONT_anyDoorOpen");
+            cs.frunkOpen = latchOpen(cp.get(1, "VCFRONT_status", "VCFRONT_frunkLatchStatus"));
         }
+
+        cs.doorOpenFL = latchOpen(cp.get(1, "VCLEFT_doorStatus", "VCLEFT_frontLatchStatus"));
+        cs.doorOpenRL = latchOpen(cp.get(1, "VCLEFT_doorStatus", "VCLEFT_rearLatchStatus"));
+        cs.doorOpenFR = latchOpen(cp.get(1, "VCRIGHT_doorStatus", "VCRIGHT_frontLatchStatus"));
+        cs.doorOpenRR = latchOpen(cp.get(1, "VCRIGHT_doorStatus", "VCRIGHT_rearLatchStatus"));
+        cs.trunkOpen = latchOpen(cp.get(1, "VCRIGHT_doorStatus", "VCRIGHT_trunkLatchStatus"));
 
         // VCLEFT_switchStatus is multiplexed: VCLEFT_frontBuckleSwitch lives on mux 0
         if (static_cast<int>(cp.get(1, "VCLEFT_switchStatus", "VCLEFT_switchStatusIndex")) == 0) {

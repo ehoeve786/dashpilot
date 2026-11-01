@@ -135,6 +135,18 @@ final class DemoDataSource: IDataSource {
 
         s.accSetSpeed = cruiseSpeed(at: t) + 5
 
+        // While stopped at the light: FL, FR, RL, RR, frunk, trunk open one after another.
+        let opening = phase >= approachEnd && phase < stoppedEnd
+            ? Int((phase - approachEnd) / (stoppedEnd - approachEnd) * 6) : -1
+        func open(_ i: Int) -> Float { opening == i ? 1 : 0 }
+        s.anyDoorOpen = (0...3).contains(opening) ? 1 : 0
+        s.doorOpenFL = open(0)
+        s.doorOpenFR = open(1)
+        s.doorOpenRL = open(2)
+        s.doorOpenRR = open(3)
+        s.frunkOpen = open(4)
+        s.trunkOpen = open(5)
+
         s.leftBlindSpot = t.truncatingRemainder(dividingBy: 23) < 3 ? 1 : 0
         s.rightBlindSpot = t.truncatingRemainder(dividingBy: 29) < 3 ? 1 : 0
 

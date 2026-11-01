@@ -53,6 +53,14 @@ struct CarState: Codable {
     var tpmsTempRL: Float = -100
     var tpmsTempRR: Float = -100
 
+    // Doors, frunk and trunk: 1 = open, 0 = closed.
+    var doorOpenFL: Float = 0
+    var doorOpenFR: Float = 0
+    var doorOpenRL: Float = 0
+    var doorOpenRR: Float = 0
+    var frunkOpen: Float = 0
+    var trunkOpen: Float = 0
+
     init() {}
 
     init(from bridge: BridgeCarState) {
@@ -100,6 +108,12 @@ struct CarState: Codable {
         tpmsTempFR = Float(bridge.tpmsTempFR)
         tpmsTempRL = Float(bridge.tpmsTempRL)
         tpmsTempRR = Float(bridge.tpmsTempRR)
+        doorOpenFL = Float(bridge.doorOpenFL)
+        doorOpenFR = Float(bridge.doorOpenFR)
+        doorOpenRL = Float(bridge.doorOpenRL)
+        doorOpenRR = Float(bridge.doorOpenRR)
+        frunkOpen = Float(bridge.frunkOpen)
+        trunkOpen = Float(bridge.trunkOpen)
     }
 
     private static let kmToMiles: Float = 0.621371

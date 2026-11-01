@@ -95,6 +95,11 @@ class DemoDataSource : IDataSource {
                 }
             }
 
+            // While stopped at the light: FL, FR, RL, RR, frunk, trunk open one after another.
+            val opening = if (phase >= APPROACH_END && phase < STOPPED_END)
+                ((phase - APPROACH_END) / (STOPPED_END - APPROACH_END) * 6).toInt() else -1
+            fun open(i: Int) = if (opening == i) 1f else 0f
+
             val packVoltage = (380 + sin(t * 0.2) * 5).toFloat()
             val packCurrent = if (braking) -speed * 1.2f else speed * 0.4f
             val kw = packVoltage * packCurrent / 1000
@@ -113,6 +118,13 @@ class DemoDataSource : IDataSource {
                 fusedSpeedLimit = LIMITS[lap % LIMITS.size],
                 stopLineDist = stopLine,
                 trafficLightColor = light,
+                anyDoorOpen = if (opening in 0..3) 1f else 0f,
+                doorOpenFL = open(0),
+                doorOpenFR = open(1),
+                doorOpenRL = open(2),
+                doorOpenRR = open(3),
+                frunkOpen = open(4),
+                trunkOpen = open(5),
                 buckleStatus = 1f,
                 accSetSpeed = cruise(t) + 5,
                 fullPackEnergy = 75f,

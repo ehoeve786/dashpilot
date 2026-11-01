@@ -53,6 +53,14 @@ data class CarState(
     val tpmsTempRL: Float = -100f,
     val tpmsTempRR: Float = -100f,
 
+    // Doors, frunk and trunk: 1 = open, 0 = closed.
+    val doorOpenFL: Float = 0f,
+    val doorOpenFR: Float = 0f,
+    val doorOpenRL: Float = 0f,
+    val doorOpenRR: Float = 0f,
+    val frunkOpen: Float = 0f,
+    val trunkOpen: Float = 0f,
+
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = ""
 ) {
@@ -66,7 +74,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 47
+        const val FIELD_COUNT = 53
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

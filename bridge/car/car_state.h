@@ -57,6 +57,15 @@ struct CarState {
     double tpmsTempRL = -100;
     double tpmsTempRR = -100;
 
+    // Doors, frunk and trunk from the latch status on VCLEFT/VCRIGHT_doorStatus and
+    // VCFRONT_status; 1 = open, 0 = closed.
+    double doorOpenFL = 0;
+    double doorOpenFR = 0;
+    double doorOpenRL = 0;
+    double doorOpenRR = 0;
+    double frunkOpen = 0;
+    double trunkOpen = 0;
+
     // Vehicle VIN, empty until fully assembled by the mapper.
     static constexpr size_t VIN_LENGTH = 17;
     char vin[VIN_LENGTH + 1] = {};
@@ -65,7 +74,9 @@ struct CarState {
     static constexpr size_t VIN_OFFSET = 36;
     static constexpr size_t TPMS_OFFSET = VIN_OFFSET + VIN_DOUBLE_COUNT;
     static constexpr size_t TPMS_COUNT = 8;
-    static constexpr size_t FIELD_COUNT = TPMS_OFFSET + TPMS_COUNT;
+    static constexpr size_t DOOR_OFFSET = TPMS_OFFSET + TPMS_COUNT;
+    static constexpr size_t DOOR_COUNT = 6;
+    static constexpr size_t FIELD_COUNT = DOOR_OFFSET + DOOR_COUNT;
 
     void toArray(double* out) const {
         // Party bus
@@ -126,5 +137,13 @@ struct CarState {
         out[TPMS_OFFSET + 5] = tpmsTempFR;
         out[TPMS_OFFSET + 6] = tpmsTempRL;
         out[TPMS_OFFSET + 7] = tpmsTempRR;
+
+        // Doors (after TPMS): FL FR RL RR, then frunk, trunk.
+        out[DOOR_OFFSET + 0] = doorOpenFL;
+        out[DOOR_OFFSET + 1] = doorOpenFR;
+        out[DOOR_OFFSET + 2] = doorOpenRL;
+        out[DOOR_OFFSET + 3] = doorOpenRR;
+        out[DOOR_OFFSET + 4] = frunkOpen;
+        out[DOOR_OFFSET + 5] = trunkOpen;
     }
 };

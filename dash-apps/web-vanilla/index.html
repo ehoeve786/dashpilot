@@ -405,6 +405,41 @@
       z-index: 2000;
       display: none;
     }
+
+    /* TPMS test widget: sits left of the experimental icon (right: 40px + 48px) */
+    #tpms {
+      position: fixed;
+      bottom: 30px;
+      right: 100px;
+      display: grid;
+      grid-template-columns: auto 44px auto;
+      grid-template-rows: 1fr 1fr;
+      column-gap: 10px;
+      row-gap: 18px;
+      align-items: center;
+      font-family: "Inter", sans-serif;
+      color: #777;
+      z-index: 2000;
+      user-select: none;
+    }
+
+    #tpms svg {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      width: 44px;
+      height: 84px;
+      color: #bbb;
+    }
+
+    .tpms-wheel { display: flex; flex-direction: column; line-height: 1.2; }
+    .tpms-wheel.left { grid-column: 1; align-items: flex-end; }
+    .tpms-wheel.right { grid-column: 3; align-items: flex-start; }
+    .tpms-p { font-size: 16px; font-weight: 500; color: #555; }
+    .tpms-t { font-size: 12px; }
+
+    body.dark-mode #tpms { color: #cfcfcf; }
+    body.dark-mode .tpms-p { color: #ffffff; }
+    body.dark-mode #tpms svg { color: #888; }
   </style>
 </head>
 <body>
@@ -482,6 +517,23 @@
     </div>
 
     <img id="experimentalIcon" src="experimental.png" alt="Experimental mode" />
+
+    <div id="tpms">
+      <div class="tpms-wheel left" style="grid-row: 1;"><span class="tpms-p" id="tpmsPFL">--</span><span class="tpms-t" id="tpmsTFL">--</span></div>
+      <!-- Top-down car, nose up -->
+      <svg viewBox="0 0 44 84" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="7" y="2" width="30" height="80" rx="12" />
+        <path d="M11 24 Q22 18 33 24 L31 34 Q22 31 13 34 Z" />
+        <path d="M13 62 Q22 65 31 62 L32 70 Q22 74 12 70 Z" />
+        <rect x="1" y="14" width="6" height="14" rx="2" fill="currentColor" />
+        <rect x="37" y="14" width="6" height="14" rx="2" fill="currentColor" />
+        <rect x="1" y="56" width="6" height="14" rx="2" fill="currentColor" />
+        <rect x="37" y="56" width="6" height="14" rx="2" fill="currentColor" />
+      </svg>
+      <div class="tpms-wheel right" style="grid-row: 1;"><span class="tpms-p" id="tpmsPFR">--</span><span class="tpms-t" id="tpmsTFR">--</span></div>
+      <div class="tpms-wheel left" style="grid-row: 2;"><span class="tpms-p" id="tpmsPRL">--</span><span class="tpms-t" id="tpmsTRL">--</span></div>
+      <div class="tpms-wheel right" style="grid-row: 2;"><span class="tpms-p" id="tpmsPRR">--</span><span class="tpms-t" id="tpmsTRR">--</span></div>
+    </div>
 
   <script>
     const leftBlinkerIcon = document.getElementById("leftBlinkerIcon");
@@ -765,6 +817,16 @@
           document.getElementById("bottomLeft").style.display = "none";
         }
 
+        // TPMS: native values are always bar / °C; -1 / -100 (or missing) = no reading
+        for (const w of ["FL", "FR", "RL", "RR"]) {
+          const p = car["tpmsPressure" + w];
+          const t = car["tpmsTemp" + w];
+          document.getElementById("tpmsP" + w).textContent = p == null || p < 0 ? "--"
+            : car.isImperial ? (p * 14.5038).toFixed(0) + " psi" : p.toFixed(2) + " bar";
+          document.getElementById("tpmsT" + w).textContent = t == null || t <= -100 ? "--"
+            : car.isImperial ? (t * 1.8 + 32).toFixed(0) + "°F" : t.toFixed(0) + "°C";
+        }
+
         // Experimental mode icon
         document.getElementById("experimentalIcon").style.display = car.experimentalMode ? "block" : "none";
 
@@ -836,6 +898,14 @@
         madsActive: NativeCarState.isMadsActive?.() ?? false,
         renderQuality: NativeCarState.getRenderQuality?.() ?? 3,
         darkModeBackgroundGray: NativeCarState.getDarkModeBackgroundGray?.() ?? 0,
+        tpmsPressureFL: NativeCarState.getTpmsPressureFL?.() ?? undefined,
+        tpmsPressureFR: NativeCarState.getTpmsPressureFR?.() ?? undefined,
+        tpmsPressureRL: NativeCarState.getTpmsPressureRL?.() ?? undefined,
+        tpmsPressureRR: NativeCarState.getTpmsPressureRR?.() ?? undefined,
+        tpmsTempFL: NativeCarState.getTpmsTempFL?.() ?? undefined,
+        tpmsTempFR: NativeCarState.getTpmsTempFR?.() ?? undefined,
+        tpmsTempRL: NativeCarState.getTpmsTempRL?.() ?? undefined,
+        tpmsTempRR: NativeCarState.getTpmsTempRR?.() ?? undefined,
       };
       receiveMessage(car);
     }

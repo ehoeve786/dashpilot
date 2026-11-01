@@ -2,6 +2,7 @@ package com.softwiredtech.dashpilot.datamodel.dash
 
 import java.time.Instant
 import java.time.ZoneId
+import java.util.Locale
 
 fun DashState.dashValues(systemDarkMode: Boolean? = null): Map<String, Any> {
     val c = carState
@@ -36,6 +37,14 @@ fun DashState.dashValues(systemDarkMode: Boolean? = null): Map<String, Any> {
         "maxDischargePower" to c.maxDischargePower,
         "packTMin" to c.packTMin,
         "packTMax" to c.packTMax,
+        "tpmsPressureFL" to c.tpmsPressureFL,
+        "tpmsPressureFR" to c.tpmsPressureFR,
+        "tpmsPressureRL" to c.tpmsPressureRL,
+        "tpmsPressureRR" to c.tpmsPressureRR,
+        "tpmsTempFL" to c.tpmsTempFL,
+        "tpmsTempFR" to c.tpmsTempFR,
+        "tpmsTempRL" to c.tpmsTempRL,
+        "tpmsTempRR" to c.tpmsTempRR,
         // Rive numbers are 32-bit floats, too coarse for epoch milliseconds.
         "currentTime" to secondsSinceLocalMidnight(currentTime),
         "phoneBattery" to phoneBattery.toFloat(),
@@ -49,7 +58,15 @@ fun DashState.dashValues(systemDarkMode: Boolean? = null): Map<String, Any> {
         "renderQuality" to d.renderQuality.toFloat(),
         "dataSourceType" to dataSourceType,
         "speedCameraDistance" to speedCameraDistance.toFloat(),
+        "speedLimitSignType" to speedLimitSignType(),
     )
+}
+
+// 0 = round (Vienna convention), 1 = US, 2 = Canada; from the phone's region, like the speed limit units.
+private fun speedLimitSignType(): Float = when (Locale.getDefault().country) {
+    "US" -> 1f
+    "CA" -> 2f
+    else -> 0f
 }
 
 private fun secondsSinceLocalMidnight(epochMillis: Long): Float =

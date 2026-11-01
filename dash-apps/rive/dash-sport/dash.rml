@@ -1,0 +1,1944 @@
+<Rive version="1" kind="fragment">
+    <!-- Elements declared first draw on top. Power, Speedometer and Tyres are component artboards drawn at
+         their natural size; the main layout gives each a filling slot and scales it to fit (contain). -->
+    <Artboard defaultStateMachineId="5:1" viewModelId="1:1" viewModelInstanceId="1:2" styleId="3:2" clip="true" width="2280" height="1080" name="Dash" id="3:1">
+        <LayoutComponentStyle name="Dash Style" id="3:2"/>
+        <Fill name="F">
+            <SolidColor colorValue="FF0A0B0E" name="C"/>
+        </Fill>
+        <LayoutComponent width="72" height="2400" styleId="3:286" name="Blind Spot Left Urgent" id="3:287">
+            <DataBindContext sourcePathIds="1:1-1:20" propertyKey="18" converterId="2:33"/>
+            <LayoutComponentStyle positionTypeValue="absolute" positionTop="0" positionTopUnitsValue="points" positionLeftUnitsValue="points" positionLeft="0" layoutWidthScaleType="fixed" layoutHeightScaleType="fixed" name="S" id="3:286"/>
+            <Fill name="F">
+                <LinearGradient startX="0" startY="0" endX="72" endY="0" name="G">
+                    <GradientStop colorValue="FFFF3B30" position="0"/>
+                    <GradientStop colorValue="00FF3B30" position="1"/>
+                </LinearGradient>
+            </Fill>
+        </LayoutComponent>
+        <LayoutComponent width="40" height="2400" styleId="3:288" name="Blind Spot Left" id="3:289">
+            <DataBindContext sourcePathIds="1:1-1:20" propertyKey="18" converterId="2:5"/>
+            <LayoutComponentStyle positionTypeValue="absolute" positionTop="0" positionTopUnitsValue="points" positionLeftUnitsValue="points" positionLeft="0" layoutWidthScaleType="fixed" layoutHeightScaleType="fixed" name="S" id="3:288"/>
+            <Fill name="F">
+                <LinearGradient startX="0" startY="0" endX="40" endY="0" name="G">
+                    <GradientStop colorValue="FFFFB020" position="0"/>
+                    <GradientStop colorValue="00FFB020" position="1"/>
+                </LinearGradient>
+            </Fill>
+        </LayoutComponent>
+        <LayoutComponent width="72" height="2400" styleId="3:290" name="Blind Spot Right Urgent" id="3:291">
+            <DataBindContext sourcePathIds="1:1-1:21" propertyKey="18" converterId="2:33"/>
+            <LayoutComponentStyle positionTypeValue="absolute" positionTop="0" positionTopUnitsValue="points" positionRightUnitsValue="points" positionRight="0" layoutWidthScaleType="fixed" layoutHeightScaleType="fixed" name="S" id="3:290"/>
+            <Fill name="F">
+                <LinearGradient startX="0" startY="0" endX="72" endY="0" name="G">
+                    <GradientStop colorValue="00FF3B30" position="0"/>
+                    <GradientStop colorValue="FFFF3B30" position="1"/>
+                </LinearGradient>
+            </Fill>
+        </LayoutComponent>
+        <LayoutComponent width="40" height="2400" styleId="3:292" name="Blind Spot Right" id="3:293">
+            <DataBindContext sourcePathIds="1:1-1:21" propertyKey="18" converterId="2:5"/>
+            <LayoutComponentStyle positionTypeValue="absolute" positionTop="0" positionTopUnitsValue="points" positionRightUnitsValue="points" positionRight="0" layoutWidthScaleType="fixed" layoutHeightScaleType="fixed" name="S" id="3:292"/>
+            <Fill name="F">
+                <LinearGradient startX="0" startY="0" endX="40" endY="0" name="G">
+                    <GradientStop colorValue="00FFB020" position="0"/>
+                    <GradientStop colorValue="FFFFB020" position="1"/>
+                </LinearGradient>
+            </Fill>
+        </LayoutComponent>
+        <LayoutComponent styleId="3:284" name="Root" id="3:285">
+            <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill" flexDirectionValue="column" paddingLeft="56" paddingLeftUnitsValue="points" paddingRight="56" paddingRightUnitsValue="points" paddingTop="36" paddingTopUnitsValue="points" paddingBottom="32" paddingBottomUnitsValue="points" name="S" id="3:284"/>
+            <LayoutComponent height="96" styleId="3:119" name="Top Bar" id="3:120">
+                <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fixed" flexDirectionValue="row" layoutAlignmentType="spaceBetweenCenter" name="S" id="3:119"/>
+                <LayoutComponent width="120" height="96" styleId="3:115" name="Blinker Left" id="3:116">
+                    <LayoutComponentStyle layoutWidthScaleType="fixed" layoutHeightScaleType="fixed" name="S" id="3:115"/>
+                    <Node x="60" y="48" name="Art">
+                        <Shape name="Lit">
+                            <DataBindContext sourcePathIds="1:1-1:13" propertyKey="18" converterId="2:6"/>
+                            <PointsPath isClosed="true" name="Arrow">
+                                <StraightVertex x="-52" y="0" radius="4"/>
+                                <StraightVertex x="-4" y="-44" radius="4"/>
+                                <StraightVertex x="-4" y="-18" radius="2"/>
+                                <StraightVertex x="52" y="-18" radius="6"/>
+                                <StraightVertex x="52" y="18" radius="6"/>
+                                <StraightVertex x="-4" y="18" radius="2"/>
+                                <StraightVertex x="-4" y="44" radius="4"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <SolidColor colorValue="FF30D158" name="C"/>
+                            </Fill>
+                        </Shape>
+                        <Shape name="Dim">
+                            <PointsPath isClosed="true" name="Arrow">
+                                <StraightVertex x="-52" y="0" radius="4"/>
+                                <StraightVertex x="-4" y="-44" radius="4"/>
+                                <StraightVertex x="-4" y="-18" radius="2"/>
+                                <StraightVertex x="52" y="-18" radius="6"/>
+                                <StraightVertex x="52" y="18" radius="6"/>
+                                <StraightVertex x="-4" y="18" radius="2"/>
+                                <StraightVertex x="-4" y="44" radius="4"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <SolidColor colorValue="FF17191D" name="C"/>
+                            </Fill>
+                        </Shape>
+                    </Node>
+                </LayoutComponent>
+                <LayoutComponent styleId="3:113" name="Warnings" id="3:114">
+                    <LayoutComponentStyle layoutWidthScaleType="hug" layoutHeightScaleType="hug" flexDirectionValue="row" layoutAlignmentType="center" gapHorizontal="16" gapHorizontalUnitsValue="points" name="S" id="3:113"/>
+                    <LayoutComponent width="230" height="56" styleId="3:103" name="Door Chip" id="3:104">
+                        <LayoutComponentStyle cornerRadiusTL="28" cornerRadiusTR="28" cornerRadiusBL="28" cornerRadiusBR="28" layoutWidthScaleType="fixed" layoutHeightScaleType="fixed" name="S" id="3:103">
+                            <DataBindContext sourcePathIds="1:1-1:15" propertyKey="596" converterId="2:7"/>
+                        </LayoutComponentStyle>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF33270A" name="C"/>
+                        </Fill>
+                        <Node name="T">
+                            <Text x="115.0" y="28.0" originX="0.5" originY="0.5" sizingValue="fixed" width="230" height="56" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Label" id="3:101">
+                                <TextStylePaint fontSize="24" letterSpacing="1.5" fontAssetId="2:901" name="S0" id="3:102">
+                                    <Fill name="F">
+                                        <SolidColor colorValue="FFFFB020" name="C"/>
+                                    </Fill>
+                                    <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                                </TextStylePaint>
+                                <TextValueRun styleId="3:102" text="DOOR OPEN" name="R0"/>
+                            </Text>
+                        </Node>
+                    </LayoutComponent>
+                    <LayoutComponent width="300" height="56" styleId="3:107" name="Seatbelt Chip" id="3:108">
+                        <LayoutComponentStyle cornerRadiusTL="28" cornerRadiusTR="28" cornerRadiusBL="28" cornerRadiusBR="28" layoutWidthScaleType="fixed" layoutHeightScaleType="fixed" name="S" id="3:107">
+                            <DataBindContext sourcePathIds="1:1-1:16" propertyKey="596" converterId="2:5"/>
+                        </LayoutComponentStyle>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF3A1210" name="C"/>
+                        </Fill>
+                        <Node name="T">
+                            <Text x="150.0" y="28.0" originX="0.5" originY="0.5" sizingValue="fixed" width="300" height="56" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Label" id="3:105">
+                                <TextStylePaint fontSize="24" letterSpacing="1.5" fontAssetId="2:901" name="S0" id="3:106">
+                                    <Fill name="F">
+                                        <SolidColor colorValue="FFFF3B30" name="C"/>
+                                    </Fill>
+                                    <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                                </TextStylePaint>
+                                <TextValueRun styleId="3:106" text="FASTEN SEATBELT" name="R0"/>
+                            </Text>
+                        </Node>
+                    </LayoutComponent>
+                    <LayoutComponent width="280" height="56" styleId="3:111" name="Lane Chip" id="3:112">
+                        <LayoutComponentStyle cornerRadiusTL="28" cornerRadiusTR="28" cornerRadiusBL="28" cornerRadiusBR="28" layoutWidthScaleType="fixed" layoutHeightScaleType="fixed" name="S" id="3:111">
+                            <DataBindContext sourcePathIds="1:1-1:51" propertyKey="596" converterId="2:43"/>
+                        </LayoutComponentStyle>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF0E1C33" name="C"/>
+                        </Fill>
+                        <Node name="T">
+                            <Text x="140.0" y="28.0" originX="0.5" originY="0.5" sizingValue="fixed" width="280" height="56" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Label" id="3:109">
+                                <TextStylePaint fontSize="24" letterSpacing="1.5" fontAssetId="2:901" name="S0" id="3:110">
+                                    <Fill name="F">
+                                        <SolidColor colorValue="FF3D8BFF" name="C"/>
+                                    </Fill>
+                                    <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                                </TextStylePaint>
+                                <TextValueRun styleId="3:110" text="CHANGING LANE" name="R0"/>
+                            </Text>
+                        </Node>
+                    </LayoutComponent>
+                </LayoutComponent>
+                <LayoutComponent width="120" height="96" styleId="3:117" name="Blinker Right" id="3:118">
+                    <LayoutComponentStyle layoutWidthScaleType="fixed" layoutHeightScaleType="fixed" name="S" id="3:117"/>
+                    <Node x="60" y="48" scaleX="-1" name="Art">
+                        <Shape name="Lit">
+                            <DataBindContext sourcePathIds="1:1-1:14" propertyKey="18" converterId="2:6"/>
+                            <PointsPath isClosed="true" name="Arrow">
+                                <StraightVertex x="-52" y="0" radius="4"/>
+                                <StraightVertex x="-4" y="-44" radius="4"/>
+                                <StraightVertex x="-4" y="-18" radius="2"/>
+                                <StraightVertex x="52" y="-18" radius="6"/>
+                                <StraightVertex x="52" y="18" radius="6"/>
+                                <StraightVertex x="-4" y="18" radius="2"/>
+                                <StraightVertex x="-4" y="44" radius="4"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <SolidColor colorValue="FF30D158" name="C"/>
+                            </Fill>
+                        </Shape>
+                        <Shape name="Dim">
+                            <PointsPath isClosed="true" name="Arrow">
+                                <StraightVertex x="-52" y="0" radius="4"/>
+                                <StraightVertex x="-4" y="-44" radius="4"/>
+                                <StraightVertex x="-4" y="-18" radius="2"/>
+                                <StraightVertex x="52" y="-18" radius="6"/>
+                                <StraightVertex x="52" y="18" radius="6"/>
+                                <StraightVertex x="-4" y="18" radius="2"/>
+                                <StraightVertex x="-4" y="44" radius="4"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <SolidColor colorValue="FF17191D" name="C"/>
+                            </Fill>
+                        </Shape>
+                    </Node>
+                </LayoutComponent>
+            </LayoutComponent>
+            <LayoutComponent styleId="3:282" name="Main" id="3:283">
+                <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill" flexBasis="0" flexBasisUnitsValue="points" flexDirectionValue="row" layoutAlignmentType="center" gapHorizontal="24" gapHorizontalUnitsValue="points" name="S" id="3:282"/>
+                <LayoutComponent fractionalWidth="1" width="0" height="0" styleId="3:276" name="Left Panel" id="3:277">
+                    <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill" name="S" id="3:276"/>
+                    <NestedArtboardLeaf artboardId="6:2" fit="contain" name="Left Panel Art"/>
+                </LayoutComponent>
+                <LayoutComponent fractionalWidth="1.7" width="0" height="0" styleId="3:278" name="Center" id="3:279">
+                    <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill" name="S" id="3:278"/>
+                    <NestedArtboardLeaf artboardId="6:3" fit="contain" name="Center Art"/>
+                </LayoutComponent>
+                <LayoutComponent fractionalWidth="1" width="0" height="0" styleId="3:280" name="Right Panel" id="3:281">
+                    <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill" name="S" id="3:280"/>
+                    <NestedArtboardLeaf artboardId="6:4" fit="contain" name="Right Panel Art"/>
+                </LayoutComponent>
+            </LayoutComponent>
+        </LayoutComponent>
+        <LinearAnimation duration="1" name="Idle" id="4:1"/>
+        <StateMachine name="Dash" id="5:1">
+            <StateMachineLayer name="Idle" id="5:10">
+                <EntryState x="0" y="0">
+                    <StateTransition stateToId="5:11"/>
+                </EntryState>
+                <AnimationState x="200" y="0" animationId="4:1" id="5:11"/>
+                <AnyState x="400" y="0"/>
+                <ExitState x="500" y="0"/>
+            </StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+    <Artboard x="2400" y="0" isComponent="true" defaultStateMachineId="5:2" viewModelId="1:1" viewModelInstanceId="1:2" styleId="6:12" width="460" height="630" name="Power" id="6:2">
+        <LayoutComponentStyle name="S" id="6:12"/>
+        <Node name="Art">
+            <Node x="230" y="230" name="Gauge">
+                <Text x="0.0" y="100.0" originX="0.5" originY="0.5" sizingValue="fixed" width="260" height="80" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="kW" id="3:121">
+                    <TextStylePaint fontSize="64" letterSpacing="-2" fontAssetId="2:901" name="S0" id="3:122">
+                        <Fill name="F">
+                            <SolidColor colorValue="FFF2F4F7" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:122" text="0" name="R0">
+                        <DataBindContext sourcePathIds="1:1-1:31" propertyKey="268" converterId="2:25"/>
+                    </TextValueRun>
+                </Text>
+                <Text x="0.0" y="148.0" originX="0.5" originY="0.5" sizingValue="fixed" width="200" height="36" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="kW Unit" id="3:123">
+                    <TextStylePaint fontSize="26" letterSpacing="1" fontAssetId="2:900" name="S0" id="3:124">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:124" text="kW" name="R0"/>
+                </Text>
+                <Text x="-120.0" y="196.0" originX="0.5" originY="0.5" sizingValue="fixed" width="140" height="30" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Regen Label" id="3:125">
+                    <TextStylePaint fontSize="18" letterSpacing="3" fontAssetId="2:901" name="S0" id="3:126">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF30D158" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:126" text="REGEN" name="R0"/>
+                </Text>
+                <Text x="120.0" y="196.0" originX="0.5" originY="0.5" sizingValue="fixed" width="140" height="30" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Power Label" id="3:127">
+                    <TextStylePaint fontSize="18" letterSpacing="3" fontAssetId="2:901" name="S0" id="3:128">
+                        <Fill name="F">
+                            <SolidColor colorValue="FFFF6A1A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:128" text="POWER" name="R0"/>
+                </Text>
+                <Node name="Needle">
+                    <DataBindContext sourcePathIds="1:1-1:29" propertyKey="15" converterId="2:50"/>
+                    <Shape name="Hub">
+                        <Ellipse width="40" height="40" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF14171C" name="C"/>
+                        </Fill>
+                        <Stroke thickness="5" name="S">
+                            <SolidColor colorValue="FFF2F4F7" name="C"/>
+                        </Stroke>
+                    </Shape>
+                    <Shape name="Blade">
+                        <PointsPath isClosed="true" name="P">
+                            <StraightVertex x="-6" y="22" radius="2"/>
+                            <StraightVertex x="0" y="-186" radius="2"/>
+                            <StraightVertex x="6" y="22" radius="2"/>
+                        </PointsPath>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFF2F4F7" name="C"/>
+                        </Fill>
+                    </Shape>
+                </Node>
+                <Shape rotation="0.0000000" name="Discharge Arc">
+                    <Ellipse width="400" height="400" name="P"/>
+                    <Stroke thickness="16" cap="butt" name="S">
+                        <SolidColor colorValue="FFFF6A1A" name="C"/>
+                        <TrimPath start="0" end="0.2" name="Trim">
+                            <DataBindContext sourcePathIds="1:1-1:29" propertyKey="115" converterId="2:51"/>
+                        </TrimPath>
+                    </Stroke>
+                </Shape>
+                <Shape rotation="0.0000000" scaleX="-1" name="Regen Arc">
+                    <Ellipse width="400" height="400" name="P"/>
+                    <Stroke thickness="16" cap="butt" name="S">
+                        <SolidColor colorValue="FF30D158" name="C"/>
+                        <TrimPath start="0" end="0.1" name="Trim">
+                            <DataBindContext sourcePathIds="1:1-1:29" propertyKey="115" converterId="2:52"/>
+                        </TrimPath>
+                    </Stroke>
+                </Shape>
+                <Shape name="Major Ticks">
+                    <Rectangle x="-147.22" y="85.00" rotation="-2.094395" width="5" height="24" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-147.22" y="-85.00" rotation="-1.047198" width="5" height="24" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="0.00" y="-170.00" rotation="0.000000" width="5" height="24" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="147.22" y="-85.00" rotation="1.047198" width="5" height="24" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="147.22" y="85.00" rotation="2.094395" width="5" height="24" originX="0.5" originY="0.5" name="T"/>
+                    <Fill name="F">
+                        <SolidColor colorValue="FFF2F4F7" name="C"/>
+                    </Fill>
+                </Shape>
+                <Shape name="Minor Ticks">
+                    <Rectangle x="-170.00" y="45.55" rotation="-1.832596" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-176.00" y="-0.00" rotation="-1.570796" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-170.00" y="-45.55" rotation="-1.308997" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-124.45" y="-124.45" rotation="-0.785398" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-88.00" y="-152.42" rotation="-0.523599" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-45.55" y="-170.00" rotation="-0.261799" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="45.55" y="-170.00" rotation="0.261799" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="88.00" y="-152.42" rotation="0.523599" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="124.45" y="-124.45" rotation="0.785398" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="170.00" y="-45.55" rotation="1.308997" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="176.00" y="-0.00" rotation="1.570796" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="170.00" y="45.55" rotation="1.832596" width="3" height="12" originX="0.5" originY="0.5" name="T"/>
+                    <Fill name="F">
+                        <SolidColor colorValue="FF59606B" name="C"/>
+                    </Fill>
+                </Shape>
+                <Shape rotation="4.1887902" name="Track">
+                    <Ellipse width="400" height="400" name="P"/>
+                    <Stroke thickness="16" cap="butt" name="S">
+                        <SolidColor colorValue="FF1B1E24" name="C"/>
+                        <TrimPath start="0" end="0.6666667" name="Trim"/>
+                    </Stroke>
+                </Shape>
+            </Node>
+            <Node x="60" y="480" name="Battery">
+                <Text x="0.0" y="0.0" sizingValue="fixed" width="340" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="SOC" id="3:129">
+                    <TextStylePaint fontSize="20" letterSpacing="3" fontAssetId="2:901" name="S0" id="3:130">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextStylePaint fontSize="38" letterSpacing="0" fontAssetId="2:901" name="S1" id="3:131">
+                        <Fill name="F">
+                            <SolidColor colorValue="FFF2F4F7" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextStylePaint fontSize="24" letterSpacing="0" fontAssetId="2:900" name="S2" id="3:132">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:130" text="BATTERY  " name="R0"/>
+                    <TextValueRun styleId="3:131" text="78" name="R1">
+                        <DataBindContext sourcePathIds="1:1-1:26" propertyKey="268" converterId="2:17"/>
+                    </TextValueRun>
+                    <TextValueRun styleId="3:132" text="%" name="R2"/>
+                </Text>
+                <Node x="20" y="62" name="Bar">
+                    <Shape name="Low">
+                        <DataBindContext sourcePathIds="1:1-1:26" propertyKey="18" converterId="2:21"/>
+                        <Rectangle width="234" height="14" originX="0" originY="0" cornerRadiusTL="7" name="P">
+                            <DataBindContext sourcePathIds="1:1-1:26" propertyKey="20" converterId="2:19"/>
+                        </Rectangle>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFFF3B30" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape name="Fill">
+                        <Rectangle width="234" height="14" originX="0" originY="0" cornerRadiusTL="7" name="P">
+                            <DataBindContext sourcePathIds="1:1-1:26" propertyKey="20" converterId="2:19"/>
+                        </Rectangle>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF30D158" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape name="Track">
+                        <Rectangle width="300" height="14" originX="0" originY="0" cornerRadiusTL="7" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF1B1E24" name="C"/>
+                        </Fill>
+                    </Shape>
+                </Node>
+                <Text x="0.0" y="92.0" sizingValue="fixed" width="340" height="36" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Pack Temp" id="3:133">
+                    <TextStylePaint fontSize="20" letterSpacing="3" fontAssetId="2:901" name="S0" id="3:134">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:901" name="S1" id="3:135">
+                        <Fill name="F">
+                            <SolidColor colorValue="FFF2F4F7" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S2" id="3:136">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:901" name="S3" id="3:137">
+                        <Fill name="F">
+                            <SolidColor colorValue="FFF2F4F7" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S4" id="3:138">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:134" text="PACK  " name="R0"/>
+                    <TextValueRun styleId="3:135" text="24" name="R1">
+                        <DataBindContext sourcePathIds="1:1-1:34" propertyKey="268" converterId="2:1"/>
+                    </TextValueRun>
+                    <TextValueRun styleId="3:136" text="–" name="R2"/>
+                    <TextValueRun styleId="3:137" text="31" name="R3">
+                        <DataBindContext sourcePathIds="1:1-1:35" propertyKey="268" converterId="2:1"/>
+                    </TextValueRun>
+                    <TextValueRun styleId="3:138" text="°" name="R4"/>
+                </Text>
+            </Node>
+        </Node>
+        <LinearAnimation duration="1" name="Idle" id="4:2"/>
+        <StateMachine name="Power" id="5:2">
+            <StateMachineLayer name="Idle" id="5:22">
+                <EntryState x="0" y="0">
+                    <StateTransition stateToId="5:32"/>
+                </EntryState>
+                <AnimationState x="200" y="0" animationId="4:2" id="5:32"/>
+                <AnyState x="400" y="0"/>
+                <ExitState x="500" y="0"/>
+            </StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+    <ComponentAsset artboardId="6:2" name="Power"/>
+    <Artboard x="2960" y="0" isComponent="true" defaultStateMachineId="5:3" viewModelId="1:1" viewModelInstanceId="1:2" styleId="6:13" width="820" height="760" name="Speedometer" id="6:3">
+        <LayoutComponentStyle name="S" id="6:13"/>
+        <Node name="Art">
+            <Node x="740" y="84" name="Speed Limit">
+                <DataBindContext sourcePathIds="1:1-1:19" propertyKey="18" converterId="2:5"/>
+                <Node name="Europe">
+                    <DataBindContext sourcePathIds="1:1-1:49" propertyKey="18" converterId="2:10"/>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="130" height="130" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Limit" id="3:192">
+                        <TextStylePaint fontSize="50" letterSpacing="-2" fontAssetId="2:901" name="S0" id="3:193">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF111111" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:193" text="80" name="R0">
+                            <DataBindContext sourcePathIds="1:1-1:19" propertyKey="268" converterId="2:1"/>
+                        </TextValueRun>
+                    </Text>
+                    <Shape name="Sign">
+                        <Ellipse width="114" height="114" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFFFFFFF" name="C"/>
+                        </Fill>
+                        <Stroke thickness="13" name="S">
+                            <SolidColor colorValue="FFE5251B" name="C"/>
+                        </Stroke>
+                    </Shape>
+                </Node>
+                <Node name="US">
+                    <DataBindContext sourcePathIds="1:1-1:49" propertyKey="18" converterId="2:11"/>
+                    <Text x="0.0" y="-50.0" originX="0.5" originY="0.5" sizingValue="fixed" width="110" height="26" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Speed" id="3:194">
+                        <TextStylePaint fontSize="21" letterSpacing="1" fontAssetId="2:901" name="S0" id="3:195">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF111111" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:195" text="SPEED" name="R0"/>
+                    </Text>
+                    <Text x="0.0" y="-25.0" originX="0.5" originY="0.5" sizingValue="fixed" width="110" height="26" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Limit" id="3:196">
+                        <TextStylePaint fontSize="21" letterSpacing="1" fontAssetId="2:901" name="S0" id="3:197">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF111111" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:197" text="LIMIT" name="R0"/>
+                    </Text>
+                    <Text x="0.0" y="28.0" originX="0.5" originY="0.5" sizingValue="fixed" width="110" height="76" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Value" id="3:198">
+                        <TextStylePaint fontSize="60" letterSpacing="-2" fontAssetId="2:901" name="S0" id="3:199">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF111111" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:199" text="50" name="R0">
+                            <DataBindContext sourcePathIds="1:1-1:19" propertyKey="268" converterId="2:1"/>
+                        </TextValueRun>
+                    </Text>
+                    <Shape name="Border">
+                        <Rectangle width="104" height="138" originX="0.5" originY="0.5" cornerRadiusTL="8" name="P"/>
+                        <Stroke thickness="3.5" name="S">
+                            <SolidColor colorValue="FF111111" name="C"/>
+                        </Stroke>
+                    </Shape>
+                    <Shape name="Sign">
+                        <Rectangle width="116" height="150" originX="0.5" originY="0.5" cornerRadiusTL="13" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFFFFFFF" name="C"/>
+                        </Fill>
+                    </Shape>
+                </Node>
+                <Node name="Canada">
+                    <DataBindContext sourcePathIds="1:1-1:49" propertyKey="18" converterId="2:12"/>
+                    <Text x="0.0" y="-46.0" originX="0.5" originY="0.5" sizingValue="fixed" width="112" height="28" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Maximum" id="3:200">
+                        <TextStylePaint fontSize="17" letterSpacing="0.5" fontAssetId="2:901" name="S0" id="3:201">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF111111" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:201" text="MAXIMUM" name="R0"/>
+                    </Text>
+                    <Text x="0.0" y="18.0" originX="0.5" originY="0.5" sizingValue="fixed" width="110" height="84" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Value" id="3:202">
+                        <TextStylePaint fontSize="62" letterSpacing="-2" fontAssetId="2:901" name="S0" id="3:203">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF111111" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:203" text="80" name="R0">
+                            <DataBindContext sourcePathIds="1:1-1:19" propertyKey="268" converterId="2:1"/>
+                        </TextValueRun>
+                    </Text>
+                    <Shape name="Border">
+                        <Rectangle width="104" height="138" originX="0.5" originY="0.5" cornerRadiusTL="8" name="P"/>
+                        <Stroke thickness="3.5" name="S">
+                            <SolidColor colorValue="FF111111" name="C"/>
+                        </Stroke>
+                    </Shape>
+                    <Shape name="Sign">
+                        <Rectangle width="116" height="150" originX="0.5" originY="0.5" cornerRadiusTL="13" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFFFFFFF" name="C"/>
+                        </Fill>
+                    </Shape>
+                </Node>
+            </Node>
+            <Node x="410" y="390" name="Dial">
+                <Text x="0.0" y="-20.0" originX="0.5" originY="0.5" sizingValue="fixed" width="560" height="210" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Speed Over" id="3:161">
+                    <DataBindContext sourcePathIds="1:1-1:10" propertyKey="18" converterId="2:4"/>
+                    <TextStylePaint fontSize="200" letterSpacing="-6" fontAssetId="2:901" name="S0" id="3:162">
+                        <Fill name="F">
+                            <SolidColor colorValue="FFFF3B30" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:162" text="72" name="R0">
+                        <DataBindContext sourcePathIds="1:1-1:10" propertyKey="268" converterId="2:1"/>
+                    </TextValueRun>
+                </Text>
+                <Text x="0.0" y="-20.0" originX="0.5" originY="0.5" sizingValue="fixed" width="560" height="210" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Speed" id="3:163">
+                    <TextStylePaint fontSize="200" letterSpacing="-6" fontAssetId="2:901" name="S0" id="3:164">
+                        <Fill name="F">
+                            <SolidColor colorValue="FFF2F4F7" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:164" text="72" name="R0">
+                        <DataBindContext sourcePathIds="1:1-1:10" propertyKey="268" converterId="2:1"/>
+                    </TextValueRun>
+                </Text>
+                <Text x="0.0" y="95.0" originX="0.5" originY="0.5" sizingValue="fixed" width="300" height="48" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Unit Metric" id="3:165">
+                    <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:43"/>
+                    <TextStylePaint fontSize="34" letterSpacing="1" fontAssetId="2:900" name="S0" id="3:166">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:166" text="km/h" name="R0"/>
+                </Text>
+                <Text x="0.0" y="95.0" originX="0.5" originY="0.5" sizingValue="fixed" width="300" height="48" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Unit Imperial" id="3:167">
+                    <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:41"/>
+                    <TextStylePaint fontSize="34" letterSpacing="1" fontAssetId="2:900" name="S0" id="3:168">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:168" text="mph" name="R0"/>
+                </Text>
+                <Node y="170" name="Set Speed">
+                    <DataBindContext sourcePathIds="1:1-1:18" propertyKey="18" converterId="2:5"/>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="220" height="56" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Set Text" id="3:169">
+                        <TextStylePaint fontSize="22" letterSpacing="2" fontAssetId="2:901" name="S0" id="3:170">
+                            <Fill name="F">
+                                <SolidColor colorValue="B3FFFFFF" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S1" id="3:171">
+                            <Fill name="F">
+                                <SolidColor colorValue="FFF2F4F7" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:170" text="SET  " name="R0"/>
+                        <TextValueRun styleId="3:171" text="75" name="R1">
+                            <DataBindContext sourcePathIds="1:1-1:18" propertyKey="268" converterId="2:1"/>
+                        </TextValueRun>
+                    </Text>
+                    <Shape name="Pill On">
+                        <DataBindContext sourcePathIds="1:1-1:50" propertyKey="18" converterId="2:41"/>
+                        <Rectangle width="220" height="58" originX="0.5" originY="0.5" cornerRadiusTL="29" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF3D8BFF" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape name="Pill">
+                        <Rectangle width="220" height="58" originX="0.5" originY="0.5" cornerRadiusTL="29" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF262A31" name="C"/>
+                        </Fill>
+                    </Shape>
+                </Node>
+                <Node y="-170" name="Assist adasOn">
+                    <DataBindContext sourcePathIds="1:1-1:50" propertyKey="18" converterId="2:41"/>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="200" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Assist" id="3:172">
+                        <TextStylePaint fontSize="22" letterSpacing="3" fontAssetId="2:901" name="S0" id="3:173">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF3D8BFF" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:173" text="ASSIST" name="R0"/>
+                    </Text>
+                    <Shape name="Ring">
+                        <Rectangle width="170" height="44" originX="0.5" originY="0.5" cornerRadiusTL="22" name="P"/>
+                        <Stroke thickness="3" name="S">
+                            <SolidColor colorValue="FF3D8BFF" name="C"/>
+                        </Stroke>
+                    </Shape>
+                </Node>
+                <Node y="-170" name="Assist madsActive">
+                    <DataBindContext sourcePathIds="1:1-1:52" propertyKey="18" converterId="2:41"/>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="200" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Assist" id="3:174">
+                        <TextStylePaint fontSize="22" letterSpacing="3" fontAssetId="2:901" name="S0" id="3:175">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF3D8BFF" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:175" text="ASSIST" name="R0"/>
+                    </Text>
+                    <Shape name="Ring">
+                        <Rectangle width="170" height="44" originX="0.5" originY="0.5" cornerRadiusTL="22" name="P"/>
+                        <Stroke thickness="3" name="S">
+                            <SolidColor colorValue="FF3D8BFF" name="C"/>
+                        </Stroke>
+                    </Shape>
+                </Node>
+                <Node x="-111" y="285" name="Gear P">
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="60" height="60" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Lit" id="3:176">
+                        <DataBindContext sourcePathIds="1:1-1:11" propertyKey="18" converterId="2:11"/>
+                        <TextStylePaint fontSize="36" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:177">
+                            <Fill name="F">
+                                <SolidColor colorValue="FFF2F4F7" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:177" text="P" name="R0"/>
+                    </Text>
+                    <Shape name="Pill">
+                        <DataBindContext sourcePathIds="1:1-1:11" propertyKey="18" converterId="2:11"/>
+                        <Rectangle width="60" height="60" originX="0.5" originY="0.5" cornerRadiusTL="16" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFFF6A1A" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="60" height="60" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Dim" id="3:178">
+                        <TextStylePaint fontSize="36" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:179">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:179" text="P" name="R0"/>
+                    </Text>
+                </Node>
+                <Node x="-37" y="285" name="Gear R">
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="60" height="60" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Lit" id="3:180">
+                        <DataBindContext sourcePathIds="1:1-1:11" propertyKey="18" converterId="2:12"/>
+                        <TextStylePaint fontSize="36" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:181">
+                            <Fill name="F">
+                                <SolidColor colorValue="FFF2F4F7" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:181" text="R" name="R0"/>
+                    </Text>
+                    <Shape name="Pill">
+                        <DataBindContext sourcePathIds="1:1-1:11" propertyKey="18" converterId="2:12"/>
+                        <Rectangle width="60" height="60" originX="0.5" originY="0.5" cornerRadiusTL="16" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFFF6A1A" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="60" height="60" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Dim" id="3:182">
+                        <TextStylePaint fontSize="36" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:183">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:183" text="R" name="R0"/>
+                    </Text>
+                </Node>
+                <Node x="37" y="285" name="Gear N">
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="60" height="60" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Lit" id="3:184">
+                        <DataBindContext sourcePathIds="1:1-1:11" propertyKey="18" converterId="2:13"/>
+                        <TextStylePaint fontSize="36" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:185">
+                            <Fill name="F">
+                                <SolidColor colorValue="FFF2F4F7" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:185" text="N" name="R0"/>
+                    </Text>
+                    <Shape name="Pill">
+                        <DataBindContext sourcePathIds="1:1-1:11" propertyKey="18" converterId="2:13"/>
+                        <Rectangle width="60" height="60" originX="0.5" originY="0.5" cornerRadiusTL="16" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFFF6A1A" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="60" height="60" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Dim" id="3:186">
+                        <TextStylePaint fontSize="36" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:187">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:187" text="N" name="R0"/>
+                    </Text>
+                </Node>
+                <Node x="111" y="285" name="Gear D">
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="60" height="60" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Lit" id="3:188">
+                        <DataBindContext sourcePathIds="1:1-1:11" propertyKey="18" converterId="2:14"/>
+                        <TextStylePaint fontSize="36" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:189">
+                            <Fill name="F">
+                                <SolidColor colorValue="FFF2F4F7" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:189" text="D" name="R0"/>
+                    </Text>
+                    <Shape name="Pill">
+                        <DataBindContext sourcePathIds="1:1-1:11" propertyKey="18" converterId="2:14"/>
+                        <Rectangle width="60" height="60" originX="0.5" originY="0.5" cornerRadiusTL="16" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFFF6A1A" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="60" height="60" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Dim" id="3:190">
+                        <TextStylePaint fontSize="36" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:191">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:191" text="D" name="R0"/>
+                    </Text>
+                </Node>
+                <Node name="Needle">
+                    <DataBindContext sourcePathIds="1:1-1:10" propertyKey="15" converterId="2:3"/>
+                    <Shape name="Blade">
+                        <PointsPath isClosed="true" name="P">
+                            <StraightVertex x="-9" y="-266" radius="3"/>
+                            <StraightVertex x="0" y="-312" radius="2"/>
+                            <StraightVertex x="9" y="-266" radius="3"/>
+                        </PointsPath>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFFF6A1A" name="C"/>
+                        </Fill>
+                    </Shape>
+                </Node>
+                <Node name="Set Speed Marker">
+                    <DataBindContext sourcePathIds="1:1-1:18" propertyKey="15" converterId="2:3"/>
+                    <DataBindContext sourcePathIds="1:1-1:18" propertyKey="18" converterId="2:5"/>
+                    <Shape y="-330" name="Dot">
+                        <Ellipse width="28" height="28" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF0A0B0E" name="C"/>
+                        </Fill>
+                        <Stroke thickness="6" name="S">
+                            <SolidColor colorValue="FF3D8BFF" name="C"/>
+                        </Stroke>
+                    </Shape>
+                </Node>
+                <Shape rotation="3.9269908" name="Over Limit Arc">
+                    <DataBindContext sourcePathIds="1:1-1:10" propertyKey="18" converterId="2:4"/>
+                    <Ellipse width="660" height="660" name="P"/>
+                    <Stroke thickness="20" cap="round" name="S">
+                        <SolidColor colorValue="FFFF3B30" name="C"/>
+                        <TrimPath start="0" end="0.3" name="Trim">
+                            <DataBindContext sourcePathIds="1:1-1:10" propertyKey="115" converterId="2:2"/>
+                        </TrimPath>
+                    </Stroke>
+                </Shape>
+                <Shape rotation="3.9269908" name="Cruise Arc">
+                    <DataBindContext sourcePathIds="1:1-1:50" propertyKey="18" converterId="2:41"/>
+                    <Ellipse width="660" height="660" name="P"/>
+                    <Stroke thickness="20" cap="round" name="S">
+                        <SolidColor colorValue="FF3D8BFF" name="C"/>
+                        <TrimPath start="0" end="0.3" name="Trim">
+                            <DataBindContext sourcePathIds="1:1-1:10" propertyKey="115" converterId="2:2"/>
+                        </TrimPath>
+                    </Stroke>
+                </Shape>
+                <Shape rotation="3.9269908" name="Speed Arc">
+                    <Ellipse width="660" height="660" name="P"/>
+                    <Stroke thickness="20" cap="round" name="S">
+                        <SolidColor colorValue="FFFF6A1A" name="C"/>
+                        <TrimPath start="0" end="0.3" name="Trim">
+                            <DataBindContext sourcePathIds="1:1-1:10" propertyKey="115" converterId="2:2"/>
+                        </TrimPath>
+                    </Stroke>
+                </Shape>
+                <Shape name="Major Ticks">
+                    <Rectangle x="-205.77" y="205.77" rotation="3.926991" width="6" height="30" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-276.76" y="89.92" rotation="4.398230" width="6" height="30" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-287.42" y="-45.52" rotation="4.869469" width="6" height="30" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-235.42" y="-171.05" rotation="5.340708" width="6" height="30" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-132.11" y="-259.28" rotation="5.811946" width="6" height="30" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-0.00" y="-291.00" rotation="6.283185" width="6" height="30" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="132.11" y="-259.28" rotation="6.754424" width="6" height="30" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="235.42" y="-171.05" rotation="7.225663" width="6" height="30" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="287.42" y="-45.52" rotation="7.696902" width="6" height="30" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="276.76" y="89.92" rotation="8.168141" width="6" height="30" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="205.77" y="205.77" rotation="8.639380" width="6" height="30" originX="0.5" originY="0.5" name="T"/>
+                    <Fill name="F">
+                        <SolidColor colorValue="FFF2F4F7" name="C"/>
+                    </Fill>
+                </Shape>
+                <Shape name="Minor Ticks">
+                    <Rectangle x="-234.81" y="185.11" rotation="4.044801" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-254.94" y="156.23" rotation="4.162610" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-271.53" y="125.18" rotation="4.280420" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-293.25" y="58.33" rotation="4.516039" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-298.08" y="23.46" rotation="4.633849" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-298.77" y="-11.74" rotation="4.751659" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-287.77" y="-81.16" rotation="4.987278" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-276.24" y="-114.42" rotation="5.105088" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-260.88" y="-146.10" rotation="5.222898" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-219.56" y="-202.96" rotation="5.458517" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-194.18" y="-227.36" rotation="5.576327" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-166.12" y="-248.61" rotation="5.694137" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-103.49" y="-280.52" rotation="5.929756" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-69.80" y="-290.74" rotation="6.047566" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="-35.14" y="-296.93" rotation="6.165376" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="35.14" y="-296.93" rotation="6.400995" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="69.80" y="-290.74" rotation="6.518805" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="103.49" y="-280.52" rotation="6.636614" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="166.12" y="-248.61" rotation="6.872234" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="194.18" y="-227.36" rotation="6.990044" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="219.56" y="-202.96" rotation="7.107853" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="260.88" y="-146.10" rotation="7.343473" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="276.24" y="-114.42" rotation="7.461283" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="287.77" y="-81.16" rotation="7.579092" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="298.77" y="-11.74" rotation="7.814712" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="298.08" y="23.46" rotation="7.932521" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="293.25" y="58.33" rotation="8.050331" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="271.53" y="125.18" rotation="8.285951" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="254.94" y="156.23" rotation="8.403760" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Rectangle x="234.81" y="185.11" rotation="8.521570" width="3" height="14" originX="0.5" originY="0.5" name="T"/>
+                    <Fill name="F">
+                        <SolidColor colorValue="FF59606B" name="C"/>
+                    </Fill>
+                </Shape>
+                <Text x="-165.5" y="165.5" originX="0.5" originY="0.5" sizingValue="fixed" width="90" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="L0" id="3:139">
+                    <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:140">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:140" text="0" name="R0"/>
+                </Text>
+                <Text x="-222.5" y="72.3" originX="0.5" originY="0.5" sizingValue="fixed" width="90" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="L20" id="3:141">
+                    <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:142">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:142" text="20" name="R0"/>
+                </Text>
+                <Text x="-231.1" y="-36.6" originX="0.5" originY="0.5" sizingValue="fixed" width="90" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="L40" id="3:143">
+                    <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:144">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:144" text="40" name="R0"/>
+                </Text>
+                <Text x="-189.3" y="-137.5" originX="0.5" originY="0.5" sizingValue="fixed" width="90" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="L60" id="3:145">
+                    <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:146">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:146" text="60" name="R0"/>
+                </Text>
+                <Text x="-106.2" y="-208.5" originX="0.5" originY="0.5" sizingValue="fixed" width="90" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="L80" id="3:147">
+                    <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:148">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:148" text="80" name="R0"/>
+                </Text>
+                <Text x="-0.0" y="-234.0" originX="0.5" originY="0.5" sizingValue="fixed" width="90" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="L100" id="3:149">
+                    <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:150">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:150" text="100" name="R0"/>
+                </Text>
+                <Text x="106.2" y="-208.5" originX="0.5" originY="0.5" sizingValue="fixed" width="90" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="L120" id="3:151">
+                    <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:152">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:152" text="120" name="R0"/>
+                </Text>
+                <Text x="189.3" y="-137.5" originX="0.5" originY="0.5" sizingValue="fixed" width="90" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="L140" id="3:153">
+                    <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:154">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:154" text="140" name="R0"/>
+                </Text>
+                <Text x="231.1" y="-36.6" originX="0.5" originY="0.5" sizingValue="fixed" width="90" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="L160" id="3:155">
+                    <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:156">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:156" text="160" name="R0"/>
+                </Text>
+                <Text x="222.5" y="72.3" originX="0.5" originY="0.5" sizingValue="fixed" width="90" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="L180" id="3:157">
+                    <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:158">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:158" text="180" name="R0"/>
+                </Text>
+                <Text x="165.5" y="165.5" originX="0.5" originY="0.5" sizingValue="fixed" width="90" height="44" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="L200" id="3:159">
+                    <TextStylePaint fontSize="34" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:160">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:160" text="200" name="R0"/>
+                </Text>
+                <Shape rotation="3.9269908" name="Track">
+                    <Ellipse width="660" height="660" name="P"/>
+                    <Stroke thickness="20" cap="round" name="S">
+                        <SolidColor colorValue="FF1B1E24" name="C"/>
+                        <TrimPath start="0" end="0.75" name="Trim"/>
+                    </Stroke>
+                </Shape>
+                <Shape name="Glow">
+                    <Ellipse width="720" height="720" name="P"/>
+                    <Fill name="F">
+                        <RadialGradient startX="0" startY="0" endX="360" endY="0" name="G">
+                            <GradientStop colorValue="FF1A1008" position="0"/>
+                            <GradientStop colorValue="001A1008" position="1"/>
+                        </RadialGradient>
+                    </Fill>
+                </Shape>
+            </Node>
+        </Node>
+        <LinearAnimation duration="1" name="Idle" id="4:3"/>
+        <StateMachine name="Speedometer" id="5:3">
+            <StateMachineLayer name="Idle" id="5:23">
+                <EntryState x="0" y="0">
+                    <StateTransition stateToId="5:33"/>
+                </EntryState>
+                <AnimationState x="200" y="0" animationId="4:3" id="5:33"/>
+                <AnyState x="400" y="0"/>
+                <ExitState x="500" y="0"/>
+            </StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+    <ComponentAsset artboardId="6:3" name="Speedometer"/>
+    <Artboard x="3880" y="0" isComponent="true" defaultStateMachineId="5:4" viewModelId="1:1" viewModelInstanceId="1:2" styleId="6:14" width="460" height="630" name="Tyres" id="6:4">
+        <LayoutComponentStyle name="S" id="6:14"/>
+        <Node name="Art">
+            <Node name="TPMS">
+                <Node x="62" y="100" name="Wheel FL">
+                    <Node name="Pressure Known">
+                        <DataBindContext sourcePathIds="1:1-1:41" propertyKey="18" converterId="2:60"/>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="58" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Psi" id="3:216">
+                            <TextStylePaint fontSize="46" letterSpacing="-1" fontAssetId="2:901" name="S0" id="3:217">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FFF2F4F7" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="24" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:218">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:217" text="42" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:41" propertyKey="268" converterId="2:65"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:218" text=" psi" name="R1"/>
+                        </Text>
+                    </Node>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="58" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Pressure None" id="3:219">
+                        <DataBindContext sourcePathIds="1:1-1:41" propertyKey="18" converterId="2:61"/>
+                        <TextStylePaint fontSize="46" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:220">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:220" text="--" name="R0"/>
+                    </Text>
+                    <Node y="48" name="Temp Known">
+                        <DataBindContext sourcePathIds="1:1-1:45" propertyKey="18" converterId="2:62"/>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="C" id="3:221">
+                            <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:43"/>
+                            <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:222">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="22" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:223">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:222" text="24" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:45" propertyKey="268" converterId="2:1"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:223" text="°C" name="R1"/>
+                        </Text>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="F" id="3:224">
+                            <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:41"/>
+                            <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:225">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="22" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:226">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:225" text="75" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:45" propertyKey="268" converterId="2:67"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:226" text="°F" name="R1"/>
+                        </Text>
+                    </Node>
+                    <Text x="0.0" y="48.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Temp None" id="3:227">
+                        <DataBindContext sourcePathIds="1:1-1:45" propertyKey="18" converterId="2:63"/>
+                        <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:228">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:228" text="--" name="R0"/>
+                    </Text>
+                </Node>
+                <Node x="398" y="100" name="Wheel FR">
+                    <Node name="Pressure Known">
+                        <DataBindContext sourcePathIds="1:1-1:42" propertyKey="18" converterId="2:60"/>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="58" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Psi" id="3:229">
+                            <TextStylePaint fontSize="46" letterSpacing="-1" fontAssetId="2:901" name="S0" id="3:230">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FFF2F4F7" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="24" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:231">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:230" text="42" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:42" propertyKey="268" converterId="2:65"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:231" text=" psi" name="R1"/>
+                        </Text>
+                    </Node>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="58" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Pressure None" id="3:232">
+                        <DataBindContext sourcePathIds="1:1-1:42" propertyKey="18" converterId="2:61"/>
+                        <TextStylePaint fontSize="46" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:233">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:233" text="--" name="R0"/>
+                    </Text>
+                    <Node y="48" name="Temp Known">
+                        <DataBindContext sourcePathIds="1:1-1:46" propertyKey="18" converterId="2:62"/>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="C" id="3:234">
+                            <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:43"/>
+                            <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:235">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="22" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:236">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:235" text="24" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:46" propertyKey="268" converterId="2:1"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:236" text="°C" name="R1"/>
+                        </Text>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="F" id="3:237">
+                            <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:41"/>
+                            <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:238">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="22" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:239">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:238" text="75" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:46" propertyKey="268" converterId="2:67"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:239" text="°F" name="R1"/>
+                        </Text>
+                    </Node>
+                    <Text x="0.0" y="48.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Temp None" id="3:240">
+                        <DataBindContext sourcePathIds="1:1-1:46" propertyKey="18" converterId="2:63"/>
+                        <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:241">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:241" text="--" name="R0"/>
+                    </Text>
+                </Node>
+                <Node x="62" y="405" name="Wheel RL">
+                    <Node name="Pressure Known">
+                        <DataBindContext sourcePathIds="1:1-1:43" propertyKey="18" converterId="2:60"/>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="58" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Psi" id="3:242">
+                            <TextStylePaint fontSize="46" letterSpacing="-1" fontAssetId="2:901" name="S0" id="3:243">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FFF2F4F7" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="24" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:244">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:243" text="42" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:43" propertyKey="268" converterId="2:65"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:244" text=" psi" name="R1"/>
+                        </Text>
+                    </Node>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="58" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Pressure None" id="3:245">
+                        <DataBindContext sourcePathIds="1:1-1:43" propertyKey="18" converterId="2:61"/>
+                        <TextStylePaint fontSize="46" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:246">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:246" text="--" name="R0"/>
+                    </Text>
+                    <Node y="48" name="Temp Known">
+                        <DataBindContext sourcePathIds="1:1-1:47" propertyKey="18" converterId="2:62"/>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="C" id="3:247">
+                            <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:43"/>
+                            <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:248">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="22" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:249">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:248" text="24" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:47" propertyKey="268" converterId="2:1"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:249" text="°C" name="R1"/>
+                        </Text>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="F" id="3:250">
+                            <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:41"/>
+                            <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:251">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="22" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:252">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:251" text="75" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:47" propertyKey="268" converterId="2:67"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:252" text="°F" name="R1"/>
+                        </Text>
+                    </Node>
+                    <Text x="0.0" y="48.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Temp None" id="3:253">
+                        <DataBindContext sourcePathIds="1:1-1:47" propertyKey="18" converterId="2:63"/>
+                        <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:254">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:254" text="--" name="R0"/>
+                    </Text>
+                </Node>
+                <Node x="398" y="405" name="Wheel RR">
+                    <Node name="Pressure Known">
+                        <DataBindContext sourcePathIds="1:1-1:44" propertyKey="18" converterId="2:60"/>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="58" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Psi" id="3:255">
+                            <TextStylePaint fontSize="46" letterSpacing="-1" fontAssetId="2:901" name="S0" id="3:256">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FFF2F4F7" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="24" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:257">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:256" text="42" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:44" propertyKey="268" converterId="2:65"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:257" text=" psi" name="R1"/>
+                        </Text>
+                    </Node>
+                    <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="58" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Pressure None" id="3:258">
+                        <DataBindContext sourcePathIds="1:1-1:44" propertyKey="18" converterId="2:61"/>
+                        <TextStylePaint fontSize="46" letterSpacing="0" fontAssetId="2:901" name="S0" id="3:259">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:259" text="--" name="R0"/>
+                    </Text>
+                    <Node y="48" name="Temp Known">
+                        <DataBindContext sourcePathIds="1:1-1:48" propertyKey="18" converterId="2:62"/>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="C" id="3:260">
+                            <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:43"/>
+                            <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:261">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="22" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:262">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:261" text="24" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:48" propertyKey="268" converterId="2:1"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:262" text="°C" name="R1"/>
+                        </Text>
+                        <Text x="0.0" y="0.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="F" id="3:263">
+                            <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:41"/>
+                            <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:264">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextStylePaint fontSize="22" letterSpacing="0" fontAssetId="2:900" name="S1" id="3:265">
+                                <Fill name="F">
+                                    <SolidColor colorValue="FF8B919A" name="C"/>
+                                </Fill>
+                                <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                            </TextStylePaint>
+                            <TextValueRun styleId="3:264" text="75" name="R0">
+                                <DataBindContext sourcePathIds="1:1-1:48" propertyKey="268" converterId="2:67"/>
+                            </TextValueRun>
+                            <TextValueRun styleId="3:265" text="°F" name="R1"/>
+                        </Text>
+                    </Node>
+                    <Text x="0.0" y="48.0" originX="0.5" originY="0.5" sizingValue="fixed" width="150" height="38" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Temp None" id="3:266">
+                        <DataBindContext sourcePathIds="1:1-1:48" propertyKey="18" converterId="2:63"/>
+                        <TextStylePaint fontSize="28" letterSpacing="0" fontAssetId="2:900" name="S0" id="3:267">
+                            <Fill name="F">
+                                <SolidColor colorValue="FF59606B" name="C"/>
+                            </Fill>
+                            <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="3:267" text="--" name="R0"/>
+                    </Text>
+                </Node>
+                <Node x="230" y="255" scaleX="1.4" scaleY="1.4" name="Car">
+                    <Node x="-67" y="-60" name="Door FL" id="3:204">
+                        <DataBindContext sourcePathIds="1:1-1:80" propertyKey="15" converterId="7:3"/>
+                        <Shape opacity="0" name="Open Highlight" id="3:205">
+                            <DataBindContext sourcePathIds="1:1-1:80" propertyKey="18" converterId="7:6"/>
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="0" y="0" radius="3"/>
+                                <StraightVertex x="16" y="0" radius="2"/>
+                                <StraightVertex x="16" y="72" radius="2"/>
+                                <StraightVertex x="-2" y="70" radius="6"/>
+                                <StraightVertex x="-2" y="6" radius="6"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <SolidColor colorValue="B3FFB020" name="C"/>
+                            </Fill>
+                            <Stroke thickness="2" name="S">
+                                <SolidColor colorValue="FFFFB020" name="C"/>
+                            </Stroke>
+                        </Shape>
+                        <Shape x="5" y="32" name="Handle">
+                            <Rectangle width="2.5" height="12" originX="0.5" originY="0.5" cornerRadiusTL="1.2" name="P"/>
+                            <Fill name="F">
+                                <SolidColor colorValue="FF5E6672" name="C"/>
+                            </Fill>
+                        </Shape>
+                        <Shape x="-9" y="10" rotation="0.35" name="Mirror">
+                            <Rectangle width="16" height="8" originX="0.5" originY="0.5" cornerRadiusTL="4" name="P"/>
+                            <Fill name="F">
+                                <LinearGradient startX="0" startY="-4" endX="0" endY="4" name="G">
+                                    <GradientStop colorValue="FF4B535E" position="0"/>
+                                    <GradientStop colorValue="FF1F242B" position="1"/>
+                                </LinearGradient>
+                            </Fill>
+                        </Shape>
+                        <Shape name="Panel">
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="0" y="0" radius="3"/>
+                                <StraightVertex x="16" y="0" radius="2"/>
+                                <StraightVertex x="16" y="72" radius="2"/>
+                                <StraightVertex x="-2" y="70" radius="6"/>
+                                <StraightVertex x="-2" y="6" radius="6"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <LinearGradient startX="-2" startY="0" endX="16" endY="0" name="G">
+                                    <GradientStop colorValue="FF1F242B" position="0"/>
+                                    <GradientStop colorValue="FF3A414B" position="1"/>
+                                </LinearGradient>
+                            </Fill>
+                            <Stroke thickness="1.5" name="S">
+                                <SolidColor colorValue="FF14171C" name="C"/>
+                            </Stroke>
+                        </Shape>
+                    </Node>
+                    <Node x="-67" y="14" name="Door RL" id="3:206">
+                        <DataBindContext sourcePathIds="1:1-1:82" propertyKey="15" converterId="7:9"/>
+                        <Shape opacity="0" name="Open Highlight" id="3:207">
+                            <DataBindContext sourcePathIds="1:1-1:82" propertyKey="18" converterId="7:12"/>
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="0" y="0" radius="3"/>
+                                <StraightVertex x="16" y="0" radius="2"/>
+                                <StraightVertex x="16" y="64" radius="2"/>
+                                <StraightVertex x="-2" y="62" radius="6"/>
+                                <StraightVertex x="-2" y="6" radius="6"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <SolidColor colorValue="B3FFB020" name="C"/>
+                            </Fill>
+                            <Stroke thickness="2" name="S">
+                                <SolidColor colorValue="FFFFB020" name="C"/>
+                            </Stroke>
+                        </Shape>
+                        <Shape x="5" y="29" name="Handle">
+                            <Rectangle width="2.5" height="12" originX="0.5" originY="0.5" cornerRadiusTL="1.2" name="P"/>
+                            <Fill name="F">
+                                <SolidColor colorValue="FF5E6672" name="C"/>
+                            </Fill>
+                        </Shape>
+                        <Shape name="Panel">
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="0" y="0" radius="3"/>
+                                <StraightVertex x="16" y="0" radius="2"/>
+                                <StraightVertex x="16" y="64" radius="2"/>
+                                <StraightVertex x="-2" y="62" radius="6"/>
+                                <StraightVertex x="-2" y="6" radius="6"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <LinearGradient startX="-2" startY="0" endX="16" endY="0" name="G">
+                                    <GradientStop colorValue="FF1F242B" position="0"/>
+                                    <GradientStop colorValue="FF3A414B" position="1"/>
+                                </LinearGradient>
+                            </Fill>
+                            <Stroke thickness="1.5" name="S">
+                                <SolidColor colorValue="FF14171C" name="C"/>
+                            </Stroke>
+                        </Shape>
+                    </Node>
+                    <Node x="67" y="-60" name="Door FR" id="3:208">
+                        <DataBindContext sourcePathIds="1:1-1:81" propertyKey="15" converterId="7:15"/>
+                        <Shape opacity="0" name="Open Highlight" id="3:209">
+                            <DataBindContext sourcePathIds="1:1-1:81" propertyKey="18" converterId="7:18"/>
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="0" y="0" radius="3"/>
+                                <StraightVertex x="-16" y="0" radius="2"/>
+                                <StraightVertex x="-16" y="72" radius="2"/>
+                                <StraightVertex x="2" y="70" radius="6"/>
+                                <StraightVertex x="2" y="6" radius="6"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <SolidColor colorValue="B3FFB020" name="C"/>
+                            </Fill>
+                            <Stroke thickness="2" name="S">
+                                <SolidColor colorValue="FFFFB020" name="C"/>
+                            </Stroke>
+                        </Shape>
+                        <Shape x="-5" y="32" name="Handle">
+                            <Rectangle width="2.5" height="12" originX="0.5" originY="0.5" cornerRadiusTL="1.2" name="P"/>
+                            <Fill name="F">
+                                <SolidColor colorValue="FF5E6672" name="C"/>
+                            </Fill>
+                        </Shape>
+                        <Shape x="9" y="10" rotation="-0.35" name="Mirror">
+                            <Rectangle width="16" height="8" originX="0.5" originY="0.5" cornerRadiusTL="4" name="P"/>
+                            <Fill name="F">
+                                <LinearGradient startX="0" startY="-4" endX="0" endY="4" name="G">
+                                    <GradientStop colorValue="FF4B535E" position="0"/>
+                                    <GradientStop colorValue="FF1F242B" position="1"/>
+                                </LinearGradient>
+                            </Fill>
+                        </Shape>
+                        <Shape name="Panel">
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="0" y="0" radius="3"/>
+                                <StraightVertex x="-16" y="0" radius="2"/>
+                                <StraightVertex x="-16" y="72" radius="2"/>
+                                <StraightVertex x="2" y="70" radius="6"/>
+                                <StraightVertex x="2" y="6" radius="6"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <LinearGradient startX="2" startY="0" endX="-16" endY="0" name="G">
+                                    <GradientStop colorValue="FF1F242B" position="0"/>
+                                    <GradientStop colorValue="FF3A414B" position="1"/>
+                                </LinearGradient>
+                            </Fill>
+                            <Stroke thickness="1.5" name="S">
+                                <SolidColor colorValue="FF14171C" name="C"/>
+                            </Stroke>
+                        </Shape>
+                    </Node>
+                    <Node x="67" y="14" name="Door RR" id="3:210">
+                        <DataBindContext sourcePathIds="1:1-1:83" propertyKey="15" converterId="7:21"/>
+                        <Shape opacity="0" name="Open Highlight" id="3:211">
+                            <DataBindContext sourcePathIds="1:1-1:83" propertyKey="18" converterId="7:24"/>
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="0" y="0" radius="3"/>
+                                <StraightVertex x="-16" y="0" radius="2"/>
+                                <StraightVertex x="-16" y="64" radius="2"/>
+                                <StraightVertex x="2" y="62" radius="6"/>
+                                <StraightVertex x="2" y="6" radius="6"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <SolidColor colorValue="B3FFB020" name="C"/>
+                            </Fill>
+                            <Stroke thickness="2" name="S">
+                                <SolidColor colorValue="FFFFB020" name="C"/>
+                            </Stroke>
+                        </Shape>
+                        <Shape x="-5" y="29" name="Handle">
+                            <Rectangle width="2.5" height="12" originX="0.5" originY="0.5" cornerRadiusTL="1.2" name="P"/>
+                            <Fill name="F">
+                                <SolidColor colorValue="FF5E6672" name="C"/>
+                            </Fill>
+                        </Shape>
+                        <Shape name="Panel">
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="0" y="0" radius="3"/>
+                                <StraightVertex x="-16" y="0" radius="2"/>
+                                <StraightVertex x="-16" y="64" radius="2"/>
+                                <StraightVertex x="2" y="62" radius="6"/>
+                                <StraightVertex x="2" y="6" radius="6"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <LinearGradient startX="2" startY="0" endX="-16" endY="0" name="G">
+                                    <GradientStop colorValue="FF1F242B" position="0"/>
+                                    <GradientStop colorValue="FF3A414B" position="1"/>
+                                </LinearGradient>
+                            </Fill>
+                            <Stroke thickness="1.5" name="S">
+                                <SolidColor colorValue="FF14171C" name="C"/>
+                            </Stroke>
+                        </Shape>
+                    </Node>
+                    <Node y="-76" name="Frunk" id="3:212">
+                        <DataBindContext sourcePathIds="1:1-1:84" propertyKey="17" converterId="7:27"/>
+                        <Shape opacity="0" name="Open Highlight" id="3:213">
+                            <DataBindContext sourcePathIds="1:1-1:84" propertyKey="18" converterId="7:30"/>
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="-46" y="0" radius="2"/>
+                                <StraightVertex x="46" y="0" radius="2"/>
+                                <StraightVertex x="60" y="-30" radius="30"/>
+                                <StraightVertex x="42" y="-72" radius="26"/>
+                                <StraightVertex x="-42" y="-72" radius="26"/>
+                                <StraightVertex x="-60" y="-30" radius="30"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <SolidColor colorValue="B3FFB020" name="C"/>
+                            </Fill>
+                            <Stroke thickness="2" name="S">
+                                <SolidColor colorValue="FFFFB020" name="C"/>
+                            </Stroke>
+                        </Shape>
+                        <Shape name="Lid">
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="-46" y="0" radius="2"/>
+                                <StraightVertex x="46" y="0" radius="2"/>
+                                <StraightVertex x="60" y="-30" radius="30"/>
+                                <StraightVertex x="42" y="-72" radius="26"/>
+                                <StraightVertex x="-42" y="-72" radius="26"/>
+                                <StraightVertex x="-60" y="-30" radius="30"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <LinearGradient startX="-68" startY="0" endX="68" endY="0" name="G">
+                                    <GradientStop colorValue="FF1F242B" position="0"/>
+                                    <GradientStop colorValue="FF3A414B" position="0.22"/>
+                                    <GradientStop colorValue="FF4B535E" position="0.5"/>
+                                    <GradientStop colorValue="FF3A414B" position="0.78"/>
+                                    <GradientStop colorValue="FF1F242B" position="1"/>
+                                </LinearGradient>
+                            </Fill>
+                            <Stroke thickness="1.5" name="S">
+                                <SolidColor colorValue="FF14171C" name="C"/>
+                            </Stroke>
+                        </Shape>
+                    </Node>
+                    <Node y="96" name="Trunk" id="3:214">
+                        <DataBindContext sourcePathIds="1:1-1:85" propertyKey="17" converterId="7:33"/>
+                        <Shape opacity="0" name="Open Highlight" id="3:215">
+                            <DataBindContext sourcePathIds="1:1-1:85" propertyKey="18" converterId="7:36"/>
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="-46" y="0" radius="2"/>
+                                <StraightVertex x="46" y="0" radius="2"/>
+                                <StraightVertex x="54" y="30" radius="20"/>
+                                <StraightVertex x="50" y="50" radius="18"/>
+                                <StraightVertex x="-50" y="50" radius="18"/>
+                                <StraightVertex x="-54" y="30" radius="20"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <SolidColor colorValue="B3FFB020" name="C"/>
+                            </Fill>
+                            <Stroke thickness="2" name="S">
+                                <SolidColor colorValue="FFFFB020" name="C"/>
+                            </Stroke>
+                        </Shape>
+                        <Shape name="Lid">
+                            <PointsPath isClosed="true" name="P">
+                                <StraightVertex x="-46" y="0" radius="2"/>
+                                <StraightVertex x="46" y="0" radius="2"/>
+                                <StraightVertex x="54" y="30" radius="20"/>
+                                <StraightVertex x="50" y="50" radius="18"/>
+                                <StraightVertex x="-50" y="50" radius="18"/>
+                                <StraightVertex x="-54" y="30" radius="20"/>
+                            </PointsPath>
+                            <Fill name="F">
+                                <LinearGradient startX="-68" startY="0" endX="68" endY="0" name="G">
+                                    <GradientStop colorValue="FF1F242B" position="0"/>
+                                    <GradientStop colorValue="FF3A414B" position="0.22"/>
+                                    <GradientStop colorValue="FF4B535E" position="0.5"/>
+                                    <GradientStop colorValue="FF3A414B" position="0.78"/>
+                                    <GradientStop colorValue="FF1F242B" position="1"/>
+                                </LinearGradient>
+                            </Fill>
+                            <Stroke thickness="1.5" name="S">
+                                <SolidColor colorValue="FF14171C" name="C"/>
+                            </Stroke>
+                        </Shape>
+                    </Node>
+                    <Shape x="-14" y="-40" rotation="0.5" name="Reflection">
+                        <Rectangle width="10" height="70" originX="0.5" originY="0.5" cornerRadiusTL="5" name="P"/>
+                        <Fill name="F">
+                            <LinearGradient startX="0" startY="-35" endX="0" endY="35" name="G">
+                                <GradientStop colorValue="00FFFFFF" position="0"/>
+                                <GradientStop colorValue="26FFFFFF" position="0.5"/>
+                                <GradientStop colorValue="00FFFFFF" position="1"/>
+                            </LinearGradient>
+                        </Fill>
+                    </Shape>
+                    <Shape name="Roof Headers">
+                        <Rectangle y="-38" width="92" height="5" originX="0.5" originY="0.5" cornerRadiusTL="2" name="Front"/>
+                        <Rectangle y="60" width="92" height="5" originX="0.5" originY="0.5" cornerRadiusTL="2" name="Rear"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF2E343D" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape name="Glass">
+                        <PointsPath isClosed="true" name="P">
+                            <StraightVertex x="-40" y="-74" radius="14"/>
+                            <StraightVertex x="40" y="-74" radius="14"/>
+                            <StraightVertex x="47" y="-36" radius="10"/>
+                            <StraightVertex x="47" y="60" radius="10"/>
+                            <StraightVertex x="39" y="94" radius="14"/>
+                            <StraightVertex x="-39" y="94" radius="14"/>
+                            <StraightVertex x="-47" y="60" radius="10"/>
+                            <StraightVertex x="-47" y="-36" radius="10"/>
+                        </PointsPath>
+                        <Fill name="F">
+                            <LinearGradient startX="0" startY="-74" endX="0" endY="94" name="G">
+                                <GradientStop colorValue="FF2A3442" position="0"/>
+                                <GradientStop colorValue="FF121821" position="0.18"/>
+                                <GradientStop colorValue="FF0D1118" position="0.8"/>
+                                <GradientStop colorValue="FF222B37" position="1"/>
+                            </LinearGradient>
+                        </Fill>
+                    </Shape>
+                    <Shape name="Headlights">
+                        <Rectangle x="-36" y="-142" rotation="-0.25" width="22" height="5" originX="0.5" originY="0.5" cornerRadiusTL="2.5" name="L"/>
+                        <Rectangle x="36" y="-142" rotation="0.25" width="22" height="5" originX="0.5" originY="0.5" cornerRadiusTL="2.5" name="R"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFDDE6F0" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape name="Taillights">
+                        <Rectangle x="0" y="143" width="96" height="4" originX="0.5" originY="0.5" cornerRadiusTL="2" name="Bar"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FFE5251B" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape name="Shoulder Highlights">
+                        <Rectangle x="-55" y="0" width="3" height="190" originX="0.5" originY="0.5" cornerRadiusTL="1.5" name="L"/>
+                        <Rectangle x="55" y="0" width="3" height="190" originX="0.5" originY="0.5" cornerRadiusTL="1.5" name="R"/>
+                        <Fill name="F">
+                            <LinearGradient startX="0" startY="-95" endX="0" endY="95" name="G">
+                                <GradientStop colorValue="00FFFFFF" position="0"/>
+                                <GradientStop colorValue="33FFFFFF" position="0.5"/>
+                                <GradientStop colorValue="00FFFFFF" position="1"/>
+                            </LinearGradient>
+                        </Fill>
+                    </Shape>
+                    <Shape x="-67" y="-60" name="Door Opening FL">
+                        <Rectangle x="7" y="36" width="16" height="68" originX="0.5" originY="0.5" cornerRadiusTL="4" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF07080A" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape x="-67" y="14" name="Door Opening RL">
+                        <Rectangle x="7" y="32" width="16" height="60" originX="0.5" originY="0.5" cornerRadiusTL="4" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF07080A" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape x="67" y="-60" name="Door Opening FR">
+                        <Rectangle x="-7" y="36" width="16" height="68" originX="0.5" originY="0.5" cornerRadiusTL="4" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF07080A" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape x="67" y="14" name="Door Opening RR">
+                        <Rectangle x="-7" y="32" width="16" height="60" originX="0.5" originY="0.5" cornerRadiusTL="4" name="P"/>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF07080A" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape y="-76" name="Frunk Cavity">
+                        <PointsPath isClosed="true" name="P">
+                            <StraightVertex x="-46" y="0" radius="2"/>
+                            <StraightVertex x="46" y="0" radius="2"/>
+                            <StraightVertex x="60" y="-30" radius="30"/>
+                            <StraightVertex x="42" y="-72" radius="26"/>
+                            <StraightVertex x="-42" y="-72" radius="26"/>
+                            <StraightVertex x="-60" y="-30" radius="30"/>
+                        </PointsPath>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF07080A" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape y="96" name="Trunk Cavity">
+                        <PointsPath isClosed="true" name="P">
+                            <StraightVertex x="-46" y="0" radius="2"/>
+                            <StraightVertex x="46" y="0" radius="2"/>
+                            <StraightVertex x="54" y="30" radius="20"/>
+                            <StraightVertex x="50" y="50" radius="18"/>
+                            <StraightVertex x="-50" y="50" radius="18"/>
+                            <StraightVertex x="-54" y="30" radius="20"/>
+                        </PointsPath>
+                        <Fill name="F">
+                            <SolidColor colorValue="FF07080A" name="C"/>
+                        </Fill>
+                    </Shape>
+                    <Shape name="Body">
+                        <PointsPath isClosed="true" name="P">
+                            <StraightVertex x="-44" y="-150" radius="30"/>
+                            <StraightVertex x="44" y="-150" radius="30"/>
+                            <StraightVertex x="64" y="-104" radius="40"/>
+                            <StraightVertex x="68" y="-22" radius="24"/>
+                            <StraightVertex x="66" y="92" radius="30"/>
+                            <StraightVertex x="56" y="148" radius="26"/>
+                            <StraightVertex x="-56" y="148" radius="26"/>
+                            <StraightVertex x="-66" y="92" radius="30"/>
+                            <StraightVertex x="-68" y="-22" radius="24"/>
+                            <StraightVertex x="-64" y="-104" radius="40"/>
+                        </PointsPath>
+                        <Fill name="F">
+                            <LinearGradient startX="-68" startY="0" endX="68" endY="0" name="G">
+                                <GradientStop colorValue="FF1F242B" position="0"/>
+                                <GradientStop colorValue="FF3A414B" position="0.22"/>
+                                <GradientStop colorValue="FF4B535E" position="0.5"/>
+                                <GradientStop colorValue="FF3A414B" position="0.78"/>
+                                <GradientStop colorValue="FF1F242B" position="1"/>
+                            </LinearGradient>
+                        </Fill>
+                        <Stroke thickness="2" name="S">
+                            <SolidColor colorValue="FF14171C" name="C"/>
+                        </Stroke>
+                    </Shape>
+                    <Shape name="Wheels">
+                        <Rectangle x="-63" y="-90" width="16" height="52" originX="0.5" originY="0.5" cornerRadiusTL="6" name="W"/>
+                        <Rectangle x="-63" y="92" width="16" height="52" originX="0.5" originY="0.5" cornerRadiusTL="6" name="W"/>
+                        <Rectangle x="63" y="-90" width="16" height="52" originX="0.5" originY="0.5" cornerRadiusTL="6" name="W"/>
+                        <Rectangle x="63" y="92" width="16" height="52" originX="0.5" originY="0.5" cornerRadiusTL="6" name="W"/>
+                        <Fill name="F">
+                            <LinearGradient startX="-70" startY="0" endX="70" endY="0" name="G">
+                                <GradientStop colorValue="FF111317" position="0"/>
+                                <GradientStop colorValue="FF2A2E35" position="0.5"/>
+                                <GradientStop colorValue="FF111317" position="1"/>
+                            </LinearGradient>
+                        </Fill>
+                    </Shape>
+                    <Shape name="Shadow">
+                        <Ellipse width="200" height="350" name="P"/>
+                        <Fill name="F">
+                            <RadialGradient startX="0" startY="0" endX="175" endY="0" name="G">
+                                <GradientStop colorValue="99000000" position="0.6"/>
+                                <GradientStop colorValue="00000000" position="1"/>
+                            </RadialGradient>
+                        </Fill>
+                    </Shape>
+                </Node>
+            </Node>
+            <Node x="60" y="565" name="Odometer">
+                <Text x="170.0" y="25.0" originX="0.5" originY="0.5" sizingValue="fixed" width="340" height="50" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Metric" id="3:268">
+                    <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:43"/>
+                    <TextStylePaint fontSize="20" letterSpacing="3" fontAssetId="2:901" name="S0" id="3:269">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextStylePaint fontSize="30" letterSpacing="0" fontAssetId="2:901" name="S1" id="3:270">
+                        <Fill name="F">
+                            <SolidColor colorValue="FFF2F4F7" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextStylePaint fontSize="24" letterSpacing="0" fontAssetId="2:900" name="S2" id="3:271">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:269" text="ODO  " name="R0"/>
+                    <TextValueRun styleId="3:270" text="42180" name="R1">
+                        <DataBindContext sourcePathIds="1:1-1:17" propertyKey="268" converterId="2:1"/>
+                    </TextValueRun>
+                    <TextValueRun styleId="3:271" text=" km" name="R2"/>
+                </Text>
+                <Text x="170.0" y="25.0" originX="0.5" originY="0.5" sizingValue="fixed" width="340" height="50" alignValue="center" verticalAlignValue="middle" wrapValue="noWrap" name="Imperial" id="3:272">
+                    <DataBindContext sourcePathIds="1:1-1:55" propertyKey="18" converterId="2:41"/>
+                    <TextStylePaint fontSize="20" letterSpacing="3" fontAssetId="2:901" name="S0" id="3:273">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextStylePaint fontSize="30" letterSpacing="0" fontAssetId="2:901" name="S1" id="3:274">
+                        <Fill name="F">
+                            <SolidColor colorValue="FFF2F4F7" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextStylePaint fontSize="24" letterSpacing="0" fontAssetId="2:900" name="S2" id="3:275">
+                        <Fill name="F">
+                            <SolidColor colorValue="FF8B919A" name="C"/>
+                        </Fill>
+                        <TextStyleFeature tag="1953396077" featureValue="1" name="tnum"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="3:273" text="ODO  " name="R0"/>
+                    <TextValueRun styleId="3:274" text="42180" name="R1">
+                        <DataBindContext sourcePathIds="1:1-1:17" propertyKey="268" converterId="2:1"/>
+                    </TextValueRun>
+                    <TextValueRun styleId="3:275" text=" mi" name="R2"/>
+                </Text>
+            </Node>
+        </Node>
+        <LinearAnimation duration="1" name="Idle" id="4:4"/>
+        <StateMachine name="Tyres" id="5:4">
+            <StateMachineLayer name="Idle" id="5:24">
+                <EntryState x="0" y="0">
+                    <StateTransition stateToId="5:34"/>
+                </EntryState>
+                <AnimationState x="200" y="0" animationId="4:4" id="5:34"/>
+                <AnyState x="400" y="0"/>
+                <ExitState x="500" y="0"/>
+            </StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+    <ComponentAsset artboardId="6:4" name="Tyres"/>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease doorOpenFL 15" id="7:1">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="0" maxOutput="0.5" clampLower="true" clampUpper="true" name="Map doorOpenFL 15" id="7:2"/>
+    <DataConverterGroup name="Open doorOpenFL 15" id="7:3">
+        <DataConverterGroupItem converterId="7:1"/>
+        <DataConverterGroupItem converterId="7:2"/>
+    </DataConverterGroup>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease doorOpenFL 18" id="7:4">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" name="Map doorOpenFL 18" id="7:5"/>
+    <DataConverterGroup name="Open doorOpenFL 18" id="7:6">
+        <DataConverterGroupItem converterId="7:4"/>
+        <DataConverterGroupItem converterId="7:5"/>
+    </DataConverterGroup>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease doorOpenRL 15" id="7:7">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="0" maxOutput="0.5" clampLower="true" clampUpper="true" name="Map doorOpenRL 15" id="7:8"/>
+    <DataConverterGroup name="Open doorOpenRL 15" id="7:9">
+        <DataConverterGroupItem converterId="7:7"/>
+        <DataConverterGroupItem converterId="7:8"/>
+    </DataConverterGroup>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease doorOpenRL 18" id="7:10">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" name="Map doorOpenRL 18" id="7:11"/>
+    <DataConverterGroup name="Open doorOpenRL 18" id="7:12">
+        <DataConverterGroupItem converterId="7:10"/>
+        <DataConverterGroupItem converterId="7:11"/>
+    </DataConverterGroup>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease doorOpenFR 15" id="7:13">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="0" maxOutput="-0.5" clampLower="true" clampUpper="true" name="Map doorOpenFR 15" id="7:14"/>
+    <DataConverterGroup name="Open doorOpenFR 15" id="7:15">
+        <DataConverterGroupItem converterId="7:13"/>
+        <DataConverterGroupItem converterId="7:14"/>
+    </DataConverterGroup>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease doorOpenFR 18" id="7:16">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" name="Map doorOpenFR 18" id="7:17"/>
+    <DataConverterGroup name="Open doorOpenFR 18" id="7:18">
+        <DataConverterGroupItem converterId="7:16"/>
+        <DataConverterGroupItem converterId="7:17"/>
+    </DataConverterGroup>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease doorOpenRR 15" id="7:19">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="0" maxOutput="-0.5" clampLower="true" clampUpper="true" name="Map doorOpenRR 15" id="7:20"/>
+    <DataConverterGroup name="Open doorOpenRR 15" id="7:21">
+        <DataConverterGroupItem converterId="7:19"/>
+        <DataConverterGroupItem converterId="7:20"/>
+    </DataConverterGroup>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease doorOpenRR 18" id="7:22">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" name="Map doorOpenRR 18" id="7:23"/>
+    <DataConverterGroup name="Open doorOpenRR 18" id="7:24">
+        <DataConverterGroupItem converterId="7:22"/>
+        <DataConverterGroupItem converterId="7:23"/>
+    </DataConverterGroup>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease frunkOpen 17" id="7:25">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="1" maxOutput="0.42" clampLower="true" clampUpper="true" name="Map frunkOpen 17" id="7:26"/>
+    <DataConverterGroup name="Open frunkOpen 17" id="7:27">
+        <DataConverterGroupItem converterId="7:25"/>
+        <DataConverterGroupItem converterId="7:26"/>
+    </DataConverterGroup>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease frunkOpen 18" id="7:28">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" name="Map frunkOpen 18" id="7:29"/>
+    <DataConverterGroup name="Open frunkOpen 18" id="7:30">
+        <DataConverterGroupItem converterId="7:28"/>
+        <DataConverterGroupItem converterId="7:29"/>
+    </DataConverterGroup>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease trunkOpen 17" id="7:31">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="1" maxOutput="0.42" clampLower="true" clampUpper="true" name="Map trunkOpen 17" id="7:32"/>
+    <DataConverterGroup name="Open trunkOpen 17" id="7:33">
+        <DataConverterGroupItem converterId="7:31"/>
+        <DataConverterGroupItem converterId="7:32"/>
+    </DataConverterGroup>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Ease trunkOpen 18" id="7:34">
+        <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" name="Map trunkOpen 18" id="7:35"/>
+    <DataConverterGroup name="Open trunkOpen 18" id="7:36">
+        <DataConverterGroupItem converterId="7:34"/>
+        <DataConverterGroupItem converterId="7:35"/>
+    </DataConverterGroup>
+</Rive>

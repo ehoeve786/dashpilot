@@ -40,6 +40,14 @@ extension DashState {
             ("maxDischargePower", .number(c.maxDischargePower)),
             ("packTMin", .number(c.packTMin)),
             ("packTMax", .number(c.packTMax)),
+            ("tpmsPressureFL", .number(c.tpmsPressureFL)),
+            ("tpmsPressureFR", .number(c.tpmsPressureFR)),
+            ("tpmsPressureRL", .number(c.tpmsPressureRL)),
+            ("tpmsPressureRR", .number(c.tpmsPressureRR)),
+            ("tpmsTempFL", .number(c.tpmsTempFL)),
+            ("tpmsTempFR", .number(c.tpmsTempFR)),
+            ("tpmsTempRL", .number(c.tpmsTempRL)),
+            ("tpmsTempRR", .number(c.tpmsTempRR)),
             // Rive numbers are 32-bit floats, too coarse for epoch milliseconds.
             ("currentTime", .number(Self.secondsSinceLocalMidnight(currentTime))),
             ("phoneBattery", .number(Float(phoneBattery))),
@@ -52,7 +60,17 @@ extension DashState {
             ("alwaysOnBlindSpotMonitor", .bool(d.alwaysOnBlindSpotMonitor)),
             ("renderQuality", .number(Float(d.renderQuality))),
             ("dataSourceType", .string(dataSourceType?.rawValue ?? "")),
+            ("speedLimitSignType", .number(Self.speedLimitSignType())),
         ]
+    }
+
+    // 0 = round (Vienna convention), 1 = US, 2 = Canada; from the phone's region, like the speed limit units.
+    private static func speedLimitSignType() -> Float {
+        switch Locale.current.region?.identifier {
+        case "US": return 1
+        case "CA": return 2
+        default: return 0
+        }
     }
 
     private static func secondsSinceLocalMidnight(_ epochMillis: Int64) -> Float {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <limits>
 #include <utility>
 #include <vector>
@@ -58,7 +60,7 @@ struct MessageId {
   }
 };
 
-uint qHash(const MessageId &item);
+unsigned int qHash(const MessageId &item);
 
 template <>
 struct std::hash<MessageId> {

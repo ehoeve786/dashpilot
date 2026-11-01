@@ -422,7 +422,7 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
                         }
                     }
                     val decoder = CanFrameDecoder(bridge, profile)
-                    DashKitDataSource(manager, decoder)
+                    DashKitDataSource(manager, decoder, context.applicationContext)
                 }
                 DataSourceType.WEBSOCKET -> WebsocketDataSource()
                 DataSourceType.DEMO -> DemoDataSource()

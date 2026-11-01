@@ -151,6 +151,14 @@ final class DemoDataSource: IDataSource {
         s.powerLevel = max(-1, min(kw / (kw >= 0 ? s.maxDischargePower : s.maxRegenPower), 1)) * 100
         s.packTMin = 22
         s.packTMax = 28
+        s.tpmsPressureFL = 2.7
+        s.tpmsPressureFR = 2.775
+        s.tpmsPressureRL = 2.525
+        s.tpmsPressureRR = 2.85
+        s.tpmsTempFL = 12
+        s.tpmsTempFR = 12
+        s.tpmsTempRL = 14
+        s.tpmsTempRR = 13
         s.acTemp = 22
         s.acTempRight = 21
         s.hvacFanLevel = 11

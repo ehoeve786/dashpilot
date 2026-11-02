@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Air
+import androidx.compose.material.icons.rounded.BatterySaver
 import androidx.compose.material.icons.rounded.SouthEast
 import androidx.compose.material.icons.rounded.EvStation
 import androidx.compose.material.icons.rounded.Flip
@@ -55,6 +56,7 @@ object ControlsState {
     // The firmware picks the injected value (HIGH/OFF) from the live bus when it
     // starts, so there's no readback and this is just on/off for the override.
     var rearFanOn by mutableStateOf(false)
+    var lowPowerOn by mutableStateOf(false)
 }
 
 /**
@@ -150,6 +152,19 @@ val vehicleControls: List<ControlAction> = listOf(
         perform = { manager ->
             if (manager == null || VehicleControl.sendRearFanToggle(manager)) {
                 ControlsState.rearFanOn = !ControlsState.rearFanOn
+            }
+        }
+    ),
+    ControlAction(
+        id = "low_power",
+        icon = Icons.Rounded.BatterySaver,
+        labelRes = { if (ControlsState.lowPowerOn) R.string.control_low_power_on else R.string.control_low_power_off },
+        active = { ControlsState.lowPowerOn },
+        gestureValue = 10,
+        perform = { manager ->
+            val next = !ControlsState.lowPowerOn
+            if (manager == null || VehicleControl.sendLowPower(manager, next)) {
+                ControlsState.lowPowerOn = next
             }
         }
     ),

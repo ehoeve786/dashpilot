@@ -245,6 +245,8 @@
     <string name="control_rear_fan_off">Hátsó ventilátor: Ki</string>
     <string name="control_mirror_dip">Tükördöntés váltása</string>
     <string name="control_ac_swing">Klíma legyező mód váltása</string>
+    <string name="control_low_power_on">Energiatakarékos: Be</string>
+    <string name="control_low_power_off">Energiatakarékos: Ki</string>
     <string name="control_glovebox">Kesztyűtartó nyitása</string>
 
     <!-- Automations -->

@@ -246,6 +246,8 @@
     <string name="control_rear_fan_off">Rear Fan: Off</string>
     <string name="control_mirror_dip">Toggle Mirror Dip</string>
     <string name="control_ac_swing">Toggle AC Swing</string>
+    <string name="control_low_power_on">Low Power: On</string>
+    <string name="control_low_power_off">Low Power: Off</string>
     <string name="control_glovebox">Open Glovebox</string>
 
     <!-- Automations -->

@@ -97,6 +97,9 @@ object VehicleControl {
     const val CMD_AC_SWING_INTENSITY: Int = 0x4D
     const val CMD_AC_SWING_TOGGLE: Int = 0x4E
 
+    // --- Tesla Low Power mode, sent by the DashKit over its Tesla BLE link ---
+    const val CMD_LOW_POWER: Int = 0x4F
+
     /** Bind (or clear, with actionValue 0) an N-finger tap to a control action. */
     fun sendFingerAction(manager: DashKitBleManager, fingers: Int, actionValue: Int): Boolean =
         send(manager, CMD_MULTI_FINGER_ACTION, (fingers shl 8) or (actionValue and 0xFF))
@@ -118,6 +121,10 @@ object VehicleControl {
 
     fun sendSportKickdownThreshold(manager: DashKitBleManager, percent: Int): Boolean =
         send(manager, CMD_SPORT_KICKDOWN_THRESHOLD, percent)
+
+    /** Enable or disable Tesla Low Power mode (car must be awake). */
+    fun sendLowPower(manager: DashKitBleManager, enabled: Boolean): Boolean =
+        send(manager, CMD_LOW_POWER, if (enabled) 1 else 0)
 
     fun sendAcSwingToggle(manager: DashKitBleManager): Boolean =
         send(manager, CMD_AC_SWING_TOGGLE, 0)

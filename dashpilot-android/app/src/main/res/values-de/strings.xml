@@ -246,6 +246,8 @@
     <string name="control_rear_fan_off">Hinteres Gebläse: Aus</string>
     <string name="control_mirror_dip">Spiegelabsenkung umschalten</string>
     <string name="control_ac_swing">Klima-Schwenkmodus umschalten</string>
+    <string name="control_low_power_on">Energiesparmodus: Ein</string>
+    <string name="control_low_power_off">Energiesparmodus: Aus</string>
     <string name="control_glovebox">Handschuhfach öffnen</string>
 
     <!-- Automations -->

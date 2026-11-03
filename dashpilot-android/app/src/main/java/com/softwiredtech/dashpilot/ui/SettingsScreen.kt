@@ -950,6 +950,41 @@ private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boole
 }
 
 @Composable
+private fun FirmwareInfoSection(updateManager: FirmwareUpdateManager, connected: Boolean) {
+    val installedVersion by updateManager.installedVersion.collectAsState()
+    val localFirmware by updateManager.localFirmware.collectAsState()
+
+    SectionHeader(stringResource(R.string.settings_section_firmware_info))
+    Spacer(modifier = Modifier.height(12.dp))
+    InfoRow(
+        label = stringResource(R.string.settings_firmware_info_status),
+        value = stringResource(
+            if (connected) R.string.settings_firmware_info_connected
+            else R.string.settings_firmware_info_disconnected
+        )
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    InfoRow(
+        label = stringResource(R.string.settings_firmware_info_version),
+        value = installedVersion?.let {
+            if (localFirmware) stringResource(R.string.settings_firmware_info_local, it) else it
+        } ?: stringResource(R.string.settings_firmware_info_unknown)
+    )
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = label, color = Color.White, fontSize = 16.sp)
+        Text(text = value, color = DarkColors.TextMuted, fontSize = 16.sp)
+    }
+}
+
+@Composable
 private fun DashKitMaintenanceSection(bleManager: DashKitBleManager, connected: Boolean) {
     val context = LocalContext.current
     val showRebootDialog = remember { mutableStateOf(false) }

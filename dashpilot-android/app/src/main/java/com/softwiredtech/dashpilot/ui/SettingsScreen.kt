@@ -848,6 +848,16 @@ private fun DashKitSettingsContent(
     DashKitMaintenanceSection(bleManager, connected)
 }
 
+// Android runs one GATT operation at a time and refuses a write while another
+// (version read, status subscribe, a previous write) is in flight: retry ~5 s.
+private suspend fun retryGatt(op: () -> Boolean): Boolean {
+    repeat(20) {
+        if (op()) return true
+        kotlinx.coroutines.delay(250)
+    }
+    return false
+}
+
 // CAN-discovery firmware only. BLE mode = normal. Wi-Fi mode = the DashKit
 // accepts every CAN ID and streams it over this phone's hotspot to
 // DiscoveryLogReceiver; BLE keeps carrying the dashboard. The password goes
@@ -878,12 +888,13 @@ private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boole
         scope.launch {
             var ok = true
             if (on && pass.isNotEmpty()) {
-                ok = TeslaClient.sendWifi(bleManager, ssid, pass)
-                prefs.edit().putString("ssid", ssid).apply()
-                pass = ""
-                kotlinx.coroutines.delay(400)
+                ok = retryGatt { TeslaClient.sendWifi(bleManager, ssid, pass) }
+                if (ok) {
+                    prefs.edit().putString("ssid", ssid).apply()
+                    pass = ""
+                }
             }
-            ok = ok && TeslaClient.sendDiscoveryMode(bleManager, on)
+            ok = ok && retryGatt { TeslaClient.sendDiscoveryMode(bleManager, on) }
             if (ok) {
                 wifiMode = on
                 prefs.edit().putBoolean("wifi_mode", on).apply()

@@ -90,6 +90,16 @@
     <string name="settings_firmware_info_version">Firmware version</string>
     <string name="settings_firmware_info_unknown">Unknown</string>
 
+    <!-- DashKit CAN-discovery Wi-Fi (discovery firmware only) -->
+    <string name="settings_section_discovery_wifi">CAN discovery Wi-Fi</string>
+    <string name="settings_discovery_wifi_body">Discovery firmware only: the DashKit joins this hotspot and broadcasts every CAN frame on UDP port 4242.</string>
+    <string name="settings_discovery_wifi_ssid">Hotspot name (SSID)</string>
+    <string name="settings_discovery_wifi_password">WPA2 password</string>
+    <string name="settings_discovery_wifi_save">Save</string>
+    <string name="settings_discovery_wifi_clear">Turn off</string>
+    <string name="settings_discovery_wifi_sent">Sent to DashKit</string>
+    <string name="settings_discovery_wifi_failed">Couldn\'t send (needs the CAN-discovery firmware)</string>
+
     <!-- DashKit maintenance -->
     <string name="settings_section_maintenance">Maintenance</string>
     <string name="settings_passthrough">Passthrough</string>

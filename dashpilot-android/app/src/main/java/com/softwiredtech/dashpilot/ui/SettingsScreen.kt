@@ -12,6 +12,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import com.softwiredtech.dashpilot.ble.TeslaClient
 import com.softwiredtech.dashpilot.datamodel.dash.DEV_RIVE_DASHBOARD_ID
 import com.softwiredtech.dashpilot.datamodel.dash.DEV_URL_DASHBOARD_ID
 import com.softwiredtech.dashpilot.datamodel.dash.getDevDashboardUrl
@@ -839,7 +841,75 @@ private fun DashKitSettingsContent(
     )
     Spacer(modifier = Modifier.height(24.dp))
 
+    DiscoveryWifiSection(bleManager, connected)
+    Spacer(modifier = Modifier.height(24.dp))
+
     DashKitMaintenanceSection(bleManager, connected)
+}
+
+// CAN-discovery firmware only: the hotspot it UDP-broadcasts frames on.
+// The password is sent over the encrypted bond and never stored on the phone.
+@Composable
+private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boolean) {
+    val context = LocalContext.current
+    var ssid by remember { mutableStateOf("") }
+    var pass by remember { mutableStateOf("") }
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        unfocusedTextColor = Color.White,
+        focusedTextColor = Color.White,
+        unfocusedBorderColor = DarkColors.Border,
+        focusedBorderColor = Color.White,
+        cursorColor = Color.White,
+    )
+    val send = { s: String, p: String ->
+        val ok = TeslaClient.sendWifi(bleManager, s, p)
+        pass = ""
+        val msg = if (ok) R.string.settings_discovery_wifi_sent else R.string.settings_discovery_wifi_failed
+        android.widget.Toast.makeText(context, context.getString(msg), android.widget.Toast.LENGTH_LONG).show()
+    }
+
+    SectionHeader(stringResource(R.string.settings_section_discovery_wifi))
+    Text(stringResource(R.string.settings_discovery_wifi_body), color = DarkColors.TextMuted, fontSize = 13.sp)
+    Spacer(modifier = Modifier.height(8.dp))
+    OutlinedTextField(
+        value = ssid,
+        onValueChange = { ssid = it },
+        label = { Text(stringResource(R.string.settings_discovery_wifi_ssid)) },
+        singleLine = true,
+        colors = fieldColors,
+        modifier = Modifier.fillMaxWidth()
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    OutlinedTextField(
+        value = pass,
+        onValueChange = { pass = it },
+        label = { Text(stringResource(R.string.settings_discovery_wifi_password)) },
+        singleLine = true,
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        colors = fieldColors,
+        modifier = Modifier.fillMaxWidth()
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Row {
+        Button(
+            onClick = { send(ssid, pass) },
+            enabled = connected && ssid.isNotEmpty() && TeslaClient.buildWifiPayload(ssid, pass) != null,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AccentColor,
+                contentColor = Color.White,
+                disabledContainerColor = DarkColors.Border,
+                disabledContentColor = DarkColors.TextMuted
+            ),
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(stringResource(R.string.settings_discovery_wifi_save), fontSize = 16.sp)
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        TextButton(onClick = { send("", "") }, enabled = connected) {
+            Text(stringResource(R.string.settings_discovery_wifi_clear), fontSize = 16.sp)
+        }
+    }
 }
 
 @Composable

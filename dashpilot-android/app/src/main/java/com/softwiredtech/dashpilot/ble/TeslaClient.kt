@@ -34,6 +34,7 @@ object TeslaClient {
     const val CMD_RESET: Int = 0x02
     const val CMD_CANCEL: Int = 0x03
     const val CMD_PROVISION: Int = 0x04
+    const val CMD_WIFI_SET: Int = 0x10
 
     const val VIN_LEN: Int = 17
 
@@ -55,6 +56,20 @@ object TeslaClient {
             return false
         }
         return manager.writeCommand(SERVICE_UUID, COMMAND_CHAR_UUID, payload, TAG)
+    }
+
+    /** CAN-discovery firmware only: hotspot for its UDP stream. Empty ssid = Wi-Fi off. */
+    fun sendWifi(manager: DashKitBleManager, ssid: String, pass: String): Boolean {
+        val payload = buildWifiPayload(ssid, pass) ?: return false
+        return manager.writeCommand(SERVICE_UUID, COMMAND_CHAR_UUID, payload, TAG)
+    }
+
+    // [0x10][ssid_len 0-32][ssid][pass_len 0 or 8-63][pass]
+    internal fun buildWifiPayload(ssid: String, pass: String): ByteArray? {
+        val s = ssid.toByteArray(Charsets.UTF_8)
+        val p = pass.toByteArray(Charsets.UTF_8)
+        if (s.size > 32 || (p.isNotEmpty() && (s.isEmpty() || p.size !in 8..63))) return null
+        return byteArrayOf(CMD_WIFI_SET.toByte(), s.size.toByte()) + s + byteArrayOf(p.size.toByte()) + p
     }
 
     internal fun isValidVin(vin: String): Boolean =

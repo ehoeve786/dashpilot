@@ -71,7 +71,7 @@ object DiscoveryLogReceiver {
         val pending = StringBuilder()  // a line can straddle two datagrams
         _stats.value = Stats(name)
 
-        DatagramSocket(null).use { sock ->
+        DatagramSocket(null as java.net.SocketAddress?).use { sock ->
             sock.reuseAddress = true
             sock.soTimeout = 500  // wake up to notice cancellation
             sock.bind(InetSocketAddress(PORT))

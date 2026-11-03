@@ -101,7 +101,9 @@
     <string name="settings_discovery_stats">%1$d frames · %2$d IDs → Downloads/%3$s</string>
     <string name="settings_discovery_loss">Lost: %1$d Wi-Fi packets · CAN overflows chassis %2$d / vehicle %3$d · queue %4$d</string>
     <string name="settings_discovery_sent">Sent to DashKit</string>
-    <string name="settings_discovery_failed">Couldn\'t send. Connect to a DashKit with discovery firmware; Wi-Fi mode needs the hotspot name and password.</string>
+    <string name="settings_discovery_failed">Couldn\'t send to the DashKit. It needs the CAN-discovery firmware.</string>
+    <string name="settings_discovery_not_connected">DashKit isn\'t connected yet. Wait for Status: Connected at the top of this tab.</string>
+    <string name="settings_discovery_bad_creds">Enter the hotspot name, and an 8–63 character WPA2 password (or leave it empty to keep the saved one).</string>
 
     <!-- DashKit maintenance -->
     <string name="settings_section_maintenance">Maintenance</string>

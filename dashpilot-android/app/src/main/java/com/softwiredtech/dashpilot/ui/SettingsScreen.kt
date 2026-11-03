@@ -869,10 +869,10 @@ private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boole
         focusedBorderColor = Color.White,
         cursorColor = Color.White,
     )
-    val toast = { ok: Boolean ->
-        val msg = if (ok) R.string.settings_discovery_sent else R.string.settings_discovery_failed
+    val say = { msg: Int ->
         android.widget.Toast.makeText(context, context.getString(msg), android.widget.Toast.LENGTH_LONG).show()
     }
+    val toast = { ok: Boolean -> say(if (ok) R.string.settings_discovery_sent else R.string.settings_discovery_failed) }
     // Credentials (if typed) then the mode; GATT takes one write at a time.
     val setMode = { on: Boolean ->
         scope.launch {
@@ -916,11 +916,14 @@ private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boole
         modifier = Modifier.fillMaxWidth()
     )
     Spacer(modifier = Modifier.height(4.dp))
-    // Wi-Fi mode needs either a fresh valid password or credentials saved earlier.
-    val credsOk = ssid.isNotEmpty() && TeslaClient.buildWifiPayload(ssid, pass) != null &&
-        (pass.isNotEmpty() || prefs.getString("ssid", "") == ssid)
+    // An empty password keeps the credentials the DashKit already has saved.
+    val credsOk = ssid.isNotEmpty() && TeslaClient.buildWifiPayload(ssid, pass) != null
     SettingsToggle(stringResource(R.string.settings_discovery_mode_wifi), wifiMode) { on ->
-        if (connected && (!on || credsOk)) setMode(on) else toast(false)
+        when {
+            !connected -> say(R.string.settings_discovery_not_connected)
+            on && !credsOk -> say(R.string.settings_discovery_bad_creds)
+            else -> setMode(on)
+        }
     }
     Spacer(modifier = Modifier.height(8.dp))
     Button(

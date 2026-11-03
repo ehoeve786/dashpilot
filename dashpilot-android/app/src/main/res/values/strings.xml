@@ -105,6 +105,15 @@
     <string name="settings_discovery_not_connected">DashKit isn\'t connected yet. Wait for Status: Connected at the top of this tab.</string>
     <string name="settings_discovery_bad_creds">Enter the hotspot name, and an 8–63 character WPA2 password (or leave it empty to keep the saved one).</string>
 
+    <!-- DashKit USB console -->
+    <string name="settings_section_usb_console">USB console</string>
+    <string name="settings_usb_console_body">Plug the DashKit\'s USB-C into this phone with a data cable to see its firmware log and save it to Downloads.</string>
+    <string name="settings_usb_console_connect">Connect USB console</string>
+    <string name="settings_usb_console_disconnect">Disconnect</string>
+    <string name="settings_usb_console_no_device">No USB serial device found. Check the cable (it must carry data) and that the DashKit is powered.</string>
+    <string name="settings_usb_console_permission">Waiting for USB permission…</string>
+    <string name="settings_usb_console_connected">%1$s → Downloads/%2$s</string>
+
     <!-- DashKit maintenance -->
     <string name="settings_section_maintenance">Maintenance</string>
     <string name="settings_passthrough">Passthrough</string>

@@ -86,7 +86,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.softwiredtech.dashpilot.usb.UsbConsole
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -845,7 +847,55 @@ private fun DashKitSettingsContent(
     DiscoveryWifiSection(bleManager, connected)
     Spacer(modifier = Modifier.height(24.dp))
 
+    UsbConsoleSection()
+    Spacer(modifier = Modifier.height(24.dp))
+
     DashKitMaintenanceSection(bleManager, connected)
+}
+
+// Live firmware log over the DashKit's USB-C port (phone as USB host), saved to Downloads.
+@Composable
+private fun UsbConsoleSection() {
+    val context = LocalContext.current
+    val state by UsbConsole.state.collectAsState()
+    val lines by UsbConsole.lines.collectAsState()
+    val connected = state is UsbConsole.State.Connected
+
+    SectionHeader(stringResource(R.string.settings_section_usb_console))
+    Text(stringResource(R.string.settings_usb_console_body), color = DarkColors.TextMuted, fontSize = 13.sp)
+    Spacer(modifier = Modifier.height(8.dp))
+    Button(
+        onClick = { if (connected) UsbConsole.disconnect() else UsbConsole.connect(context) },
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = Color.White)
+    ) {
+        Text(
+            stringResource(if (connected) R.string.settings_usb_console_disconnect else R.string.settings_usb_console_connect),
+            fontSize = 16.sp
+        )
+    }
+    Spacer(modifier = Modifier.height(4.dp))
+    val status = when (val s = state) {
+        is UsbConsole.State.Idle -> null
+        is UsbConsole.State.NoDevice -> stringResource(R.string.settings_usb_console_no_device)
+        is UsbConsole.State.WaitingPermission -> stringResource(R.string.settings_usb_console_permission)
+        is UsbConsole.State.Connected -> stringResource(R.string.settings_usb_console_connected, s.name, s.file)
+        is UsbConsole.State.Error -> s.message
+    }
+    status?.let { Text(it, color = if (state is UsbConsole.State.Error) DarkColors.Error else DarkColors.TextMuted, fontSize = 13.sp) }
+    if (lines.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            lines.takeLast(25).joinToString("\n"),
+            color = Color.White,
+            fontSize = 11.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(DarkColors.Border, RoundedCornerShape(8.dp))
+                .padding(8.dp)
+        )
+    }
 }
 
 // Android runs one GATT operation at a time and refuses a write while another

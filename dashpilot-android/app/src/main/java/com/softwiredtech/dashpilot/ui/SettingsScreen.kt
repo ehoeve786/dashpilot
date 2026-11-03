@@ -850,7 +850,55 @@ private fun DashKitSettingsContent(
     UsbConsoleSection()
     Spacer(modifier = Modifier.height(24.dp))
 
+    VentTestSection(bleManager, connected)
+    Spacer(modifier = Modifier.height(24.dp))
+
     DashKitMaintenanceSection(bleManager, connected)
+}
+
+// Vent mapping test: one-shot driver vent position (held 1 s by the firmware)
+// and the AC-swing axis choice (which 0x253 signal the swing moves).
+@Composable
+private fun VentTestSection(bleManager: DashKitBleManager, connected: Boolean) {
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("vent_test", Context.MODE_PRIVATE) }
+    var y by remember { mutableFloatStateOf(50f) }
+    var split by remember { mutableFloatStateOf(100f) }
+    var splitAxis by remember { mutableStateOf(prefs.getBoolean("split_axis", false)) }
+    val sliderColors = SliderDefaults.colors(thumbColor = AccentColor, activeTrackColor = AccentColor, inactiveTrackColor = DarkColors.Border)
+
+    SectionHeader(stringResource(R.string.settings_section_vent_test))
+    Text(stringResource(R.string.settings_vent_test_body), color = DarkColors.TextMuted, fontSize = 13.sp)
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(stringResource(R.string.settings_vent_test_y, y.toInt()), color = Color.White, fontSize = 14.sp)
+    Slider(value = y, onValueChange = { y = it }, valueRange = 0f..100f, colors = sliderColors)
+    Text(stringResource(R.string.settings_vent_test_split, split.toInt()), color = Color.White, fontSize = 14.sp)
+    Slider(value = split, onValueChange = { split = it }, valueRange = 0f..100f, colors = sliderColors)
+    Button(
+        onClick = {
+            val ok = VehicleControl.send(bleManager, VehicleControl.CMD_VENT_SET, (y.toInt() shl 8) or split.toInt())
+            android.widget.Toast.makeText(
+                context,
+                context.getString(if (ok) R.string.settings_discovery_sent else R.string.settings_discovery_failed),
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+        },
+        enabled = connected,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = AccentColor, contentColor = Color.White,
+            disabledContainerColor = DarkColors.Border, disabledContentColor = DarkColors.TextMuted
+        )
+    ) {
+        Text(stringResource(R.string.settings_vent_test_send), fontSize = 16.sp)
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    SettingsToggle(stringResource(R.string.settings_vent_swing_axis), splitAxis) { on ->
+        if (VehicleControl.send(bleManager, VehicleControl.CMD_AC_SWING_AXIS, if (on) 1 else 0)) {
+            splitAxis = on
+            prefs.edit().putBoolean("split_axis", on).apply()
+        }
+    }
 }
 
 // Live firmware log over the DashKit's USB-C port (phone as USB host), saved to Downloads.

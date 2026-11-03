@@ -105,6 +105,14 @@
     <string name="settings_discovery_not_connected">DashKit isn\'t connected yet. Wait for Status: Connected at the top of this tab.</string>
     <string name="settings_discovery_bad_creds">Enter the hotspot name, and an 8–63 character WPA2 password (or leave it empty to keep the saved one).</string>
 
+    <!-- DashKit vent test -->
+    <string name="settings_section_vent_test">Vent test</string>
+    <string name="settings_vent_test_body">Sends a driver-vent position over CAN and holds it for 1 s. If the vent moves, the mapping is right.</string>
+    <string name="settings_vent_test_y">Up / down: %1$d%%</string>
+    <string name="settings_vent_test_split">Left / right (lateral split): %1$d%%</string>
+    <string name="settings_vent_test_send">Move vent</string>
+    <string name="settings_vent_swing_axis">AC swing uses lateral split (2023+ Model Y)</string>
+
     <!-- DashKit USB console -->
     <string name="settings_section_usb_console">USB console</string>
     <string name="settings_usb_console_body">Plug the DashKit\'s USB-C into this phone with a data cable to see its firmware log and save it to Downloads.</string>

@@ -4,6 +4,9 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
+import android.bluetooth.BluetoothStatusCodes
+import android.os.Handler
+import android.os.Looper
 import android.os.Build
 import android.util.Log
 import com.softwiredtech.dashpilot.datasource.ConnectionStatus
@@ -52,6 +55,14 @@ class DashKitOtaUpdate(
     private var pingInFlight = false
     @Volatile
     private var uploadFinished = false
+    private val handler = Handler(Looper.getMainLooper())
+    private var subscribeTries = 0
+    // Fail loudly instead of sitting idle if the DashKit never answers the start.
+    private val watchdog = Runnable {
+        if (_state.value is OtaState.Connecting) {
+            _state.value = OtaState.Error(manager.context.getString(R.string.ota_error_no_response))
+        }
+    }
 
     fun start(fw: ByteArray) {
         if (fw.isEmpty()) {
@@ -65,17 +76,21 @@ class DashKitOtaUpdate(
         manager.suppressPings = true
         manager.addGattListener(this)
 
+        _state.value = OtaState.Connecting
+        subscribeTries = 0
+        handler.removeCallbacks(watchdog)
+        handler.postDelayed(watchdog, 15_000)
         // If already connected, use existing GATT directly
         val g = manager.gatt
         if (g != null && manager.connectionState.value == ConnectionStatus.Connected) {
             setupOtaService(g)
         } else {
-            _state.value = OtaState.Connecting
             manager.connect()
         }
     }
 
     fun cancel() {
+        handler.removeCallbacksAndMessages(null)
         manager.removeGattListener(this)
         manager.suppressPings = false
         firmware = null
@@ -117,16 +132,28 @@ class DashKitOtaUpdate(
             ?.getCharacteristic(VehicleControl.CONTROL_CHAR_UUID)
 
         g.setCharacteristicNotification(statusChar, true)
-        val descriptor = statusChar!!.getDescriptor(CCCD_UUID)
-        if (descriptor != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                g.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+        val descriptor = statusChar!!.getDescriptor(CCCD_UUID) ?: run {
+            sendBeginCommand(g)  // no CCCD to enable: start without status notifications
+            return
+        }
+        val ok = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            g.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE) ==
+                BluetoothStatusCodes.SUCCESS
+        } else {
+            @Suppress("DEPRECATION")
+            descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            @Suppress("DEPRECATION")
+            g.writeDescriptor(descriptor)
+        }
+        if (!ok) {
+            // Usually another GATT operation is still in flight (one at a time): retry.
+            if (++subscribeTries < 20) {
+                Log.w(TAG, "OTA subscribe busy, retry $subscribeTries")
+                handler.postDelayed({ if (_state.value is OtaState.Connecting) setupOtaService(g) }, 300)
             } else {
-                @Suppress("DEPRECATION")
-                descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                @Suppress("DEPRECATION")
-                g.writeDescriptor(descriptor)
+                _state.value = OtaState.Error(manager.context.getString(R.string.ota_error_busy))
             }
+            return
         }
         Log.d(TAG, "OTA service ready, subscribed to status")
     }

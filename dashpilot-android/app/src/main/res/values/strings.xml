@@ -355,6 +355,8 @@
     <string name="ota_error_empty">Firmware file is empty</string>
     <string name="ota_error_service_not_found">OTA service not found on device</string>
     <string name="ota_error_chars_not_found">OTA characteristics not found</string>
+    <string name="ota_error_busy">Bluetooth stayed busy; close and reopen DashPilot, then try again</string>
+    <string name="ota_error_no_response">DashKit didn\'t respond to the update request</string>
     <string name="ota_error_notify">Failed to enable OTA notifications</string>
     <string name="ota_error_write">Write failed (status %1$d)</string>
     <string name="ota_error_disconnected">Disconnected unexpectedly</string>

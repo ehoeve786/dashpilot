@@ -38,7 +38,8 @@ jobs:
         if: failure()
         working-directory: dashpilot-android
         shell: bash
-        run: grep -E '^e: |error:|What went wrong' -A2 build.log | head -40 | sed 's/^/::error::/' || true
+        run: |
+          grep -E '^e: |error:|What went wrong' -A2 build.log | head -40 | sed 's/^/::error::/' || true
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4

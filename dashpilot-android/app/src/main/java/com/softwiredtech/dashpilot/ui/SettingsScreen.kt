@@ -946,6 +946,15 @@ private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boole
             color = DarkColors.TextMuted,
             fontSize = 13.sp
         )
+        val anyLoss = stats.lostPackets + stats.overflows.sum() + stats.queueDrops > 0
+        Text(
+            stringResource(
+                R.string.settings_discovery_loss,
+                stats.lostPackets, stats.overflows[0], stats.overflows[1], stats.queueDrops
+            ),
+            color = if (anyLoss) DarkColors.Error else DarkColors.TextMuted,
+            fontSize = 13.sp
+        )
     }
 }
 

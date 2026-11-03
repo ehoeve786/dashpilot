@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.softwiredtech.dashpilot.ble.TeslaClient
+import com.softwiredtech.dashpilot.ble.DiscoveryLogReceiver
 import com.softwiredtech.dashpilot.datamodel.dash.DEV_RIVE_DASHBOARD_ID
 import com.softwiredtech.dashpilot.datamodel.dash.DEV_URL_DASHBOARD_ID
 import com.softwiredtech.dashpilot.datamodel.dash.getDevDashboardUrl
@@ -847,13 +848,20 @@ private fun DashKitSettingsContent(
     DashKitMaintenanceSection(bleManager, connected)
 }
 
-// CAN-discovery firmware only: the hotspot it UDP-broadcasts frames on.
-// The password is sent over the encrypted bond and never stored on the phone.
+// CAN-discovery firmware only. BLE mode = normal. Wi-Fi mode = the DashKit
+// accepts every CAN ID and streams it over this phone's hotspot to
+// DiscoveryLogReceiver; BLE keeps carrying the dashboard. The password goes
+// over the encrypted bond and is never stored on the phone.
 @Composable
 private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boolean) {
     val context = LocalContext.current
-    var ssid by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    val prefs = remember { context.getSharedPreferences("can_discovery", Context.MODE_PRIVATE) }
+    var ssid by remember { mutableStateOf(prefs.getString("ssid", "") ?: "") }
     var pass by remember { mutableStateOf("") }
+    var wifiMode by remember { mutableStateOf(prefs.getBoolean("wifi_mode", false)) }
+    val recording by DiscoveryLogReceiver.running.collectAsState()
+    val stats by DiscoveryLogReceiver.stats.collectAsState()
     val fieldColors = OutlinedTextFieldDefaults.colors(
         unfocusedTextColor = Color.White,
         focusedTextColor = Color.White,
@@ -861,11 +869,28 @@ private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boole
         focusedBorderColor = Color.White,
         cursorColor = Color.White,
     )
-    val send = { s: String, p: String ->
-        val ok = TeslaClient.sendWifi(bleManager, s, p)
-        pass = ""
-        val msg = if (ok) R.string.settings_discovery_wifi_sent else R.string.settings_discovery_wifi_failed
+    val toast = { ok: Boolean ->
+        val msg = if (ok) R.string.settings_discovery_sent else R.string.settings_discovery_failed
         android.widget.Toast.makeText(context, context.getString(msg), android.widget.Toast.LENGTH_LONG).show()
+    }
+    // Credentials (if typed) then the mode; GATT takes one write at a time.
+    val setMode = { on: Boolean ->
+        scope.launch {
+            var ok = true
+            if (on && pass.isNotEmpty()) {
+                ok = TeslaClient.sendWifi(bleManager, ssid, pass)
+                prefs.edit().putString("ssid", ssid).apply()
+                pass = ""
+                kotlinx.coroutines.delay(400)
+            }
+            ok = ok && TeslaClient.sendDiscoveryMode(bleManager, on)
+            if (ok) {
+                wifiMode = on
+                prefs.edit().putBoolean("wifi_mode", on).apply()
+                if (on) DiscoveryLogReceiver.start(context) else DiscoveryLogReceiver.stop()
+            }
+            toast(ok)
+        }
     }
 
     SectionHeader(stringResource(R.string.settings_section_discovery_wifi))
@@ -890,60 +915,37 @@ private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boole
         colors = fieldColors,
         modifier = Modifier.fillMaxWidth()
     )
-    Spacer(modifier = Modifier.height(8.dp))
-    Row {
-        Button(
-            onClick = { send(ssid, pass) },
-            enabled = connected && ssid.isNotEmpty() && TeslaClient.buildWifiPayload(ssid, pass) != null,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AccentColor,
-                contentColor = Color.White,
-                disabledContainerColor = DarkColors.Border,
-                disabledContentColor = DarkColors.TextMuted
-            ),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(stringResource(R.string.settings_discovery_wifi_save), fontSize = 16.sp)
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        TextButton(onClick = { send("", "") }, enabled = connected) {
-            Text(stringResource(R.string.settings_discovery_wifi_clear), fontSize = 16.sp)
-        }
+    Spacer(modifier = Modifier.height(4.dp))
+    // Wi-Fi mode needs either a fresh valid password or credentials saved earlier.
+    val credsOk = ssid.isNotEmpty() && TeslaClient.buildWifiPayload(ssid, pass) != null &&
+        (pass.isNotEmpty() || prefs.getString("ssid", "") == ssid)
+    SettingsToggle(stringResource(R.string.settings_discovery_mode_wifi), wifiMode) { on ->
+        if (connected && (!on || credsOk)) setMode(on) else toast(false)
     }
-}
-
-@Composable
-private fun FirmwareInfoSection(updateManager: FirmwareUpdateManager, connected: Boolean) {
-    val installedVersion by updateManager.installedVersion.collectAsState()
-    val localFirmware by updateManager.localFirmware.collectAsState()
-
-    SectionHeader(stringResource(R.string.settings_section_firmware_info))
-    Spacer(modifier = Modifier.height(12.dp))
-    InfoRow(
-        label = stringResource(R.string.settings_firmware_info_status),
-        value = stringResource(
-            if (connected) R.string.settings_firmware_info_connected
-            else R.string.settings_firmware_info_disconnected
-        )
-    )
     Spacer(modifier = Modifier.height(8.dp))
-    InfoRow(
-        label = stringResource(R.string.settings_firmware_info_version),
-        value = installedVersion?.let {
-            if (localFirmware) stringResource(R.string.settings_firmware_info_local, it) else it
-        } ?: stringResource(R.string.settings_firmware_info_unknown)
-    )
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
+    Button(
+        onClick = { if (recording) DiscoveryLogReceiver.stop() else DiscoveryLogReceiver.start(context) },
+        enabled = wifiMode || recording,
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        colors = ButtonDefaults.buttonColors(
+            containerColor = AccentColor,
+            contentColor = Color.White,
+            disabledContainerColor = DarkColors.Border,
+            disabledContentColor = DarkColors.TextMuted
+        )
     ) {
-        Text(text = label, color = Color.White, fontSize = 16.sp)
-        Text(text = value, color = DarkColors.TextMuted, fontSize = 16.sp)
+        Text(
+            stringResource(if (recording) R.string.settings_discovery_stop else R.string.settings_discovery_record),
+            fontSize = 16.sp
+        )
+    }
+    stats.file?.let {
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            stringResource(R.string.settings_discovery_stats, stats.lines, stats.ids, it),
+            color = DarkColors.TextMuted,
+            fontSize = 13.sp
+        )
     }
 }
 

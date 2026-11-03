@@ -35,6 +35,7 @@ object TeslaClient {
     const val CMD_CANCEL: Int = 0x03
     const val CMD_PROVISION: Int = 0x04
     const val CMD_WIFI_SET: Int = 0x10
+    const val CMD_DISCOVERY_MODE: Int = 0x11
 
     const val VIN_LEN: Int = 17
 
@@ -63,6 +64,10 @@ object TeslaClient {
         val payload = buildWifiPayload(ssid, pass) ?: return false
         return manager.writeCommand(SERVICE_UUID, COMMAND_CHAR_UUID, payload, TAG)
     }
+
+    /** CAN-discovery firmware only: Wi-Fi discovery mode on/off; the DashKit reboots on change. */
+    fun sendDiscoveryMode(manager: DashKitBleManager, on: Boolean): Boolean =
+        manager.writeCommand(SERVICE_UUID, COMMAND_CHAR_UUID, byteArrayOf(CMD_DISCOVERY_MODE.toByte(), if (on) 1 else 0), TAG)
 
     // [0x10][ssid_len 0-32][ssid][pass_len 0 or 8-63][pass]
     internal fun buildWifiPayload(ssid: String, pass: String): ByteArray? {

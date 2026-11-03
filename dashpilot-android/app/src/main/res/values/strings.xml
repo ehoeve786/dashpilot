@@ -90,6 +90,16 @@
     <string name="settings_firmware_info_version">Firmware version</string>
     <string name="settings_firmware_info_unknown">Unknown</string>
 
+    <!-- DashKit vent test -->
+    <string name="settings_section_vent_test">Vent test</string>
+    <string name="settings_vent_test_body">Sends a driver-vent position over CAN and holds it for 1 s. If the vent moves, the mapping is right.</string>
+    <string name="settings_vent_test_y">Up / down: %1$d%%</string>
+    <string name="settings_vent_test_split">Left / right (lateral split): %1$d%%</string>
+    <string name="settings_vent_test_send">Move vent</string>
+    <string name="settings_vent_test_sent">Sent to DashKit</string>
+    <string name="settings_vent_test_failed">Couldn\'t send. Is the DashKit connected and on firmware with vent control?</string>
+    <string name="settings_vent_swing_axis">AC swing uses lateral split (2023+ Model Y)</string>
+
     <!-- DashKit maintenance -->
     <string name="settings_section_maintenance">Maintenance</string>
     <string name="settings_passthrough">Passthrough</string>

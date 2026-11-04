@@ -515,6 +515,11 @@ fun SettingsScreen(
                         color = DarkColors.TextMuted,
                         fontSize = 14.sp
                     )
+                    // USB needs no Bluetooth link: lets you rescue a DashKit that won't boot.
+                    Spacer(modifier = Modifier.height(24.dp))
+                    UsbConsoleSection()
+                    Spacer(modifier = Modifier.height(24.dp))
+                    UsbFlashSection()
                 }
             }
             } // end scrollable content column

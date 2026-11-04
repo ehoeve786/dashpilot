@@ -1028,7 +1028,8 @@ private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boole
     )
     Spacer(modifier = Modifier.height(4.dp))
     // An empty password keeps the credentials the DashKit already has saved.
-    val credsOk = ssid.isNotEmpty() && TeslaClient.buildWifiPayload(ssid, pass) != null
+    // Wi-Fi is optional (USB always streams); only a typed password is validated and sent.
+    val credsOk = pass.isEmpty() || (ssid.isNotEmpty() && TeslaClient.buildWifiPayload(ssid, pass) != null)
     SettingsToggle(stringResource(R.string.settings_discovery_mode_wifi), wifiMode) { on ->
         when {
             !connected -> say(R.string.settings_discovery_not_connected)

@@ -92,10 +92,10 @@
 
     <!-- DashKit CAN discovery (discovery firmware only) -->
     <string name="settings_section_discovery_wifi">CAN discovery</string>
-    <string name="settings_discovery_wifi_body">Discovery firmware only. Wi-Fi mode: the DashKit reads every CAN ID on both buses and sends them over this phone\'s hotspot; the dashboard stays on Bluetooth. The DashKit restarts when the mode changes.</string>
+    <string name="settings_discovery_wifi_body">Discovery firmware only. The DashKit reads every CAN ID on both buses and streams them over USB (see the USB console) and, if hotspot details are set, over this phone\'s 2.4 GHz WPA2 hotspot. The dashboard stays on Bluetooth. The DashKit restarts when the mode changes.</string>
     <string name="settings_discovery_wifi_ssid">Hotspot name (SSID)</string>
     <string name="settings_discovery_wifi_password">WPA2 password</string>
-    <string name="settings_discovery_mode_wifi">Wi-Fi discovery mode</string>
+    <string name="settings_discovery_mode_wifi">Discovery mode</string>
     <string name="settings_discovery_record">Record CAN log</string>
     <string name="settings_discovery_stop">Stop recording</string>
     <string name="settings_discovery_stats">%1$d frames · %2$d IDs → Downloads/%3$s</string>
@@ -103,7 +103,7 @@
     <string name="settings_discovery_sent">Sent to DashKit</string>
     <string name="settings_discovery_failed">Couldn\'t send to the DashKit. It needs the CAN-discovery firmware.</string>
     <string name="settings_discovery_not_connected">DashKit isn\'t connected yet. Wait for Status: Connected at the top of this tab.</string>
-    <string name="settings_discovery_bad_creds">Enter the hotspot name, and an 8–63 character WPA2 password (or leave it empty to keep the saved one).</string>
+    <string name="settings_discovery_bad_creds">The WPA2 password must be 8–63 characters, with the hotspot name filled in. Leave it empty to skip Wi-Fi or keep the saved one.</string>
 
     <!-- DashKit USB flash -->
     <string name="settings_section_usb_flash">USB flash</string>

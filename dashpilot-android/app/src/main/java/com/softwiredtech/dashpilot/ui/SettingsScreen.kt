@@ -89,6 +89,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.softwiredtech.dashpilot.usb.UsbConsole
+import com.softwiredtech.dashpilot.usb.EspFlasher
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -850,10 +851,54 @@ private fun DashKitSettingsContent(
     UsbConsoleSection()
     Spacer(modifier = Modifier.height(24.dp))
 
+    UsbFlashSection()
+    Spacer(modifier = Modifier.height(24.dp))
+
     VentTestSection(bleManager, connected)
     Spacer(modifier = Modifier.height(24.dp))
 
     DashKitMaintenanceSection(bleManager, connected)
+}
+
+// Full flash over USB-C via the ESP32-S3 ROM bootloader: partition table,
+// boot record, firmware and the factory recovery copy, from the CI recovery-set zip.
+@Composable
+private fun UsbFlashSection() {
+    val context = LocalContext.current
+    val state by EspFlasher.state.collectAsState()
+    val busy = state is EspFlasher.State.Busy
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) EspFlasher.flashRecoverySet(context, uri)
+    }
+
+    SectionHeader(stringResource(R.string.settings_section_usb_flash))
+    Text(stringResource(R.string.settings_usb_flash_body), color = DarkColors.TextMuted, fontSize = 13.sp)
+    Spacer(modifier = Modifier.height(8.dp))
+    Button(
+        onClick = { picker.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
+        enabled = !busy,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = AccentColor, contentColor = Color.White,
+            disabledContainerColor = DarkColors.Border, disabledContentColor = DarkColors.TextMuted
+        )
+    ) {
+        Text(stringResource(R.string.settings_usb_flash_button), fontSize = 16.sp)
+    }
+    val (msg, color) = when (val s = state) {
+        is EspFlasher.State.Idle -> null to DarkColors.TextMuted
+        is EspFlasher.State.Busy -> s.message to Color.White
+        is EspFlasher.State.Done -> s.message to AccentColor
+        is EspFlasher.State.Error -> s.message to DarkColors.Error
+    }
+    msg?.let {
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(it, color = color, fontSize = 13.sp)
+    }
+    (state as? EspFlasher.State.Busy)?.takeIf { it.progress >= 0f }?.let {
+        Spacer(modifier = Modifier.height(4.dp))
+        LinearProgressIndicator(progress = { it.progress }, modifier = Modifier.fillMaxWidth(), color = AccentColor, trackColor = DarkColors.Border)
+    }
 }
 
 // Vent mapping test: one-shot driver vent position (held 1 s by the firmware)

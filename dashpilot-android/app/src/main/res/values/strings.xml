@@ -105,6 +105,11 @@
     <string name="settings_discovery_not_connected">DashKit isn\'t connected yet. Wait for Status: Connected at the top of this tab.</string>
     <string name="settings_discovery_bad_creds">Enter the hotspot name, and an 8–63 character WPA2 password (or leave it empty to keep the saved one).</string>
 
+    <!-- DashKit USB flash -->
+    <string name="settings_section_usb_flash">USB flash</string>
+    <string name="settings_usb_flash_body">Writes a full image set from the CI recovery-set zip (partition table, boot record, firmware, factory recovery copy) through the chip\'s built-in bootloader. Works even if the firmware won\'t boot. Keep the cable in until it says done.</string>
+    <string name="settings_usb_flash_button">Flash recovery set (zip)…</string>
+
     <!-- DashKit vent test -->
     <string name="settings_section_vent_test">Vent test</string>
     <string name="settings_vent_test_body">Sends a driver-vent position over CAN and holds it for 1 s. If the vent moves, the mapping is right.</string>

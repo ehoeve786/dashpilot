@@ -110,12 +110,8 @@
     <string name="settings_usb_flash_body">Writes a full image set from the CI recovery-set zip (partition table, boot record, firmware, factory recovery copy) through the chip\'s built-in bootloader. Works even if the firmware won\'t boot. Keep the cable in until it says done.</string>
     <string name="settings_usb_flash_button">Flash recovery set (zip)…</string>
 
-    <!-- DashKit vent test -->
-    <string name="settings_section_vent_test">Vent test</string>
-    <string name="settings_vent_test_body">Sends a driver-vent position over CAN and holds it for 1 s. If the vent moves, the mapping is right.</string>
-    <string name="settings_vent_test_y">Up / down: %1$d%%</string>
-    <string name="settings_vent_test_split">Left / right (lateral split): %1$d%%</string>
-    <string name="settings_vent_test_send">Move vent</string>
+    <!-- DashKit AC swing -->
+    <string name="settings_section_ac_swing">AC swing</string>
     <string name="settings_vent_swing_axis">AC swing uses lateral split (2023+ Model Y)</string>
 
     <!-- DashKit USB console -->

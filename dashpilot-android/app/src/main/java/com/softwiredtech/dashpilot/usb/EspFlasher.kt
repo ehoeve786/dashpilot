@@ -69,7 +69,7 @@ object EspFlasher {
                     p.command(OP_SPI_ATTACH, u32(0, 0))
                     p.command(OP_SPI_SET_PARAMS, u32(0, FLASH_SIZE.toLong(), 0x10000, 0x1000, 0x100, 0xFFFF))
                     for ((offset, name, data) in set) p.flash(offset, name, data)
-                    p.command(OP_FLASH_END, u32(1))  // 1 = stay in bootloader
+                    // No FLASH_END: the S3 ROM rejects it over USB-Serial-JTAG (error 0x6); reset instead, as esptool does.
                     p.hardReset()
                 }
                 _state.value = State.Done("Flashed ${set.size} images. DashKit is restarting.")
@@ -162,7 +162,6 @@ object EspFlasher {
 
     private const val OP_FLASH_BEGIN = 0x02
     private const val OP_FLASH_DATA = 0x03
-    private const val OP_FLASH_END = 0x04
     private const val OP_SYNC = 0x08
     private const val OP_READ_REG = 0x0A
     private const val OP_SPI_SET_PARAMS = 0x0B

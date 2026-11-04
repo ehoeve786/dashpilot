@@ -96,7 +96,6 @@ object VehicleControl {
     const val CMD_AC_SWING_SIDE: Int = 0x4C
     const val CMD_AC_SWING_INTENSITY: Int = 0x4D
     const val CMD_AC_SWING_TOGGLE: Int = 0x4E
-    const val CMD_AC_SWING_AXIS: Int = 0x50   // 0 = PositionX, 1 = LateralSplit
 
     /** Bind (or clear, with actionValue 0) an N-finger tap to a control action. */
     fun sendFingerAction(manager: DashKitBleManager, fingers: Int, actionValue: Int): Boolean =

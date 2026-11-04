@@ -854,9 +854,6 @@ private fun DashKitSettingsContent(
     UsbFlashSection()
     Spacer(modifier = Modifier.height(24.dp))
 
-    AcSwingAxisSection(bleManager, connected)
-    Spacer(modifier = Modifier.height(24.dp))
-
     DashKitMaintenanceSection(bleManager, connected)
 }
 
@@ -898,22 +895,6 @@ private fun UsbFlashSection() {
     (state as? EspFlasher.State.Busy)?.takeIf { it.progress >= 0f }?.let {
         Spacer(modifier = Modifier.height(4.dp))
         LinearProgressIndicator(progress = { it.progress }, modifier = Modifier.fillMaxWidth(), color = AccentColor, trackColor = DarkColors.Border)
-    }
-}
-
-// AC-swing axis choice: which 0x253 signal the swing moves (saved on the DashKit).
-@Composable
-private fun AcSwingAxisSection(bleManager: DashKitBleManager, connected: Boolean) {
-    val context = LocalContext.current
-    val prefs = remember { context.getSharedPreferences("vent_test", Context.MODE_PRIVATE) }
-    var splitAxis by remember { mutableStateOf(prefs.getBoolean("split_axis", false)) }
-
-    SectionHeader(stringResource(R.string.settings_section_ac_swing))
-    SettingsToggle(stringResource(R.string.settings_vent_swing_axis), splitAxis) { on ->
-        if (connected && VehicleControl.send(bleManager, VehicleControl.CMD_AC_SWING_AXIS, if (on) 1 else 0)) {
-            splitAxis = on
-            prefs.edit().putBoolean("split_axis", on).apply()
-        }
     }
 }
 

@@ -969,7 +969,8 @@ private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boole
     val prefs = remember { context.getSharedPreferences("can_discovery", Context.MODE_PRIVATE) }
     var ssid by remember { mutableStateOf(prefs.getString("ssid", "") ?: "") }
     var pass by remember { mutableStateOf("") }
-    var wifiMode by remember { mutableStateOf(prefs.getBoolean("wifi_mode", false)) }
+    var wifiMode by remember { mutableStateOf(prefs.getBoolean("wifi_mode", false)) }  // discovery on
+    var useWifi by remember { mutableStateOf(prefs.getBoolean("use_wifi", true)) }
     val recording by DiscoveryLogReceiver.running.collectAsState()
     val stats by DiscoveryLogReceiver.stats.collectAsState()
     val fieldColors = OutlinedTextFieldDefaults.colors(
@@ -984,21 +985,23 @@ private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boole
     }
     val toast = { ok: Boolean -> say(if (ok) R.string.settings_discovery_sent else R.string.settings_discovery_failed) }
     // Credentials (if typed) then the mode; GATT takes one write at a time.
-    val setMode = { on: Boolean ->
+    val setMode = { on: Boolean, wifi: Boolean ->
         scope.launch {
             var ok = true
-            if (on && pass.isNotEmpty()) {
+            if (on && wifi && pass.isNotEmpty()) {
                 ok = retryGatt { TeslaClient.sendWifi(bleManager, ssid, pass) }
                 if (ok) {
                     prefs.edit().putString("ssid", ssid).apply()
                     pass = ""
                 }
             }
-            ok = ok && retryGatt { TeslaClient.sendDiscoveryMode(bleManager, on) }
+            val mode = if (!on) 0 else if (wifi) 1 else 2
+            ok = ok && retryGatt { TeslaClient.sendDiscoveryMode(bleManager, mode) }
             if (ok) {
                 wifiMode = on
-                prefs.edit().putBoolean("wifi_mode", on).apply()
-                if (on) DiscoveryLogReceiver.start(context) else DiscoveryLogReceiver.stop()
+                useWifi = wifi
+                prefs.edit().putBoolean("wifi_mode", on).putBoolean("use_wifi", wifi).apply()
+                if (mode == 1) DiscoveryLogReceiver.start(context) else DiscoveryLogReceiver.stop()
             }
             toast(ok)
         }
@@ -1033,14 +1036,23 @@ private fun DiscoveryWifiSection(bleManager: DashKitBleManager, connected: Boole
     SettingsToggle(stringResource(R.string.settings_discovery_mode_wifi), wifiMode) { on ->
         when {
             !connected -> say(R.string.settings_discovery_not_connected)
-            on && !credsOk -> say(R.string.settings_discovery_bad_creds)
-            else -> setMode(on)
+            on && useWifi && !credsOk -> say(R.string.settings_discovery_bad_creds)
+            else -> setMode(on, useWifi)
+        }
+    }
+    // Off = USB only. While discovery is on, a change restarts the DashKit in the new mode.
+    SettingsToggle(stringResource(R.string.settings_discovery_use_wifi), useWifi) { wifi ->
+        when {
+            !wifiMode -> { useWifi = wifi; prefs.edit().putBoolean("use_wifi", wifi).apply() }
+            !connected -> say(R.string.settings_discovery_not_connected)
+            wifi && !credsOk -> say(R.string.settings_discovery_bad_creds)
+            else -> setMode(true, wifi)
         }
     }
     Spacer(modifier = Modifier.height(8.dp))
     Button(
         onClick = { if (recording) DiscoveryLogReceiver.stop() else DiscoveryLogReceiver.start(context) },
-        enabled = wifiMode || recording,
+        enabled = (wifiMode && useWifi) || recording,
         modifier = Modifier.fillMaxWidth(),
         colors = ButtonDefaults.buttonColors(
             containerColor = AccentColor,

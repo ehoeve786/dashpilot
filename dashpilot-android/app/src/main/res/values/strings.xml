@@ -96,6 +96,7 @@
     <string name="settings_discovery_wifi_ssid">Hotspot name (SSID)</string>
     <string name="settings_discovery_wifi_password">WPA2 password</string>
     <string name="settings_discovery_mode_wifi">Discovery mode</string>
+    <string name="settings_discovery_use_wifi">Also stream over Wi-Fi</string>
     <string name="settings_discovery_record">Record CAN log</string>
     <string name="settings_discovery_stop">Stop recording</string>
     <string name="settings_discovery_stats">%1$d frames · %2$d IDs → Downloads/%3$s</string>

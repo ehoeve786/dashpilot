@@ -66,8 +66,9 @@ object TeslaClient {
     }
 
     /** CAN-discovery firmware only: Wi-Fi discovery mode on/off; the DashKit reboots on change. */
-    fun sendDiscoveryMode(manager: DashKitBleManager, on: Boolean): Boolean =
-        manager.writeCommand(SERVICE_UUID, COMMAND_CHAR_UUID, byteArrayOf(CMD_DISCOVERY_MODE.toByte(), if (on) 1 else 0), TAG)
+    /** 0 = off, 1 = USB + Wi-Fi, 2 = USB only (saved hotspot kept). */
+    fun sendDiscoveryMode(manager: DashKitBleManager, mode: Int): Boolean =
+        manager.writeCommand(SERVICE_UUID, COMMAND_CHAR_UUID, byteArrayOf(CMD_DISCOVERY_MODE.toByte(), mode.toByte()), TAG)
 
     // [0x10][ssid_len 0-32][ssid][pass_len 0 or 8-63][pass]
     internal fun buildWifiPayload(ssid: String, pass: String): ByteArray? {

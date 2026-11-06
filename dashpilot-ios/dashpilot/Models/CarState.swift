@@ -63,6 +63,12 @@ struct CarState: Codable {
     var trunkPosition: Float = 0
     var frunkOpen: Float = 0
 
+    // TPMS sensor battery voltage (V, -1 = none) per wheel.
+    var tpmsBattFL: Float = -1
+    var tpmsBattFR: Float = -1
+    var tpmsBattRL: Float = -1
+    var tpmsBattRR: Float = -1
+
     init() {}
 
     init(from bridge: BridgeCarState) {
@@ -117,6 +123,10 @@ struct CarState: Codable {
         trunkOpen = Float(bridge.trunkOpen)
         trunkPosition = Float(bridge.trunkPosition)
         frunkOpen = Float(bridge.frunkOpen)
+        tpmsBattFL = Float(bridge.tpmsBattFL)
+        tpmsBattFR = Float(bridge.tpmsBattFR)
+        tpmsBattRL = Float(bridge.tpmsBattRL)
+        tpmsBattRR = Float(bridge.tpmsBattRR)
     }
 
     private static let kmToMiles: Float = 0.621371
@@ -186,5 +196,9 @@ struct CarState: Codable {
         trunkOpen            = try c.decodeIfPresent(Float.self, forKey: .trunkOpen)            ?? 0
         trunkPosition        = try c.decodeIfPresent(Float.self, forKey: .trunkPosition)        ?? 0
         frunkOpen            = try c.decodeIfPresent(Float.self, forKey: .frunkOpen)            ?? 0
+        tpmsBattFL           = try c.decodeIfPresent(Float.self, forKey: .tpmsBattFL)           ?? -1
+        tpmsBattFR           = try c.decodeIfPresent(Float.self, forKey: .tpmsBattFR)           ?? -1
+        tpmsBattRL           = try c.decodeIfPresent(Float.self, forKey: .tpmsBattRL)           ?? -1
+        tpmsBattRR           = try c.decodeIfPresent(Float.self, forKey: .tpmsBattRR)           ?? -1
     }
 }

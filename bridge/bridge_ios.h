@@ -69,6 +69,12 @@ typedef struct {
     double trunkOpen;
     double trunkPosition;
     double frunkOpen;
+
+    // TPMS sensor battery voltage (V, -1 = none) per wheel.
+    double tpmsBattFL;
+    double tpmsBattFR;
+    double tpmsBattRL;
+    double tpmsBattRR;
 } BridgeCarState;
 
 // Context

@@ -82,7 +82,12 @@ class CanFrameDecoder(
                 doorOpenRR = values[50].toFloat(),
                 trunkOpen = values[51].toFloat(),
                 trunkPosition = values[52].toFloat(),
-                frunkOpen = values[53].toFloat()
+                frunkOpen = values[53].toFloat(),
+                // TPMS sensor battery after closures (see CarState::TPMS_BATT_OFFSET): FL FR RL RR.
+                tpmsBattFL = values[54].toFloat(),
+                tpmsBattFR = values[55].toFloat(),
+                tpmsBattRL = values[56].toFloat(),
+                tpmsBattRR = values[57].toFloat()
             )
         }
 

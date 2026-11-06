@@ -56,6 +56,11 @@ struct CarState {
     double tpmsTempFR = -100;
     double tpmsTempRL = -100;
     double tpmsTempRR = -100;
+    // Sensor battery voltage (V) per wheel from the per-sensor TPMS muxes; -1 = no reading.
+    double tpmsBattFL = -1;
+    double tpmsBattFR = -1;
+    double tpmsBattRL = -1;
+    double tpmsBattRR = -1;
 
     // Closures from VCLEFT_doorStatus / VCRIGHT_doorStatus latch state: 1 while
     // the latch is anything but closed (opened, opening, ajar, closing), else 0.
@@ -80,7 +85,9 @@ struct CarState {
     static constexpr size_t TPMS_COUNT = 8;
     static constexpr size_t DOOR_OFFSET = TPMS_OFFSET + TPMS_COUNT;
     static constexpr size_t DOOR_COUNT = 7;
-    static constexpr size_t FIELD_COUNT = DOOR_OFFSET + DOOR_COUNT;
+    static constexpr size_t TPMS_BATT_OFFSET = DOOR_OFFSET + DOOR_COUNT;
+    static constexpr size_t TPMS_BATT_COUNT = 4;
+    static constexpr size_t FIELD_COUNT = TPMS_BATT_OFFSET + TPMS_BATT_COUNT;
 
     void toArray(double* out) const {
         // Party bus
@@ -150,5 +157,11 @@ struct CarState {
         out[DOOR_OFFSET + 4] = trunkOpen;
         out[DOOR_OFFSET + 5] = trunkPosition;
         out[DOOR_OFFSET + 6] = frunkOpen;
+
+        // TPMS sensor battery (after closures): FL FR RL RR.
+        out[TPMS_BATT_OFFSET + 0] = tpmsBattFL;
+        out[TPMS_BATT_OFFSET + 1] = tpmsBattFR;
+        out[TPMS_BATT_OFFSET + 2] = tpmsBattRL;
+        out[TPMS_BATT_OFFSET + 3] = tpmsBattRR;
     }
 };

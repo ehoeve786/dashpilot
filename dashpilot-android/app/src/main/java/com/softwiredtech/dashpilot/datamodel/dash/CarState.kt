@@ -63,6 +63,12 @@ data class CarState(
     val trunkPosition: Float = 0f,
     val frunkOpen: Float = 0f,
 
+    // TPMS sensor battery voltage (V, -1 = none) per wheel.
+    val tpmsBattFL: Float = -1f,
+    val tpmsBattFR: Float = -1f,
+    val tpmsBattRL: Float = -1f,
+    val tpmsBattRR: Float = -1f,
+
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = ""
 ) {
@@ -76,7 +82,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 54
+        const val FIELD_COUNT = 58
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

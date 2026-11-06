@@ -45,6 +45,11 @@
         <ViewModelPropertyNumber name="doorOpenRR" id="1:83"/>
         <ViewModelPropertyNumber name="frunkOpen" id="1:84"/>
         <ViewModelPropertyNumber name="trunkOpen" id="1:85"/>
+        <ViewModelPropertyNumber name="trunkPosition" id="1:86"/>
+        <ViewModelPropertyNumber name="tpmsBattFL" id="1:87"/>
+        <ViewModelPropertyNumber name="tpmsBattFR" id="1:88"/>
+        <ViewModelPropertyNumber name="tpmsBattRL" id="1:89"/>
+        <ViewModelPropertyNumber name="tpmsBattRR" id="1:90"/>
 
         <ViewModelPropertyBoolean name="adasOn" id="1:50"/>
         <ViewModelPropertyBoolean name="changingLane" id="1:51"/>
@@ -105,6 +110,11 @@
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="1:83"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="1:84"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="1:85"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="1:86"/>
+            <ViewModelInstanceNumber propertyValue="2.99" viewModelPropertyId="1:87"/>
+            <ViewModelInstanceNumber propertyValue="2.98" viewModelPropertyId="1:88"/>
+            <ViewModelInstanceNumber propertyValue="2.99" viewModelPropertyId="1:89"/>
+            <ViewModelInstanceNumber propertyValue="2.99" viewModelPropertyId="1:90"/>
 
             <ViewModelInstanceBoolean propertyValue="true" viewModelPropertyId="1:50"/>
             <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="1:51"/>

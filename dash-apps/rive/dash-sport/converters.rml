@@ -263,4 +263,6 @@
         <DataConverterGroupItem converterId="2:66"/>
         <DataConverterGroupItem converterId="2:1"/>
     </DataConverterGroup>
+    <DataConverterRangeMapper minInput="-1" maxInput="0" minOutput="0" maxOutput="1"
+                              clampLower="true" clampUpper="true" name="Batt Known" id="2:68"/>
 </Rive>

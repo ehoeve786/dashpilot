@@ -53,6 +53,7 @@ What a dash app receives: the [CarState](#carstate) fields plus these phone and 
 | `renderQuality` | 1–3 | hint for expensive effects |
 | `dataSourceType` | string | `"dashkit"`, `"comma"`, `"websocket"`, `"demo"` |
 | `speedCameraDistance` | meters | -1 = none nearby. **Android only** |
+| `speedLimitSignType` | 0–2 | speed limit sign style for the phone's region: 0 round (Vienna convention), 1 US, 2 Canada |
 
 ## CarState
 

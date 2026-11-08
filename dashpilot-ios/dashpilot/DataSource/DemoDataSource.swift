@@ -135,6 +135,19 @@ final class DemoDataSource: IDataSource {
 
         s.accSetSpeed = cruiseSpeed(at: t) + 5
 
+        // While stopped at the light: FL, FR, RL, RR, frunk, trunk open one after another.
+        let opening = phase >= approachEnd && phase < stoppedEnd
+            ? Int((phase - approachEnd) / (stoppedEnd - approachEnd) * 6) : -1
+        func open(_ i: Int) -> Float { opening == i ? 1 : 0 }
+        s.anyDoorOpen = (0...3).contains(opening) ? 1 : 0
+        s.doorOpenFL = open(0)
+        s.doorOpenFR = open(1)
+        s.doorOpenRL = open(2)
+        s.doorOpenRR = open(3)
+        s.frunkOpen = open(4)
+        s.trunkOpen = open(5)
+        s.trunkPosition = opening == 5 ? 85 : 0
+
         s.leftBlindSpot = t.truncatingRemainder(dividingBy: 23) < 3 ? 1 : 0
         s.rightBlindSpot = t.truncatingRemainder(dividingBy: 29) < 3 ? 1 : 0
 
@@ -151,6 +164,18 @@ final class DemoDataSource: IDataSource {
         s.powerLevel = max(-1, min(kw / (kw >= 0 ? s.maxDischargePower : s.maxRegenPower), 1)) * 100
         s.packTMin = 22
         s.packTMax = 28
+        s.tpmsPressureFL = 2.7
+        s.tpmsPressureFR = 2.775
+        s.tpmsPressureRL = 2.525
+        s.tpmsPressureRR = 2.85
+        s.tpmsTempFL = 12
+        s.tpmsTempFR = 12
+        s.tpmsTempRL = 14
+        s.tpmsTempRR = 13
+        s.tpmsBattFL = 2.99
+        s.tpmsBattFR = 2.98
+        s.tpmsBattRL = 2.99
+        s.tpmsBattRR = 2.99
         s.acTemp = 22
         s.acTempRight = 21
         s.hvacFanLevel = 11

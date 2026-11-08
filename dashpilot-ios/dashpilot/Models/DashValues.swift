@@ -74,11 +74,21 @@ extension DashState {
             ("alwaysOnBlindSpotMonitor", .bool(d.alwaysOnBlindSpotMonitor)),
             ("renderQuality", .number(Float(d.renderQuality))),
             ("dataSourceType", .string(dataSourceType?.rawValue ?? "")),
+            ("speedLimitSignType", .number(Self.speedLimitSignType())),
         ]
         if c.ambientLightingAvailable {
             values.append(("ambientLightingColor", .color(c.ambientLightingColor)))
         }
         return values
+    }
+
+    // 0 = round (Vienna convention), 1 = US, 2 = Canada; from the phone's region, like the speed limit units.
+    static func speedLimitSignType() -> Float {
+        switch Locale.current.region?.identifier {
+        case "US": return 1
+        case "CA": return 2
+        default: return 0
+        }
     }
 
     private static func secondsSinceLocalMidnight(_ epochMillis: Int64) -> Float {

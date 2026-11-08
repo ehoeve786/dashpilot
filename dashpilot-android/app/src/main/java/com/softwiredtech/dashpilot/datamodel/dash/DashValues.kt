@@ -2,6 +2,7 @@ package com.softwiredtech.dashpilot.datamodel.dash
 
 import java.time.Instant
 import java.time.ZoneId
+import java.util.Locale
 
 fun DashState.dashValues(systemDarkMode: Boolean? = null): Map<String, Any> {
     val c = carState
@@ -70,11 +71,19 @@ fun DashState.dashValues(systemDarkMode: Boolean? = null): Map<String, Any> {
         "renderQuality" to d.renderQuality.toFloat(),
         "dataSourceType" to dataSourceType,
         "speedCameraDistance" to speedCameraDistance.toFloat(),
+        "speedLimitSignType" to speedLimitSignType(),
     )
     if (c.ambientLightingAvailable) {
         values["ambientLightingColor"] = c.ambientLightingColor or 0xFF000000.toInt()
     }
     return values
+}
+
+// 0 = round (Vienna convention), 1 = US, 2 = Canada; from the phone's region, like the speed limit units.
+internal fun speedLimitSignType(): Float = when (Locale.getDefault().country) {
+    "US" -> 1f
+    "CA" -> 2f
+    else -> 0f
 }
 
 private fun secondsSinceLocalMidnight(epochMillis: Long): Float =

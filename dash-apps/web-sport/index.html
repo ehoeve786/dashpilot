@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Sport</title>
+<style>
+@font-face { font-family: 'Inter'; font-weight: 400; font-display: block; src: url('fonts/inter-400.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-display: block; src: url('fonts/inter-600.ttf') format('truetype'); }
+
+/* The layout is 1080 units tall at any screen size; 1 unit = --u. */
+:root { --u: calc(100vh / 1080); }
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: #0A0B0E; color: #F2F4F7;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-user-select: none; user-select: none;
+}
+#root {
+  box-sizing: border-box; height: 100%;
+  display: flex; flex-direction: column;
+  padding: calc(36 * var(--u)) calc(56 * var(--u)) calc(32 * var(--u));
+}
+#top {
+  height: calc(96 * var(--u)); flex: none;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.blinker { width: calc(120 * var(--u)); height: calc(96 * var(--u)); }
+#chips { display: flex; gap: calc(16 * var(--u)); }
+.chip {
+  display: none; height: calc(56 * var(--u)); border-radius: calc(28 * var(--u));
+  align-items: center; justify-content: center;
+  font-size: calc(24 * var(--u)); font-weight: 600; letter-spacing: calc(1.5 * var(--u));
+}
+.chip.on { display: flex; }
+#main { flex: 1 1 0; min-height: 0; display: flex; gap: calc(24 * var(--u)); }
+#main > svg { flex: 1 1 0; min-width: 0; height: 100%; }
+#main > svg#speedo { flex-grow: 1.7; }
+.edge { position: fixed; top: 0; bottom: 0; opacity: 0; pointer-events: none; }
+svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dominant-baseline: central; white-space: pre; }
+</style>
+</head>
+<body>
+<div class="edge" id="bsLeft" style="left:0; width:calc(40 * var(--u)); background:linear-gradient(to right,#FFB020,rgba(255,176,32,0))"></div>
+<div class="edge" id="bsLeftUrgent" style="left:0; width:calc(72 * var(--u)); background:linear-gradient(to right,#FF3B30,rgba(255,59,48,0))"></div>
+<div class="edge" id="bsRight" style="right:0; width:calc(40 * var(--u)); background:linear-gradient(to left,#FFB020,rgba(255,176,32,0))"></div>
+<div class="edge" id="bsRightUrgent" style="right:0; width:calc(72 * var(--u)); background:linear-gradient(to left,#FF3B30,rgba(255,59,48,0))"></div>
+
+<div id="root">
+  <div id="top">
+    <svg class="blinker" id="blinkLeft" viewBox="0 0 120 96"></svg>
+    <div id="chips">
+      <div class="chip" id="chipDoor" style="width:calc(230 * var(--u)); background:#33270A; color:#FFB020">DOOR OPEN</div>
+      <div class="chip" id="chipBelt" style="width:calc(300 * var(--u)); background:#3A1210; color:#FF3B30">FASTEN SEATBELT</div>
+      <div class="chip" id="chipLane" style="width:calc(280 * var(--u)); background:#0E1C33; color:#3D8BFF">CHANGING LANE</div>
+    </div>
+    <svg class="blinker" id="blinkRight" viewBox="0 0 120 96"></svg>
+  </div>
+  <div id="main">
+    <svg id="power" viewBox="0 0 460 630" preserveAspectRatio="xMidYMid meet"></svg>
+    <svg id="speedo" viewBox="0 0 820 760" preserveAspectRatio="xMidYMid meet"></svg>
+    <svg id="tyres" viewBox="0 0 460 630" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+</div>
+
+<script>
+'use strict';
+const BG = '#0A0B0E', TRACK = '#1B1E24', DIM = '#59606B', TEXT = '#F2F4F7', SUB = '#8B919A';
+const ACCENT = '#FF6A1A', RED = '#FF3B30', BLUE = '#3D8BFF', GREEN = '#30D158', AMBER = '#FFB020';
+const NS = 'http://www.w3.org/2000/svg';
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const num = (v, d) => (typeof v === 'number' && isFinite(v) ? v : (v === true ? 1 : v === false ? 0 : d));
+
+/* ── SVG helpers ── */
+function el(parent, tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs || {}) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+// Polygon with a rounding radius per vertex: [[x, y, r], ...].
+function roundedPoly(pts) {
+  let d = '';
+  const n = pts.length;
+  for (let i = 0; i < n; i++) {
+    const [x, y, r] = pts[i], [px, py] = pts[(i + n - 1) % n], [nx, ny] = pts[(i + 1) % n];
+    const lp = Math.hypot(px - x, py - y), ln = Math.hypot(nx - x, ny - y);
+    const a = Math.min(r, lp / 2) / lp, b = Math.min(r, ln / 2) / ln;
+    const ax = x + (px - x) * a, ay = y + (py - y) * a, bx = x + (nx - x) * b, by = y + (ny - y) * b;
+    d += (i ? 'L' : 'M') + ax.toFixed(2) + ' ' + ay.toFixed(2) + 'Q' + x + ' ' + y + ' ' + bx.toFixed(2) + ' ' + by.toFixed(2);
+  }
+  return d + 'Z';
+}
+// Arc of radius r around (0,0) between angles in degrees, clockwise from 12 o'clock.
+function arc(r, a0, a1) {
+  if (Math.abs(a1 - a0) < 0.01) return '';
+  const p = (a) => [r * Math.sin(a * Math.PI / 180), -r * Math.cos(a * Math.PI / 180)];
+  const [x0, y0] = p(a0), [x1, y1] = p(a1);
+  const large = Math.abs(a1 - a0) > 180 ? 1 : 0, sweep = a1 > a0 ? 1 : 0;
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${large} ${sweep} ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+function ticks(parent, angles, rOuter, len, width, color) {
+  for (const a of angles) {
+    el(parent, 'rect', { x: -width / 2, y: -rOuter, width, height: len, fill: color, transform: `rotate(${a})` });
+  }
+}
+// Text with runs: [[text, size, color, weight, letterSpacing, id], ...]
+function label(parent, x, y, runs) {
+  const t = el(parent, 'text', { x, y });
+  for (const [s, size, color, weight, ls, id] of runs) {
+    const span = el(t, 'tspan', { 'font-size': size, fill: color, 'font-weight': weight || 400, 'letter-spacing': ls || 0 }, s);
+    if (id) span.id = id;
+  }
+  return t;
+}
+function linGrad(defs, id, x1, y1, x2, y2, stops) {
+  const g = el(defs, 'linearGradient', { id, gradientUnits: 'userSpaceOnUse', x1, y1, x2, y2 });
+  for (const [o, c, a] of stops) el(g, 'stop', { offset: o, 'stop-color': c, 'stop-opacity': a === undefined ? 1 : a });
+  return `url(#${id})`;
+}
+const $ = (id) => document.getElementById(id);
+
+/* ── Eased parts (doors, lids, highlights): 0.35 s ease-in-out toward a target ── */
+const eased = [];
+function easedPart(apply, initial) {
+  const p = { apply, from: initial, to: initial, value: initial, t0: 0 };
+  eased.push(p);
+  apply(initial);
+  return (target) => {
+    if (target === p.to) return;
+    p.from = p.value; p.to = target; p.t0 = performance.now();
+    startEasing();
+  };
+}
+let easing = 0;
+function startEasing() { if (!easing) easing = requestAnimationFrame(stepEasing); }
+function stepEasing() {
+  easing = 0;
+  const now = performance.now();
+  let busy = false;
+  for (const p of eased) {
+    if (p.value === p.to) continue;
+    const t = clamp((now - p.t0) / 350, 0, 1);
+    const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    p.value = t >= 1 ? p.to : p.from + (p.to - p.from) * e;
+    p.apply(p.value);
+    if (t < 1) busy = true;
+  }
+  if (busy) startEasing();
+}
+
+/* ── Blinkers ── */
+const ARROW = [[-52, 0, 4], [-4, -44, 4], [-4, -18, 2], [52, -18, 6], [52, 18, 6], [-4, 18, 2], [-4, 44, 4]];
+function buildBlinker(svg, mirror) {
+  const g = el(svg, 'g', { transform: `translate(60 48)${mirror ? ' scale(-1 1)' : ''}` });
+  el(g, 'path', { d: roundedPoly(ARROW), fill: '#17191D' });
+  return el(g, 'path', { d: roundedPoly(ARROW), fill: GREEN, opacity: 0 });
+}
+const blinkLeft = buildBlinker($('blinkLeft'), false);
+const blinkRight = buildBlinker($('blinkRight'), true);
+
+/* ── Power gauge + battery ── */
+const P = {};
+(function buildPower() {
+  const svg = $('power');
+  const g = el(svg, 'g', { transform: 'translate(230 230)' });
+  el(g, 'path', { d: arc(200, -120, 120), fill: 'none', stroke: TRACK, 'stroke-width': 16 });
+  const all = []; for (let a = -120; a <= 120; a += 15) all.push(a);
+  ticks(g, all.filter((a) => a % 60 !== 0), 182, 12, 3, DIM);
+  ticks(g, all.filter((a) => a % 60 === 0), 182, 24, 5, TEXT);
+  P.regen = el(g, 'path', { fill: 'none', stroke: GREEN, 'stroke-width': 16 });
+  P.discharge = el(g, 'path', { fill: 'none', stroke: ACCENT, 'stroke-width': 16 });
+  P.needle = el(g, 'g');
+  el(P.needle, 'path', { d: 'M-6 22L0 -186L6 22Z', fill: TEXT });
+  el(P.needle, 'circle', { r: 20, fill: '#14171C', stroke: TEXT, 'stroke-width': 5 });
+  label(svg, 230, 330, [['0', 64, TEXT, 600, -2, 'pKw']]);
+  label(svg, 230, 378, [['kW', 26, SUB, 400, 1]]);
+  label(svg, 110, 426, [['REGEN', 18, GREEN, 600, 3]]);
+  label(svg, 350, 426, [['POWER', 18, ACCENT, 600, 3]]);
+  label(svg, 230, 502, [['BATTERY  ', 20, SUB, 600, 3], ['0', 38, TEXT, 600, 0, 'pSoc'], ['%', 24, SUB, 400, 0]]);
+  el(svg, 'rect', { x: 80, y: 542, width: 300, height: 14, rx: 7, fill: TRACK });
+  P.socFill = el(svg, 'rect', { x: 80, y: 542, width: 0, height: 14, rx: 7, fill: GREEN });
+  label(svg, 230, 590, [['PACK  ', 20, SUB, 600, 3], ['0', 28, TEXT, 600, 0, 'pTMin'], ['–', 28, SUB, 400, 0], ['0', 28, TEXT, 600, 0, 'pTMax'], ['°', 28, SUB, 400, 0]]);
+})();
+
+/* ── Speedometer ── */
+const S = {};
+const speedAngle = (v) => -135 + clamp(v, 0, 200) / 200 * 270;
+(function buildSpeedo() {
+  const svg = $('speedo');
+  const defs = el(svg, 'defs');
+  const glow = el(defs, 'radialGradient', { id: 'glow', gradientUnits: 'userSpaceOnUse', cx: 0, cy: 0, r: 360 });
+  el(glow, 'stop', { offset: 0, 'stop-color': '#1A1008' });
+  el(glow, 'stop', { offset: 1, 'stop-color': '#1A1008', 'stop-opacity': 0 });
+  const g = el(svg, 'g', { transform: 'translate(410 390)' });
+  el(g, 'circle', { r: 360, fill: 'url(#glow)' });
+  el(g, 'path', { d: arc(330, -135, 135), fill: 'none', stroke: TRACK, 'stroke-width': 20, 'stroke-linecap': 'round' });
+  const all = []; for (let i = 0; i <= 40; i++) all.push(-135 + i * 6.75);
+  ticks(g, all.filter((_, i) => i % 4 !== 0), 306, 14, 3, DIM);
+  ticks(g, all.filter((_, i) => i % 4 === 0), 306, 30, 6, TEXT);
+  for (let i = 0; i <= 10; i++) {
+    const a = (-135 + i * 27) * Math.PI / 180;
+    label(g, 234 * Math.sin(a), -234 * Math.cos(a), [[String(i * 20), 34, SUB, 600, 0]]);
+  }
+  S.arc = el(g, 'path', { fill: 'none', stroke: ACCENT, 'stroke-width': 20, 'stroke-linecap': 'round' });
+  S.arcCruise = el(g, 'path', { fill: 'none', stroke: BLUE, 'stroke-width': 20, 'stroke-linecap': 'round', opacity: 0 });
+  S.arcOver = el(g, 'path', { fill: 'none', stroke: RED, 'stroke-width': 20, 'stroke-linecap': 'round', opacity: 0 });
+  S.marker = el(g, 'g', { opacity: 0 });
+  el(S.marker, 'circle', { cy: -330, r: 14, fill: BG, stroke: BLUE, 'stroke-width': 6 });
+  S.pointer = el(g, 'path', { d: roundedPoly([[-9, -266, 3], [0, -312, 2], [9, -266, 3]]), fill: ACCENT });
+
+  S.speed = label(g, 0, -20, [['0', 200, TEXT, 600, -6]]).firstChild;
+  S.unit = label(g, 0, 95, [['km/h', 34, SUB, 400, 1]]).firstChild;
+
+  S.set = el(g, 'g', { transform: 'translate(0 170)', opacity: 0 });
+  S.setPill = el(S.set, 'rect', { x: -110, y: -29, width: 220, height: 58, rx: 29, fill: '#262A31' });
+  S.setValue = label(S.set, 0, 0, [['SET  ', 22, 'rgba(255,255,255,0.7)', 600, 2], ['0', 34, TEXT, 600, 0]]).lastChild;
+
+  S.assist = el(g, 'g', { transform: 'translate(0 -170)', opacity: 0 });
+  el(S.assist, 'rect', { x: -85, y: -22, width: 170, height: 44, rx: 22, fill: 'none', stroke: BLUE, 'stroke-width': 3 });
+  label(S.assist, 0, 0, [['ASSIST', 22, BLUE, 600, 3]]);
+
+  S.gears = [];
+  'PRND'.split('').forEach((letter, i) => {
+    const gg = el(g, 'g', { transform: `translate(${-111 + i * 74} 285)` });
+    const pill = el(gg, 'rect', { x: -30, y: -30, width: 60, height: 60, rx: 16, fill: ACCENT, opacity: 0 });
+    const t = label(gg, 0, 0, [[letter, 36, DIM, 600, 0]]).firstChild;
+    S.gears.push({ pill, t });
+  });
+
+  // Speed limit sign: round (Vienna convention), US "SPEED LIMIT" or Canada "MAXIMUM".
+  S.limit = el(svg, 'g', { transform: 'translate(740 84)', opacity: 0 });
+  S.signRound = el(S.limit, 'g');
+  el(S.signRound, 'circle', { r: 57, fill: '#FFFFFF', stroke: '#E5251B', 'stroke-width': 13 });
+  S.limitRound = label(S.signRound, 0, 0, [['80', 50, '#111111', 600, -2]]).firstChild;
+  const rectSign = (parent) => {
+    el(parent, 'rect', { x: -58, y: -75, width: 116, height: 150, rx: 13, fill: '#FFFFFF' });
+    el(parent, 'rect', { x: -52, y: -69, width: 104, height: 138, rx: 8, fill: 'none', stroke: '#111111', 'stroke-width': 3.5 });
+  };
+  S.signUs = el(S.limit, 'g', { display: 'none' });
+  rectSign(S.signUs);
+  label(S.signUs, 0, -50, [['SPEED', 21, '#111111', 600, 1]]);
+  label(S.signUs, 0, -25, [['LIMIT', 21, '#111111', 600, 1]]);
+  S.limitUs = label(S.signUs, 0, 28, [['50', 60, '#111111', 600, -2]]).firstChild;
+  S.signCa = el(S.limit, 'g', { display: 'none' });
+  rectSign(S.signCa);
+  label(S.signCa, 0, -46, [['MAXIMUM', 17, '#111111', 600, 0.5]]);
+  S.limitCa = label(S.signCa, 0, 18, [['80', 62, '#111111', 600, -2]]).firstChild;
+})();
+
+/* ── Tyres: shaded top-down car, doors / lids, readings per wheel ── */
+const T = { wheels: {} };
+(function buildTyres() {
+  const svg = $('tyres');
+  const defs = el(svg, 'defs');
+  const bodyPaint = linGrad(defs, 'bodyPaint', -68, 0, 68, 0, [[0, '#1F242B'], [0.22, '#3A414B'], [0.5, '#4B535E'], [0.78, '#3A414B'], [1, '#1F242B']]);
+  const shadow = el(defs, 'radialGradient', { id: 'carShadow', gradientUnits: 'userSpaceOnUse', cx: 0, cy: 0, r: 175 });
+  el(shadow, 'stop', { offset: 0.6, 'stop-color': '#000', 'stop-opacity': 0.6 });
+  el(shadow, 'stop', { offset: 1, 'stop-color': '#000', 'stop-opacity': 0 });
+
+  // Readings: psi (always), temperature (°C / °F), sensor battery (V).
+  [['FL', 62, 100], ['FR', 398, 100], ['RL', 62, 405], ['RR', 398, 405]].forEach(([w, x, y]) => {
+    const g = el(svg, 'g', { transform: `translate(${x} ${y})` });
+    const p = label(g, 0, 0, [['--', 46, DIM, 600, -1], ['', 24, SUB, 400, 0]]);
+    const t = label(g, 0, 48, [['--', 28, DIM, 400, 0], ['', 22, SUB, 400, 0]]);
+    const b = label(g, 0, 84, [['', 22, SUB, 400, 0], [' V', 18, SUB, 400, 0]]);
+    T.wheels[w] = { p, t, b };
+  });
+  T.odo = label(svg, 230, 590, [['ODO  ', 20, SUB, 600, 3], ['0', 30, TEXT, 600, 0], [' km', 24, SUB, 400, 0]]);
+
+  const car = el(svg, 'g', { transform: 'translate(230 255) scale(1.4)' });
+  // Painted bottom-up: shadow, wheels, body, openings, lids, glass, doors.
+  el(car, 'ellipse', { rx: 100, ry: 175, fill: 'url(#carShadow)' });
+  const wheelPaint = linGrad(defs, 'wheelPaint', -70, 0, 70, 0, [[0, '#111317'], [0.5, '#2A2E35'], [1, '#111317']]);
+  for (const x of [-63, 63]) for (const y of [-90, 92]) {
+    el(car, 'rect', { x: x - 8, y: y - 26, width: 16, height: 52, rx: 6, fill: wheelPaint });
+  }
+  const BODY = [[-44, -150, 30], [44, -150, 30], [64, -104, 40], [68, -22, 24], [66, 92, 30], [56, 148, 26],
+                [-56, 148, 26], [-66, 92, 30], [-68, -22, 24], [-64, -104, 40]];
+  el(car, 'path', { d: roundedPoly(BODY), fill: bodyPaint, stroke: '#14171C', 'stroke-width': 2 });
+
+  const FRUNK = [[-46, 0, 2], [46, 0, 2], [60, -30, 30], [42, -72, 26], [-42, -72, 26], [-60, -30, 30]];
+  const TRUNK = [[-46, 0, 2], [46, 0, 2], [54, 30, 20], [50, 50, 18], [-50, 50, 18], [-54, 30, 20]];
+  el(car, 'path', { d: roundedPoly(FRUNK), fill: '#07080A', transform: 'translate(0 -76)' });
+  el(car, 'path', { d: roundedPoly(TRUNK), fill: '#07080A', transform: 'translate(0 96)' });
+
+  const DOORS = [['FL', -1, -60, 72], ['RL', -1, 14, 64], ['FR', 1, -60, 72], ['RR', 1, 14, 64]];
+  for (const [w, sgn, hy, len] of DOORS) {
+    const hx = 67 * sgn;
+    el(car, 'rect', { x: hx + (-8 * sgn + sgn) - 8, y: hy + 2, width: 16, height: len - 4, rx: 4, fill: '#07080A' });
+  }
+
+  // Shoulder highlights, lights, glass, roof headers, reflection.
+  const shoulder = linGrad(defs, 'shoulder', 0, -95, 0, 95, [[0, '#FFF', 0], [0.5, '#FFF', 0.2], [1, '#FFF', 0]]);
+  for (const x of [-55, 55]) el(car, 'rect', { x: x - 1.5, y: -95, width: 3, height: 190, rx: 1.5, fill: shoulder });
+  el(car, 'rect', { x: -11, y: -2.5, width: 22, height: 5, rx: 2.5, fill: '#DDE6F0', transform: 'translate(-36 -142) rotate(-14.3)' });
+  el(car, 'rect', { x: -11, y: -2.5, width: 22, height: 5, rx: 2.5, fill: '#DDE6F0', transform: 'translate(36 -142) rotate(14.3)' });
+
+  const glass = linGrad(defs, 'glass', 0, -74, 0, 94, [[0, '#2A3442'], [0.18, '#121821'], [0.8, '#0D1118'], [1, '#222B37']]);
+  el(car, 'path', { d: roundedPoly([[-40, -74, 14], [40, -74, 14], [47, -36, 10], [47, 60, 10], [39, 94, 14], [-39, 94, 14], [-47, 60, 10], [-47, -36, 10]]), fill: glass });
+  el(car, 'rect', { x: -46, y: -40.5, width: 92, height: 5, rx: 2, fill: '#2E343D' });
+  el(car, 'rect', { x: -46, y: 57.5, width: 92, height: 5, rx: 2, fill: '#2E343D' });
+  const refl = linGrad(defs, 'refl', 0, -35, 0, 35, [[0, '#FFF', 0], [0.5, '#FFF', 0.15], [1, '#FFF', 0]]);
+  el(car, 'rect', { x: -5, y: -35, width: 10, height: 70, rx: 5, fill: refl, transform: 'translate(-14 -40) rotate(28.6)' });
+
+  // Lids fold toward their hinge (frunk at the windshield, trunk at the rear glass).
+  const lid = (name, pts, hy) => {
+    const g = el(car, 'g');
+    el(g, 'path', { d: roundedPoly(pts), fill: bodyPaint, stroke: '#14171C', 'stroke-width': 1.5 });
+    const hl = el(g, 'path', { d: roundedPoly(pts), fill: 'rgba(255,176,32,0.7)', stroke: AMBER, 'stroke-width': 2, opacity: 0 });
+    T[name] = easedPart((s) => g.setAttribute('transform', `translate(0 ${hy}) scale(1 ${s.toFixed(3)})`), 1);
+    T[name + 'Hl'] = easedPart((o) => hl.setAttribute('opacity', o.toFixed(3)), 0);
+  };
+  lid('frunk', FRUNK, -76);
+  lid('trunk', TRUNK, 96);
+  el(car, 'rect', { x: -48, y: 141, width: 96, height: 4, rx: 2, fill: '#E5251B' });
+
+  // Doors swing on their front hinge; mirrors ride on the front doors.
+  for (const [w, sgn, hy, len] of DOORS) {
+    const hx = 67 * sgn, inner = -16 * sgn;
+    const pts = [[0, 0, 3], [inner, 0, 2], [inner, len, 2], [2 * sgn, len - 2, 6], [2 * sgn, 6, 6]];
+    const g = el(car, 'g');
+    const panel = linGrad(defs, 'door' + w, 2 * sgn, 0, inner, 0, [[0, '#1F242B'], [1, '#3A414B']]);
+    el(g, 'path', { d: roundedPoly(pts), fill: panel, stroke: '#14171C', 'stroke-width': 1.5 });
+    if (w[0] === 'F') {
+      const mirror = linGrad(defs, 'mirror' + w, 0, -4, 0, 4, [[0, '#4B535E'], [1, '#1F242B']]);
+      el(g, 'rect', { x: -8, y: -4, width: 16, height: 8, rx: 4, fill: mirror, transform: `translate(${9 * sgn} 10) rotate(${-20 * sgn})` });
+    }
+    el(g, 'rect', { x: -5 * sgn - 1.25, y: Math.round(len * 0.45) - 6, width: 2.5, height: 12, rx: 1.2, fill: '#5E6672' });
+    const hl = el(g, 'path', { d: roundedPoly(pts), fill: 'rgba(255,176,32,0.7)', stroke: AMBER, 'stroke-width': 2, opacity: 0 });
+    T['door' + w] = easedPart((a) => g.setAttribute('transform', `translate(${hx} ${hy}) rotate(${(a * -28.6 * sgn).toFixed(2)})`), 0);
+    T['door' + w + 'Hl'] = easedPart((o) => hl.setAttribute('opacity', o.toFixed(3)), 0);
+  }
+})();
+
+/* ── Render ── */
+function setText(node, s) { if (node.textContent !== s) node.textContent = s; }
+function render(c) {
+  const imperial = !!c.isImperial;
+  const speed = num(c.egoSpeed, 0), limit = num(c.fusedSpeedLimit, 0);
+
+  // Top bar, edges
+  blinkLeft.setAttribute('opacity', num(c.leftBlinker, 0) === 2 ? 1 : 0);
+  blinkRight.setAttribute('opacity', num(c.rightBlinker, 0) === 2 ? 1 : 0);
+  $('chipDoor').classList.toggle('on', num(c.anyDoorOpen, 0) > 0);
+  $('chipBelt').classList.toggle('on', c.buckleStatus !== undefined && num(c.buckleStatus, 1) === 0);
+  $('chipLane').classList.toggle('on', !!c.changingLane);
+  const lbs = num(c.leftBlindSpot, 0), rbs = num(c.rightBlindSpot, 0);
+  $('bsLeft').style.opacity = clamp(lbs, 0, 1);
+  $('bsLeftUrgent').style.opacity = clamp(lbs - 1, 0, 1);
+  $('bsRight').style.opacity = clamp(rbs, 0, 1);
+  $('bsRightUrgent').style.opacity = clamp(rbs - 1, 0, 1);
+
+  // Power + battery
+  const power = clamp(num(c.powerLevel, 0), -100, 100);
+  P.needle.setAttribute('transform', `rotate(${(power * 1.2).toFixed(2)})`);
+  P.discharge.setAttribute('d', power > 0 ? arc(200, 0, power * 1.2) : '');
+  P.regen.setAttribute('d', power < 0 ? arc(200, power * 1.2, 0) : '');
+  setText($('pKw'), String(Math.round(num(c.packCurrent, 0) * num(c.packVoltage, 0) / 1000)));
+  const buffer = num(c.energyBuffer, 0);
+  const soc = clamp((num(c.nominalEnergyRemaining, 0) - buffer) / Math.max(0.01, num(c.fullPackEnergy, 0) - buffer) * 100, 0, 100);
+  setText($('pSoc'), String(Math.round(soc)));
+  P.socFill.setAttribute('width', (soc * 3).toFixed(1));
+  P.socFill.setAttribute('fill', soc < 19 ? RED : GREEN);
+  setText($('pTMin'), String(Math.round(num(c.packTMin, 0))));
+  setText($('pTMax'), String(Math.round(num(c.packTMax, 0))));
+
+  // Speedometer
+  const sweep = arc(330, -135, speedAngle(speed));
+  const over = clamp((speed - (limit + 2)) / 3, 0, 1) * Math.min(1, limit);
+  S.arc.setAttribute('d', sweep);
+  S.arcCruise.setAttribute('d', sweep);
+  S.arcOver.setAttribute('d', sweep);
+  S.arcCruise.setAttribute('opacity', c.adasOn ? 1 : 0);
+  S.arcOver.setAttribute('opacity', over.toFixed(2));
+  S.pointer.setAttribute('transform', `rotate(${speedAngle(speed).toFixed(2)})`);
+  setText(S.speed, String(Math.round(speed)));
+  S.speed.setAttribute('fill', over >= 0.5 ? RED : TEXT);
+  setText(S.unit, imperial ? 'mph' : 'km/h');
+  const setSpeed = num(c.accSetSpeed, 0);
+  S.set.setAttribute('opacity', clamp(setSpeed, 0, 1));
+  S.marker.setAttribute('opacity', clamp(setSpeed, 0, 1));
+  S.marker.setAttribute('transform', `rotate(${speedAngle(setSpeed).toFixed(2)})`);
+  S.setPill.setAttribute('fill', c.adasOn ? BLUE : '#262A31');
+  setText(S.setValue, String(Math.round(setSpeed)));
+  S.assist.setAttribute('opacity', c.adasOn || c.madsActive ? 1 : 0);
+  const gear = num(c.gear, 0);
+  S.gears.forEach((g, i) => {
+    const on = gear === i + 1;
+    g.pill.setAttribute('opacity', on ? 1 : 0);
+    g.t.setAttribute('fill', on ? TEXT : DIM);
+  });
+  S.limit.setAttribute('opacity', clamp(limit, 0, 1));
+  const sign = num(c.speedLimitSignType, 0), lim = String(Math.round(limit));
+  S.signRound.setAttribute('display', sign === 0 ? 'inline' : 'none');
+  S.signUs.setAttribute('display', sign === 1 ? 'inline' : 'none');
+  S.signCa.setAttribute('display', sign === 2 ? 'inline' : 'none');
+  setText(S.limitRound, lim); setText(S.limitUs, lim); setText(S.limitCa, lim);
+
+  // Tyres (native values are bar / °C / V; pressure shows in psi)
+  for (const w of ['FL', 'FR', 'RL', 'RR']) {
+    const r = T.wheels[w];
+    const p = num(c['tpmsPressure' + w], -1), t = num(c['tpmsTemp' + w], -100), b = num(c['tpmsBatt' + w], -1);
+    setText(r.p.firstChild, p >= 0 ? String(Math.round(p * 14.5038)) : '--');
+    r.p.firstChild.setAttribute('fill', p >= 0 ? TEXT : DIM);
+    setText(r.p.lastChild, p >= 0 ? ' psi' : '');
+    setText(r.t.firstChild, t > -100 ? String(Math.round(imperial ? t * 1.8 + 32 : t)) : '--');
+    r.t.firstChild.setAttribute('fill', t > -100 ? SUB : DIM);
+    setText(r.t.lastChild, t > -100 ? (imperial ? '°F' : '°C') : '');
+    r.b.setAttribute('opacity', b >= 0 ? 1 : 0);
+    setText(r.b.firstChild, b >= 0 ? b.toFixed(1) : '');
+  }
+  setText(T.odo.childNodes[1], String(Math.round(num(c.odometer, 0))));
+  setText(T.odo.lastChild, imperial ? ' mi' : ' km');
+
+  // Doors, frunk, trunk: the liftgate angle folds the trunk; unlatched with no angle reads ajar.
+  for (const w of ['FL', 'FR', 'RL', 'RR']) {
+    const open = num(c['doorOpen' + w], 0) > 0 ? 1 : 0;
+    T['door' + w](open);
+    T['door' + w + 'Hl'](open);
+  }
+  const frunk = num(c.frunkOpen, 0) > 0 ? 1 : 0;
+  T.frunk(1 - 0.58 * frunk);
+  T.frunkHl(frunk);
+  const trunkOpen = num(c.trunkOpen, 0) > 0 ? 1 : 0;
+  const fold = Math.max(clamp(num(c.trunkPosition, 0) / 95, 0, 1), trunkOpen * 0.15);
+  T.trunk(1 - 0.58 * fold);
+  T.trunkHl(trunkOpen);
+}
+
+/* ── Data: iOS calls receiveMessage(state); Android calls onCarStateUpdate() ── */
+let pending = null, frame = 0;
+function receiveMessage(state) {
+  pending = state;
+  if (!frame) frame = requestAnimationFrame(() => { frame = 0; const s = pending; pending = null; if (s) render(s); });
+}
+function readNative(method, fallback) {
+  try {
+    const fn = window.NativeCarState && window.NativeCarState[method];
+    return typeof fn === 'function' ? fn.call(window.NativeCarState) : fallback;
+  } catch (_) { return fallback; }
+}
+const NATIVE_KEYS = ['egoSpeed', 'gear', 'leftBlinker', 'rightBlinker', 'leftBlindSpot', 'rightBlindSpot', 'fusedSpeedLimit',
+  'anyDoorOpen', 'buckleStatus', 'accSetSpeed', 'fullPackEnergy', 'nominalEnergyRemaining', 'energyBuffer', 'powerLevel',
+  'packVoltage', 'packCurrent', 'packTMin', 'packTMax', 'odometer', 'speedLimitSignType',
+  'doorOpenFL', 'doorOpenFR', 'doorOpenRL', 'doorOpenRR', 'frunkOpen', 'trunkOpen', 'trunkPosition'];
+for (const w of ['FL', 'FR', 'RL', 'RR']) NATIVE_KEYS.push('tpmsPressure' + w, 'tpmsTemp' + w, 'tpmsBatt' + w);
+window.onCarStateUpdate = function () {
+  const s = {};
+  for (const k of NATIVE_KEYS) s[k] = readNative('get' + k[0].toUpperCase() + k.slice(1), undefined);
+  s.adasOn = readNative('isAdasOn', false);
+  s.madsActive = readNative('isMadsActive', false);
+  s.changingLane = readNative('isChangingLane', false);
+  s.isImperial = readNative('isImperial', false);
+  receiveMessage(s);
+};
+window.receiveMessage = receiveMessage;
+
+receiveMessage({ gear: 1 });
+</script>
+</body>
+</html>

@@ -58,6 +58,13 @@ let availableDashboards: [DashboardConfig] = [
         type: .rive,
         screenshotName: "preview_rive"
     ),
+    DashboardConfig(
+        id: "sport",
+        name: String(localized: "Sport"),
+        url: "sport",
+        type: .web,
+        screenshotName: "preview_sport"
+    ),
 ]
 
 let devRiveDashboardId = "dev_rive"

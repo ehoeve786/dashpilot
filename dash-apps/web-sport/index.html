@@ -35,8 +35,11 @@ html, body {
 }
 .chip.on { display: flex; }
 #main { flex: 1 1 0; min-height: 0; display: flex; gap: calc(24 * var(--u)); }
-#main > svg { flex: 1 1 0; min-width: 0; height: 100%; }
+#main > svg, #tyresWrap { flex: 1 1 0; min-width: 0; height: 100%; }
 #main > svg#speedo { flex-grow: 1.7; }
+#tyresWrap { position: relative; }
+#tyresWrap > svg { width: 100%; height: 100%; }
+#car3dCanvas { position: absolute; pointer-events: none; }
 .edge { position: fixed; top: 0; bottom: 0; opacity: 0; pointer-events: none; }
 svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dominant-baseline: central; white-space: pre; }
 </style>
@@ -60,7 +63,10 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
   <div id="main">
     <svg id="power" viewBox="0 0 460 630" preserveAspectRatio="xMidYMid meet"></svg>
     <svg id="speedo" viewBox="0 0 820 760" preserveAspectRatio="xMidYMid meet"></svg>
-    <svg id="tyres" viewBox="0 0 460 630" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="tyresWrap">
+      <svg id="tyres" viewBox="0 0 460 630" preserveAspectRatio="xMidYMid meet"></svg>
+      <canvas id="car3dCanvas"></canvas>
+    </div>
   </div>
 </div>
 
@@ -270,7 +276,7 @@ const T = { wheels: {} };
   });
   T.odo = label(svg, 230, 590, [['ODO  ', 20, SUB, 600, 3], ['0', 30, TEXT, 600, 0], [' km', 24, SUB, 400, 0]]);
 
-  const car = el(svg, 'g', { transform: 'translate(230 255) scale(1.4)' });
+  const car = el(svg, 'g', { id: 'carSvg', transform: 'translate(230 255) scale(1.4)' });
   // Painted bottom-up: shadow, wheels, body, openings, lids, glass, doors.
   el(car, 'ellipse', { rx: 100, ry: 175, fill: 'url(#carShadow)' });
   const wheelPaint = linGrad(defs, 'wheelPaint', -70, 0, 70, 0, [[0, '#111317'], [0.5, '#2A2E35'], [1, '#111317']]);
@@ -428,6 +434,7 @@ function render(c) {
   const fold = Math.max(clamp(num(c.trunkPosition, 0) / 95, 0, 1), trunkOpen * 0.15);
   T.trunk(1 - 0.58 * fold);
   T.trunkHl(trunkOpen);
+  if (window.car3d && typeof window.car3d.update === 'function') window.car3d.update(c);
 }
 
 /* ── Data: iOS calls receiveMessage(state); Android calls onCarStateUpdate() ── */
@@ -444,7 +451,7 @@ function readNative(method, fallback) {
 }
 const NATIVE_KEYS = ['egoSpeed', 'gear', 'leftBlinker', 'rightBlinker', 'leftBlindSpot', 'rightBlindSpot', 'fusedSpeedLimit',
   'anyDoorOpen', 'buckleStatus', 'accSetSpeed', 'fullPackEnergy', 'nominalEnergyRemaining', 'energyBuffer', 'powerLevel',
-  'packVoltage', 'packCurrent', 'packTMin', 'packTMax', 'odometer', 'speedLimitSignType',
+  'packVoltage', 'packCurrent', 'packTMin', 'packTMax', 'odometer', 'speedLimitSignType', 'renderQuality',
   'doorOpenFL', 'doorOpenFR', 'doorOpenRL', 'doorOpenRR', 'frunkOpen', 'trunkOpen', 'trunkPosition'];
 for (const w of ['FL', 'FR', 'RL', 'RR']) NATIVE_KEYS.push('tpmsPressure' + w, 'tpmsTemp' + w, 'tpmsBatt' + w);
 window.onCarStateUpdate = function () {
@@ -460,5 +467,7 @@ window.receiveMessage = receiveMessage;
 
 receiveMessage({ gear: 1 });
 </script>
+<script src="vendor/three-bundle.js"></script>
+<script src="car3d.js"></script>
 </body>
 </html>

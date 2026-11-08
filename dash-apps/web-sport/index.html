@@ -454,6 +454,8 @@ const NATIVE_KEYS = ['egoSpeed', 'gear', 'leftBlinker', 'rightBlinker', 'leftBli
   'packVoltage', 'packCurrent', 'packTMin', 'packTMax', 'odometer', 'speedLimitSignType', 'renderQuality',
   'doorOpenFL', 'doorOpenFR', 'doorOpenRL', 'doorOpenRR', 'frunkOpen', 'trunkOpen', 'trunkPosition'];
 for (const w of ['FL', 'FR', 'RL', 'RR']) NATIVE_KEYS.push('tpmsPressure' + w, 'tpmsTemp' + w, 'tpmsBatt' + w);
+NATIVE_KEYS.push('mirrorFoldedL', 'mirrorFoldedR');
+for (const s of ['FL', 'FR', 'RL', 'RC', 'RR']) NATIVE_KEYS.push('seatHeat' + s, 'seatBelt' + s);
 window.onCarStateUpdate = function () {
   const s = {};
   for (const k of NATIVE_KEYS) s[k] = readNative('get' + k[0].toUpperCase() + k.slice(1), undefined);

@@ -1,6 +1,7 @@
 // 3D car for the Sport dashboard: a Tesla Model Y (CC BY 4.0, see model/ATTRIBUTION.md) rendered
-// with three.js over the tyres panel. Doors, frunk and liftgate are separate parts hinged at their
-// pivots; the liftgate follows the real angle. Falls back to the SVG car when WebGL is unavailable.
+// with three.js over the tyres panel. Doors, frunk, liftgate and mirrors are separate parts hinged
+// at their pivots; the liftgate follows the real angle. The roof is cut away at the beltline to show
+// a simple cabin: seats with their heater and belt state. Falls back to the SVG car without WebGL.
 (function () {
   'use strict';
   if (!window.THREE3D) return;
@@ -20,6 +21,7 @@
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
+  renderer.localClippingEnabled = true;
 
   // Panel is a 460x630 viewBox (xMidYMid meet); the canvas covers its top 510 units so the car,
   // centred in the canvas, sits at viewBox y = 255 like the SVG car.
@@ -83,7 +85,12 @@
     door_fl: { axis: 'z', sign: -1, open: 35 }, door_rl: { axis: 'z', sign: -1, open: 35 },
     door_fr: { axis: 'z', sign: 1, open: 35 }, door_rr: { axis: 'z', sign: 1, open: 35 },
     frunk: { axis: 'x', sign: -1, open: 75 }, liftgate: { axis: 'x', sign: 1, open: 95 },
+    // Mirrors fold back on a vertical hinge at their base.
+    mirror_l: { axis: 'z', sign: 1, open: 65 }, mirror_r: { axis: 'z', sign: -1, open: 65 },
   };
+  // Everything above the beltline is cut away, in each part's own frame so an open door or lid
+  // keeps its cut. The mirrors stand above it and are kept whole.
+  const CUT_Z = 47;
   const parts = {};   // name -> { group, slab, value, from, to, t0 }
   // The model is Z-up; three.js lighting (environment, hemisphere) is Y-up. Car and camera live in
   // a rig rotated so the model's up is the world's up.
@@ -103,15 +110,26 @@
       if (!p) {
         p = parts[part] = { group: new THREE.Group(), markers: [], value: 0, from: 0, to: 0, t0: 0 };
         p.group.position.copy(node.position);
+        if (!part.startsWith('mirror')) {
+          p.plane = new THREE.Plane();
+          p.cut = new THREE.Plane(new THREE.Vector3(0, 0, -1), CUT_Z - node.position.z);
+        }
         car.add(p.group);
       }
+      const clipped = (material) => {
+        if (!p.plane) return material;
+        const c = material.clone();
+        c.clippingPlanes = [p.plane];
+        return c;
+      };
       const m = node.clone();
       m.position.set(0, 0, 0);
-      m.material = MATS[mat] || paint;
+      m.material = clipped(MATS[mat] || paint);
       p.group.add(m);
       if (mat === 'paint' || mat === 'glass') {
         const back = m.clone();
-        back.material = interior;
+        back.material = clipped(interior);
+        back.userData.inside = true;
         p.group.add(back);
       }
     });
@@ -121,7 +139,7 @@
     const box = new THREE.Box3();
     for (const name in HINGES) {
       const p = parts[name];
-      if (!p) continue;
+      if (!p || name.startsWith('mirror')) continue;
       box.setFromObject(p.group);     // world == car space (rotation is zero at load)
       const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
       p.markers = [];
@@ -138,12 +156,20 @@
         car.add(glow);
         p.markers.push([glow.material, 1.0]);
         const edges = edgeMat.clone();
+        edges.clippingPlanes = [p.plane];
         for (const m of p.group.children.slice()) {
-          if (m.isMesh && m.material !== interior) p.group.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 35), edges));
+          if (m.isMesh && !m.userData.inside) p.group.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 35), edges));
         }
         p.markers.push([edges, 0.55]);
       }
     }
+    // The mirrors sit on the front doors and swing with them.
+    for (const side of ['l', 'r']) {
+      const door = parts['door_f' + side], mirror = parts['mirror_' + side];
+      if (door && mirror) door.group.attach(mirror.group);
+    }
+    buildCabin();
+    updateCuts();
     ready = true;
     document.getElementById('carSvg').style.display = 'none';
     if (pending) update(pending);
@@ -151,6 +177,116 @@
     dirty = true;
     tick();
   }, undefined, () => { /* keep the SVG car */ });
+
+  // The cabin under the cut-away roof, built from simple shapes (the model is a hollow shell): floor,
+  // dash with the screen and wheel, centre console, two front seats and a three-seat bench. A seat
+  // turns red when someone sits there unbuckled (like the car's own display), shows a green belt
+  // across it when buckled, and an amber heater icon with one to three waves for the heater level.
+  // Model units: 196 = 4.75 m, nose at -y, driver at +x.
+  const seats = {};   // FL FR RL RC RR -> { mat, strap, heat }
+  const SEAT = 0x1e2127, SEAT_UNBUCKLED = 0xa3231c;
+  const heatTex = [null, 1, 2, 3].map((n) => {
+    if (!n) return null;
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const x = c.getContext('2d');
+    x.strokeStyle = '#ffab2e'; x.lineWidth = 11; x.lineCap = 'round';
+    for (let i = 0; i < n; i++) {
+      const cx = 64 + (i - (n - 1) / 2) * 34;
+      x.beginPath();
+      x.moveTo(cx, 112);
+      x.bezierCurveTo(cx - 22, 88, cx + 22, 64, cx, 40);
+      x.bezierCurveTo(cx - 14, 26, cx + 6, 18, cx, 12);
+      x.stroke();
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  });
+  function slab(w, d, h, r, mat) {
+    const sh = new THREE.Shape(), x = w / 2 - r, y = d / 2 - r;
+    sh.moveTo(-x, -d / 2); sh.lineTo(x, -d / 2); sh.quadraticCurveTo(w / 2, -d / 2, w / 2, -y);
+    sh.lineTo(w / 2, y); sh.quadraticCurveTo(w / 2, d / 2, x, d / 2); sh.lineTo(-x, d / 2);
+    sh.quadraticCurveTo(-w / 2, d / 2, -w / 2, y); sh.lineTo(-w / 2, -y); sh.quadraticCurveTo(-w / 2, -d / 2, -x, -d / 2);
+    const geo = new THREE.ExtrudeGeometry(sh, { depth: h, bevelEnabled: true, bevelThickness: 0.8, bevelSize: 0.8, bevelSegments: 2, curveSegments: 4 });
+    return new THREE.Mesh(geo, mat);
+  }
+  function buildCabin() {
+    const cabin = new THREE.Group();
+    car.add(cabin);
+    const dark = new THREE.MeshStandardMaterial({ color: 0x15171b, roughness: 0.9, metalness: 0 });
+    const trimMat = new THREE.MeshStandardMaterial({ color: 0x23262c, roughness: 0.6, metalness: 0.2 });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(64, 86), new THREE.MeshStandardMaterial({ color: 0x0e1013, roughness: 1 }));
+    floor.position.set(0, 16, 15.5);
+    cabin.add(floor);
+    const dash = slab(64, 9, 7, 3, dark);
+    dash.position.set(0, -25, 30);
+    cabin.add(dash);
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(17, 1.2, 10),
+      new THREE.MeshStandardMaterial({ color: 0x0b0d10, roughness: 0.2, metalness: 0.3, emissive: 0x1b2633 }));
+    screen.position.set(0, -19, 41);
+    screen.rotation.x = -0.35;
+    cabin.add(screen);
+    const wheel = new THREE.Mesh(new THREE.TorusGeometry(6, 0.9, 8, 28), trimMat);
+    wheel.position.set(15.5, -17, 36);
+    wheel.rotation.x = -70 * Math.PI / 180;
+    cabin.add(wheel);
+    const console_ = slab(10, 30, 9, 2, dark);
+    console_.position.set(0, -4, 16);
+    cabin.add(console_);
+    const strapMat = new THREE.MeshBasicMaterial({ color: 0x34c759 });
+    const layout = { FL: [15.5, 2, 22], FR: [-15.5, 2, 22], RL: [17, 33, 16], RC: [0, 33, 16], RR: [-17, 33, 16] };
+    for (const id in layout) {
+      const [x, y, w] = layout[id];
+      const mat = new THREE.MeshStandardMaterial({ color: SEAT, roughness: 0.85, metalness: 0 });
+      const seat = new THREE.Group();
+      seat.position.set(x, y, 0);
+      const cushion = slab(w, 20, 5, 3, mat);
+      cushion.position.set(0, 0, 18);
+      const back = slab(w, 6, 22, 3, mat);
+      back.rotation.x = -0.25;   // upright, leaning back
+      back.position.set(0, 12, 21);
+      seat.add(cushion, back);
+      if (y < 20) {
+        const head = slab(w * 0.55, 5, 5, 2, mat);
+        head.rotation.x = -0.25;
+        head.position.set(0, 18.5, 41);
+        seat.add(head);
+      }
+      // Belt: from the outer shoulder down across the seat to the inner hip.
+      const outer = x === 0 ? 1 : Math.sign(x);
+      const strap = new THREE.Mesh(new THREE.BoxGeometry(2.2, 26, 0.6), strapMat);
+      strap.position.set(0, 4, 25.5);
+      strap.rotation.z = outer * 0.55;
+      strap.visible = false;
+      // Heater icon on the front of the cushion, facing up (the nose is at the top of the screen).
+      const heat = new THREE.Mesh(new THREE.PlaneGeometry(9, 9),
+        new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }));
+      heat.position.set(0, -5, 25);
+      heat.rotation.z = Math.PI;
+      heat.visible = false;
+      seat.add(strap, heat);
+      cabin.add(seat);
+      seats[id] = { mat, strap, heat };
+    }
+  }
+  function setSeat(id, heat, belt) {
+    const s = seats[id];
+    if (!s) return;
+    const level = Math.max(0, Math.min(3, Math.round(heat)));
+    s.heat.visible = level > 0;
+    if (level) s.heat.material.map = heatTex[level];
+    s.heat.material.needsUpdate = true;
+    s.mat.color.setHex(belt === 1 ? SEAT_UNBUCKLED : SEAT);
+    s.strap.visible = belt === 2;
+  }
+  function updateCuts() {
+    car.updateMatrixWorld(true);
+    for (const name in parts) {
+      const p = parts[name];
+      if (p.plane) p.plane.copy(p.cut).applyMatrix4(p.group.matrixWorld);
+    }
+  }
 
   function fit() {
     const r = wrap.getBoundingClientRect();
@@ -200,6 +336,7 @@
       apply(name, p.value);
       if (t < 1) busy = true;
     }
+    updateCuts();
     animating = busy;
     dirty = true;
   }
@@ -221,6 +358,10 @@
     setTarget('frunk', n(c.frunkOpen, 0) > 0 ? HINGES.frunk.open : 0);
     const trunkOpen = n(c.trunkOpen, 0) > 0;
     setTarget('liftgate', Math.max(Math.min(n(c.trunkPosition, 0), 95), trunkOpen ? 10 : 0));
+    setTarget('mirror_l', n(c.mirrorFoldedL, 0) > 0 ? HINGES.mirror_l.open : 0);
+    setTarget('mirror_r', n(c.mirrorFoldedR, 0) > 0 ? HINGES.mirror_r.open : 0);
+    for (const id in seats) setSeat(id, n(c['seatHeat' + id], 0), n(c['seatBelt' + id], 0));
+    dirty = true;
     setQuality(n(c.renderQuality, 3));
     schedule();
   }
@@ -230,6 +371,7 @@
   // Jump every part to its target (used by capture tooling; animation is the normal path).
   function settle() {
     for (const name in parts) { const p = parts[name]; p.value = p.to; apply(name, p.to); }
+    updateCuts();
     animating = false; dirty = true; tick();
   }
   window.car3d = { update, settle };

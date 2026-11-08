@@ -7,5 +7,5 @@ Derived from **"Tesla Model Y (high detail)"** by Volkswagen Arteon on Printable
 (https://creativecommons.org/licenses/by/4.0/).
 
 Changes: the 1.6 M-triangle printing mesh was decimated to about 196 k triangles, cut into
-body, four doors, frunk lid and liftgate (hinge pivots at the part origins), and split into
+body, four doors, two side mirrors, frunk lid and liftgate (hinge pivots at the part origins), and split into
 material regions (paint, glass, tyre, rim, trim, lights). No textures were added.

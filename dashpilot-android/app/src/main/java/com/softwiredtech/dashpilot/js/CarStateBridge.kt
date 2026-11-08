@@ -3,6 +3,7 @@ package com.softwiredtech.dashpilot.js
 import android.webkit.JavascriptInterface
 import com.softwiredtech.dashpilot.datamodel.dash.CarState
 import com.softwiredtech.dashpilot.datamodel.dash.DisplaySettings
+import com.softwiredtech.dashpilot.datamodel.dash.speedLimitSignType
 
 class CarStateBridge(
     private val loadAppData: () -> String = { "" },
@@ -179,6 +180,7 @@ class CarStateBridge(
     @JavascriptInterface fun getTpmsBattFR(): Float = tpmsBattFR
     @JavascriptInterface fun getTpmsBattRL(): Float = tpmsBattRL
     @JavascriptInterface fun getTpmsBattRR(): Float = tpmsBattRR
+    @JavascriptInterface fun getSpeedLimitSignType(): Float = speedLimitSignType()
     @JavascriptInterface fun getSpeedCameraDistance(): Int = speedCameraDistance
 
     fun updateSpeedCameraDistance(distanceMeters: Int) {

@@ -1,0 +1,6 @@
+{
+  "$schema": "../manifest.schema.json",
+  "manifestVersion": 1,
+  "id": "sport",
+  "settings": ["useImperial"]
+}

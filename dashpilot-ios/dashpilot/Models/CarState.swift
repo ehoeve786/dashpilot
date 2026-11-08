@@ -71,6 +71,21 @@ struct CarState: Codable {
     var trunkPosition: Float = 0
     var frunkOpen: Float = 0
 
+    // Cabin: mirrors 1 while folded, seat heaters 0-3, seat belts 0 empty, 1 occupied
+    // but unbuckled, 2 buckled.
+    var mirrorFoldedL: Float = 0
+    var mirrorFoldedR: Float = 0
+    var seatHeatFL: Float = 0
+    var seatHeatFR: Float = 0
+    var seatHeatRL: Float = 0
+    var seatHeatRC: Float = 0
+    var seatHeatRR: Float = 0
+    var seatBeltFL: Float = 0
+    var seatBeltFR: Float = 0
+    var seatBeltRL: Float = 0
+    var seatBeltRC: Float = 0
+    var seatBeltRR: Float = 0
+
     init() {}
 
     init(from bridge: BridgeCarState) {
@@ -132,6 +147,18 @@ struct CarState: Codable {
         trunkOpen = Float(bridge.trunkOpen)
         trunkPosition = Float(bridge.trunkPosition)
         frunkOpen = Float(bridge.frunkOpen)
+        mirrorFoldedL = Float(bridge.mirrorFoldedL)
+        mirrorFoldedR = Float(bridge.mirrorFoldedR)
+        seatHeatFL = Float(bridge.seatHeatFL)
+        seatHeatFR = Float(bridge.seatHeatFR)
+        seatHeatRL = Float(bridge.seatHeatRL)
+        seatHeatRC = Float(bridge.seatHeatRC)
+        seatHeatRR = Float(bridge.seatHeatRR)
+        seatBeltFL = Float(bridge.seatBeltFL)
+        seatBeltFR = Float(bridge.seatBeltFR)
+        seatBeltRL = Float(bridge.seatBeltRL)
+        seatBeltRC = Float(bridge.seatBeltRC)
+        seatBeltRR = Float(bridge.seatBeltRR)
     }
 
     private static let kmToMiles: Float = 0.621371
@@ -204,5 +231,17 @@ struct CarState: Codable {
         trunkOpen            = try c.decodeIfPresent(Float.self, forKey: .trunkOpen)            ?? 0
         trunkPosition        = try c.decodeIfPresent(Float.self, forKey: .trunkPosition)        ?? 0
         frunkOpen            = try c.decodeIfPresent(Float.self, forKey: .frunkOpen)            ?? 0
+        mirrorFoldedL        = try c.decodeIfPresent(Float.self, forKey: .mirrorFoldedL) ?? 0
+        mirrorFoldedR        = try c.decodeIfPresent(Float.self, forKey: .mirrorFoldedR) ?? 0
+        seatHeatFL           = try c.decodeIfPresent(Float.self, forKey: .seatHeatFL) ?? 0
+        seatHeatFR           = try c.decodeIfPresent(Float.self, forKey: .seatHeatFR) ?? 0
+        seatHeatRL           = try c.decodeIfPresent(Float.self, forKey: .seatHeatRL) ?? 0
+        seatHeatRC           = try c.decodeIfPresent(Float.self, forKey: .seatHeatRC) ?? 0
+        seatHeatRR           = try c.decodeIfPresent(Float.self, forKey: .seatHeatRR) ?? 0
+        seatBeltFL           = try c.decodeIfPresent(Float.self, forKey: .seatBeltFL) ?? 0
+        seatBeltFR           = try c.decodeIfPresent(Float.self, forKey: .seatBeltFR) ?? 0
+        seatBeltRL           = try c.decodeIfPresent(Float.self, forKey: .seatBeltRL) ?? 0
+        seatBeltRC           = try c.decodeIfPresent(Float.self, forKey: .seatBeltRC) ?? 0
+        seatBeltRR           = try c.decodeIfPresent(Float.self, forKey: .seatBeltRR) ?? 0
     }
 }

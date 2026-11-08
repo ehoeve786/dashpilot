@@ -116,6 +116,42 @@ static inline void updateClosures(const CANParsers& cp, CarState& cs) {
     }
 }
 
+// VCLEFT/VCRIGHT_mirrorFoldState: 0 UNKNOWN, 1 FOLDED, 2 UNFOLDED, 3 FOLDING, 4 UNFOLDING.
+static inline double mirrorFolded(double foldState) {
+    int s = static_cast<int>(foldState);
+    return (s == 1 || s == 3) ? 1.0 : 0.0;
+}
+
+static inline double seatBelt(bool occupied, bool buckled) {
+    return buckled ? 2.0 : (occupied ? 1.0 : 0.0);
+}
+
+// Mirrors, seat heaters and seat belts, from the vehicle bus (DashKit forwards
+// 0x102, 0x103, 0x273, 0x3C2 and 0x31A). The left body controller's switches
+// (VCLEFT_switchStatus mux 0) read 1 OFF / 2 ON; the right one reports the
+// passenger's occupancy (1 OCCUPIED) and its buckles (1 LATCHED).
+static inline void updateCabin(const CANParsers& cp, CarState& cs) {
+    cs.mirrorFoldedL = mirrorFolded(cp.get(1, "VCLEFT_doorStatus", "VCLEFT_mirrorFoldState"));
+    cs.mirrorFoldedR = mirrorFolded(cp.get(1, "VCRIGHT_doorStatus", "VCRIGHT_mirrorFoldState"));
+
+    cs.seatHeatFL = cp.get(1, "UI_vehicleControl", "UI_frontLeftSeatHeatReq");
+    cs.seatHeatFR = cp.get(1, "UI_vehicleControl", "UI_frontRightSeatHeatReq");
+    cs.seatHeatRL = cp.get(1, "UI_vehicleControl", "UI_rearLeftSeatHeatReq");
+    cs.seatHeatRC = cp.get(1, "UI_vehicleControl", "UI_rearCenterSeatHeatReq");
+    cs.seatHeatRR = cp.get(1, "UI_vehicleControl", "UI_rearRightSeatHeatReq");
+
+    auto latched = [&](const char* sig) { return cp.get(1, "VCRIGHT_restraintStatus", sig) == 1.0; };
+    cs.seatBeltFR = seatBelt(latched("VCRIGHT_frontOccupancyStatus"), latched("VCRIGHT_frontBuckleStatus"));
+    if (static_cast<int>(cp.get(1, "VCLEFT_switchStatus", "VCLEFT_switchStatusIndex")) == 0) {
+        auto on = [&](const char* sig) { return cp.get(1, "VCLEFT_switchStatus", sig) == 2.0; };
+        cs.seatBeltFL = seatBelt(on("VCLEFT_frontOccupancySwitch"), on("VCLEFT_frontBuckleSwitch"));
+        cs.seatBeltRL = seatBelt(on("VCLEFT_rearLeftOccupancySwitch"), on("VCLEFT_rearLeftBuckleSwitch"));
+        cs.seatBeltRC = seatBelt(on("VCLEFT_rearCenterOccupancySwitch"), on("VCLEFT_rearCenterBuckleSwitch"));
+        // Rear right: occupancy from the left controller, buckle from the right one.
+        cs.seatBeltRR = seatBelt(on("VCLEFT_rearRightOccupancySwitch"), latched("VCRIGHT_rearRightBuckleStatus"));
+    }
+}
+
 static inline void updateVehicleBus(const CANParsers& cp, CarState& cs) {
     // Vehicle bus specific signals
     // BMS_energyStatus is multiplexed: mux 0 has pack/remaining energy, mux 1 has energyBuffer
@@ -214,6 +250,7 @@ public:
         }
 
         updateClosures(cp, cs);
+        updateCabin(cp, cs);
 
         // Climate setpoint temperature (degC) from the vehicle bus.
         cs.acTemp = cp.get(1, "UI_hvacRequest", "UI_hvacReqTempSetpointLeft");

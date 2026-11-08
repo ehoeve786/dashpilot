@@ -147,6 +147,13 @@ final class DemoDataSource: IDataSource {
         s.frunkOpen = open(4)
         s.trunkOpen = open(5)
         s.trunkPosition = opening == 5 ? 85 : 0
+        // Mirrors fold with the liftgate open; the passenger unbuckles to get out.
+        s.mirrorFoldedL = open(5)
+        s.mirrorFoldedR = open(5)
+        s.seatHeatFL = 2
+        s.seatHeatFR = 1
+        s.seatBeltFL = 2
+        s.seatBeltFR = opening == 1 ? 1 : 2
 
         s.leftBlindSpot = t.truncatingRemainder(dividingBy: 23) < 3 ? 1 : 0
         s.rightBlindSpot = t.truncatingRemainder(dividingBy: 29) < 3 ? 1 : 0

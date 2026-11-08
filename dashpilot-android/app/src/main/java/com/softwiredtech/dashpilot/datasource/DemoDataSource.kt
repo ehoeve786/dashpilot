@@ -126,6 +126,13 @@ class DemoDataSource : IDataSource {
                 frunkOpen = open(4),
                 trunkOpen = open(5),
                 trunkPosition = if (opening == 5) 85f else 0f,
+                // Mirrors fold with the liftgate open; the passenger unbuckles to get out.
+                mirrorFoldedL = open(5),
+                mirrorFoldedR = open(5),
+                seatHeatFL = 2f,
+                seatHeatFR = 1f,
+                seatBeltFL = 2f,
+                seatBeltFR = if (opening == 1) 1f else 2f,
                 buckleStatus = 1f,
                 accSetSpeed = cruise(t) + 5,
                 fullPackEnergy = 75f,

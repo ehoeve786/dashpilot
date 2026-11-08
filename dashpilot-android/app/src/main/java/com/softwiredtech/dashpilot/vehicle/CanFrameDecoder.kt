@@ -90,6 +90,19 @@ class CanFrameDecoder(
                 ambientLightingAvailable = values[58] > 0,
                 ambientLightingColor = values[59].toInt(),
                 ambientLightingBrightness = values[60].toFloat(),
+                // Cabin after ambient lighting (see CarState::CABIN_OFFSET): mirrors, seat heaters, seat belts.
+                mirrorFoldedL = values[61].toFloat(),
+                mirrorFoldedR = values[62].toFloat(),
+                seatHeatFL = values[63].toFloat(),
+                seatHeatFR = values[64].toFloat(),
+                seatHeatRL = values[65].toFloat(),
+                seatHeatRC = values[66].toFloat(),
+                seatHeatRR = values[67].toFloat(),
+                seatBeltFL = values[68].toFloat(),
+                seatBeltFR = values[69].toFloat(),
+                seatBeltRL = values[70].toFloat(),
+                seatBeltRC = values[71].toFloat(),
+                seatBeltRR = values[72].toFloat()
             )
         }
 

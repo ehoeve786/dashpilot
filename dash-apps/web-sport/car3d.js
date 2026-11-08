@@ -63,8 +63,20 @@
     tail: new THREE.MeshStandardMaterial({ color: 0x8c0f0f, roughness: 0.4, metalness: 0.1, emissive: 0x3a0404 }),
   };
   const interior = new THREE.MeshStandardMaterial({ color: 0x0b0c0f, roughness: 1, metalness: 0, side: THREE.BackSide });
-  // Open-part marker: a door-thick translucent slab, the way the car's own display draws open doors.
+  // Open-part markers. Doors: a door-thick translucent slab, the way the car's own display draws
+  // open doors. Frunk and liftgate: the interior light coming on, a soft warm glow in the opening,
+  // plus a thin light outline on the lifted lid.
   const slabMat = new THREE.MeshBasicMaterial({ color: 0xffb020, transparent: true, opacity: 0, depthWrite: false });
+  const glowCanvas = document.createElement('canvas');
+  glowCanvas.width = glowCanvas.height = 128;
+  const gg = glowCanvas.getContext('2d');
+  const rg = gg.createRadialGradient(64, 64, 4, 64, 64, 64);
+  rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(0.45, 'rgba(255,255,255,0.55)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+  gg.fillStyle = rg; gg.fillRect(0, 0, 128, 128);
+  const glowTex = new THREE.CanvasTexture(glowCanvas);
+  const glowMat = new THREE.MeshBasicMaterial({ map: glowTex, color: 0xffe2b0, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false });
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0xe6edf5, transparent: true, opacity: 0, depthWrite: false });
 
   // Hinges: axis and the open angle (deg) for the on/off parts; the liftgate uses the real angle.
   const HINGES = {
@@ -89,7 +101,7 @@
       const [part, mat] = node.name.split('__');
       let p = parts[part];
       if (!p) {
-        p = parts[part] = { group: new THREE.Group(), slab: null, value: 0, from: 0, to: 0, t0: 0 };
+        p = parts[part] = { group: new THREE.Group(), markers: [], value: 0, from: 0, to: 0, t0: 0 };
         p.group.position.copy(node.position);
         car.add(p.group);
       }
@@ -103,28 +115,34 @@
         p.group.add(back);
       }
     });
-    // Open markers, faded in with the opening angle: doors get a door-thick slab just inside the
-    // skin (sill to beltline) that swings with them; the frunk and liftgate get a sheet over the
-    // opening in the body, which is what you see from above once the lid is up.
+    // Open markers, faded in with the opening angle. Doors: a door-thick slab just inside the skin
+    // (sill to beltline) that swings with the door. Lids: a warm glow in the opening (the interior
+    // light) and an outline on the lid itself, which is otherwise hard to make out from above.
     const box = new THREE.Box3();
     for (const name in HINGES) {
       const p = parts[name];
       if (!p) continue;
       box.setFromObject(p.group);     // world == car space (rotation is zero at load)
       const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
-      const slab = new THREE.Mesh(undefined, slabMat.clone());
+      p.markers = [];
       if (name.startsWith('door')) {
         const outer = name.endsWith('l') ? box.max.x : box.min.x, sgn = name.endsWith('l') ? 1 : -1;
         const z0 = Math.max(box.min.z, 11), z1 = Math.min(box.max.z, 46);
-        slab.geometry = new THREE.BoxGeometry(6, size.y - 2, z1 - z0);
+        const slab = new THREE.Mesh(new THREE.BoxGeometry(6, size.y - 2, z1 - z0), slabMat.clone());
         slab.position.set(outer - sgn * 3, c.y, (z0 + z1) / 2).sub(p.group.position);
         p.group.add(slab);
+        p.markers.push([slab.material, 0.7]);
       } else {
-        slab.geometry = new THREE.BoxGeometry(size.x - 6, size.y - 4, 1);
-        slab.position.set(c.x, c.y, name === 'frunk' ? box.max.z - 8 : 50);
-        car.add(slab);
+        const glow = new THREE.Mesh(new THREE.PlaneGeometry(size.x * 1.4, size.y * 1.5), glowMat.clone());
+        glow.position.set(c.x, c.y, name === 'frunk' ? box.max.z - 10 : 44);
+        car.add(glow);
+        p.markers.push([glow.material, 1.0]);
+        const edges = edgeMat.clone();
+        for (const m of p.group.children.slice()) {
+          if (m.isMesh && m.material !== interior) p.group.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 35), edges));
+        }
+        p.markers.push([edges, 0.55]);
       }
-      p.slab = slab.material;
     }
     ready = true;
     document.getElementById('carSvg').style.display = 'none';
@@ -162,7 +180,8 @@
     if (!p || !h) return;
     const a = h.sign * deg * Math.PI / 180;
     p.group.rotation.set(h.axis === 'x' ? a : 0, 0, h.axis === 'z' ? a : 0);
-    if (p.slab) p.slab.opacity = Math.min(1, deg / 10) * 0.7;
+    const k = Math.min(1, deg / 10);
+    for (const [mat, max] of p.markers || []) mat.opacity = k * max;
   }
   function setTarget(name, deg) {
     const p = parts[name];

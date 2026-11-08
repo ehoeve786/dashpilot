@@ -74,6 +74,23 @@ struct CarState {
     // Frunk latch from VCFRONT_status (mux 0), same rule as the doors; it has no position.
     double frunkOpen = 0;
 
+    // Cabin, from the vehicle bus. Mirrors 1 while folded or folding, else 0
+    // (VCLEFT/VCRIGHT_mirrorFoldState). Seat heaters 0-3, the level the screen
+    // asks for (UI_vehicleControl). Seat belts 0 empty or unknown, 1 occupied
+    // but unbuckled, 2 buckled (VCLEFT_switchStatus mux 0, VCRIGHT_restraintStatus).
+    double mirrorFoldedL = 0;
+    double mirrorFoldedR = 0;
+    double seatHeatFL = 0;
+    double seatHeatFR = 0;
+    double seatHeatRL = 0;
+    double seatHeatRC = 0;
+    double seatHeatRR = 0;
+    double seatBeltFL = 0;
+    double seatBeltFR = 0;
+    double seatBeltRL = 0;
+    double seatBeltRC = 0;
+    double seatBeltRR = 0;
+
     // Vehicle VIN, empty until fully assembled by the mapper.
     static constexpr size_t VIN_LENGTH = 17;
     char vin[VIN_LENGTH + 1] = {};
@@ -84,7 +101,9 @@ struct CarState {
     static constexpr size_t TPMS_COUNT = 12;
     static constexpr size_t DOOR_OFFSET = TPMS_OFFSET + TPMS_COUNT;
     static constexpr size_t DOOR_COUNT = 7;
-    static constexpr size_t FIELD_COUNT = DOOR_OFFSET + DOOR_COUNT;
+    static constexpr size_t CABIN_OFFSET = DOOR_OFFSET + DOOR_COUNT;
+    static constexpr size_t CABIN_COUNT = 12;
+    static constexpr size_t FIELD_COUNT = CABIN_OFFSET + CABIN_COUNT;
 
     void toArray(double* out) const {
         // Party bus
@@ -158,5 +177,19 @@ struct CarState {
         out[DOOR_OFFSET + 4] = trunkOpen;
         out[DOOR_OFFSET + 5] = trunkPosition;
         out[DOOR_OFFSET + 6] = frunkOpen;
+
+        // Cabin (after closures): mirrors L R, seat heaters FL FR RL RC RR, seat belts FL FR RL RC RR.
+        out[CABIN_OFFSET + 0] = mirrorFoldedL;
+        out[CABIN_OFFSET + 1] = mirrorFoldedR;
+        out[CABIN_OFFSET + 2] = seatHeatFL;
+        out[CABIN_OFFSET + 3] = seatHeatFR;
+        out[CABIN_OFFSET + 4] = seatHeatRL;
+        out[CABIN_OFFSET + 5] = seatHeatRC;
+        out[CABIN_OFFSET + 6] = seatHeatRR;
+        out[CABIN_OFFSET + 7] = seatBeltFL;
+        out[CABIN_OFFSET + 8] = seatBeltFR;
+        out[CABIN_OFFSET + 9] = seatBeltRL;
+        out[CABIN_OFFSET + 10] = seatBeltRC;
+        out[CABIN_OFFSET + 11] = seatBeltRR;
     }
 };

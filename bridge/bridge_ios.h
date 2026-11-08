@@ -73,6 +73,20 @@ typedef struct {
     double trunkOpen;
     double trunkPosition;
     double frunkOpen;
+
+    // Cabin: mirrors folded 0/1, seat heaters 0-3, seat belts 0 empty, 1 unbuckled, 2 buckled.
+    double mirrorFoldedL;
+    double mirrorFoldedR;
+    double seatHeatFL;
+    double seatHeatFR;
+    double seatHeatRL;
+    double seatHeatRC;
+    double seatHeatRR;
+    double seatBeltFL;
+    double seatBeltFR;
+    double seatBeltRL;
+    double seatBeltRC;
+    double seatBeltRR;
 } BridgeCarState;
 
 // Context

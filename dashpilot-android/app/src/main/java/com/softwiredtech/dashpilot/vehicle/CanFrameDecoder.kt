@@ -86,7 +86,20 @@ class CanFrameDecoder(
                 doorOpenRR = values[54].toFloat(),
                 trunkOpen = values[55].toFloat(),
                 trunkPosition = values[56].toFloat(),
-                frunkOpen = values[57].toFloat()
+                frunkOpen = values[57].toFloat(),
+                // Cabin after closures (see CarState::CABIN_OFFSET): mirrors, seat heaters, seat belts.
+                mirrorFoldedL = values[58].toFloat(),
+                mirrorFoldedR = values[59].toFloat(),
+                seatHeatFL = values[60].toFloat(),
+                seatHeatFR = values[61].toFloat(),
+                seatHeatRL = values[62].toFloat(),
+                seatHeatRC = values[63].toFloat(),
+                seatHeatRR = values[64].toFloat(),
+                seatBeltFL = values[65].toFloat(),
+                seatBeltFR = values[66].toFloat(),
+                seatBeltRL = values[67].toFloat(),
+                seatBeltRC = values[68].toFloat(),
+                seatBeltRR = values[69].toFloat()
             )
         }
 

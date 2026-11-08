@@ -67,6 +67,21 @@ data class CarState(
     val trunkPosition: Float = 0f,
     val frunkOpen: Float = 0f,
 
+    // Cabin: mirrors 1 while folded, seat heaters 0-3, seat belts 0 empty, 1 occupied
+    // but unbuckled, 2 buckled.
+    val mirrorFoldedL: Float = 0f,
+    val mirrorFoldedR: Float = 0f,
+    val seatHeatFL: Float = 0f,
+    val seatHeatFR: Float = 0f,
+    val seatHeatRL: Float = 0f,
+    val seatHeatRC: Float = 0f,
+    val seatHeatRR: Float = 0f,
+    val seatBeltFL: Float = 0f,
+    val seatBeltFR: Float = 0f,
+    val seatBeltRL: Float = 0f,
+    val seatBeltRC: Float = 0f,
+    val seatBeltRR: Float = 0f,
+
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = ""
 ) {
@@ -80,7 +95,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 58
+        const val FIELD_COUNT = 70
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

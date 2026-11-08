@@ -62,6 +62,18 @@ static void carStateToBridge(const CarState& cs, BridgeCarState* out) {
     out->trunkOpen = cs.trunkOpen;
     out->trunkPosition = cs.trunkPosition;
     out->frunkOpen = cs.frunkOpen;
+    out->mirrorFoldedL = cs.mirrorFoldedL;
+    out->mirrorFoldedR = cs.mirrorFoldedR;
+    out->seatHeatFL = cs.seatHeatFL;
+    out->seatHeatFR = cs.seatHeatFR;
+    out->seatHeatRL = cs.seatHeatRL;
+    out->seatHeatRC = cs.seatHeatRC;
+    out->seatHeatRR = cs.seatHeatRR;
+    out->seatBeltFL = cs.seatBeltFL;
+    out->seatBeltFR = cs.seatBeltFR;
+    out->seatBeltRL = cs.seatBeltRL;
+    out->seatBeltRC = cs.seatBeltRC;
+    out->seatBeltRR = cs.seatBeltRR;
 }
 
 static std::atomic<bool> receiveLoopRunning{false};

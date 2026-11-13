@@ -4538,6 +4538,11 @@ BO_ 1376 GTW_factoryEcuPresent: 4 VEH
  SG_ GTW_VCRIGHTpresent: 21|1@1+ (1,0) [0|0] "" X
  SG_ GTW_VCSECpresent: 17|1@1+ (1,0) [0|0] "" X
 
+BO_ 2032 COMMA_status: 8 X
+ SG_ COMMA_active : 0|1@1+ (1,0) [0|1] "" X
+ SG_ COMMA_experimental : 1|1@1+ (1,0) [0|1] "" X
+ SG_ COMMA_laneChange : 2|1@1+ (1,0) [0|1] "" X
+
 BO_ 2033 GTW_hrl: 7 VEH
  SG_ GTW_hrlIndex M: 0|2@1+ (1,0) [0|0] "" X
  SG_ GTW_hrlPagesCount m1: 8|32@0+ (1,0) [0|0] "" X

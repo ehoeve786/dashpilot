@@ -222,6 +222,12 @@ public:
         cs.trafficLightColor = cp.get(0, "DAS_road", "DAS_trafficLightColor");
         cs.stopLineDist = cp.get(0, "DAS_road", "DAS_stopLineDist");
 
+        // openpilot state from the comma 3X over its USB link to the DashKit, which forwards it as
+        // COMMA_status (0x7F0, bus 1; app-only, never on CAN). All zero once the C3X goes quiet for 1 s.
+        cs.selfdriveActive = cp.get(1, "COMMA_status", "COMMA_active");
+        cs.experimentalMode = cp.get(1, "COMMA_status", "COMMA_experimental");
+        cs.changingLane = cp.get(1, "COMMA_status", "COMMA_laneChange");
+
         cs.leftBlinker = leftBlinkerHold_.update(
             cp.get(1, "VCLEFT_lightStatus", "VCLEFT_turnSignalStatus"));
         cs.rightBlinker = rightBlinkerHold_.update(

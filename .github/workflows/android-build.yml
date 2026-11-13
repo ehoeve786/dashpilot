@@ -2,7 +2,7 @@ name: Build Android App
 
 on:
   push:
-    branches: [main]
+    branches: [main, comma-via-dashkit]
   pull_request:
 
 jobs:
@@ -30,3 +30,10 @@ jobs:
       - name: Build debug APK
         working-directory: dashpilot-android
         run: ./gradlew assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashpilot-debug-${{ github.sha }}
+          path: dashpilot-android/app/build/outputs/apk/debug/*.apk
+          retention-days: 14

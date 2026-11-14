@@ -75,6 +75,13 @@ class DashKitBleManager(internal val context: Context) {
         private val CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
         private const val MAX_SUBSCRIBE_ATTEMPTS = 3
         private const val SUBSCRIBE_RETRY_DELAY_MS = 250L
+
+        // Command write queue (see writeCommand): retry while another GATT
+        // operation holds the single slot; give up on a write whose
+        // onCharacteristicWrite never comes.
+        private const val MAX_WRITE_ATTEMPTS = 20
+        private const val WRITE_RETRY_DELAY_MS = 50L
+        private const val WRITE_TIMEOUT_MS = 3_000L
     }
 
     private val crashlytics = FirebaseCrashlytics.getInstance()
@@ -500,6 +507,10 @@ class DashKitBleManager(internal val context: Context) {
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
+            synchronized(writeQueue) {
+                if (writeInFlight?.characteristic?.uuid == characteristic.uuid) writeInFlight = null
+            }
+            drainWrites()
             forEachListener { it.onCharacteristicWrite(g, characteristic, status) }
         }
 
@@ -684,9 +695,25 @@ class DashKitBleManager(internal val context: Context) {
         writeCccd()
     }
 
+    private class PendingWrite(
+        val gatt: BluetoothGatt,
+        val characteristic: BluetoothGattCharacteristic,
+        val payload: ByteArray,
+        val logTag: String
+    ) {
+        var attempts = 0
+        var sentAtMs = 0L
+    }
+
+    // Android allows one GATT operation in flight; a write issued while another
+    // is pending is refused. Commands (pings, controls, settings, the resync
+    // burst on connect, Tesla commands) go out one at a time from this queue.
+    private val writeQueue = ArrayDeque<PendingWrite>()
+    private var writeInFlight: PendingWrite? = null  // guarded by writeQueue
+
     /** Write-with-response to a characteristic on the current connection.
-     * Returns true if the write was dispatched (not acknowledged). Shared by
-     * the CAN control and Tesla app-channel commands. */
+     * Returns true if the write was queued (not acknowledged); writes go out
+     * one at a time. Shared by the CAN control and Tesla app-channel commands. */
     fun writeCommand(
         serviceUuid: UUID,
         charUuid: UUID,
@@ -701,19 +728,57 @@ class DashKitBleManager(internal val context: Context) {
             Log.w(logTag, "Characteristic $charUuid not found; firmware may be older")
             return false
         }
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            gatt.writeCharacteristic(
-                characteristic,
-                payload,
+        synchronized(writeQueue) {
+            writeQueue.addLast(PendingWrite(gatt, characteristic, payload, logTag))
+        }
+        drainWrites()
+        return true
+    }
+
+    private fun drainWrites() {
+        synchronized(writeQueue) {
+            val now = android.os.SystemClock.elapsedRealtime()
+            writeInFlight?.let {
+                // Link replaced, or the completion never came: stop waiting.
+                if (it.gatt !== gatt || now - it.sentAtMs > WRITE_TIMEOUT_MS) writeInFlight = null
+            }
+            while (writeInFlight == null) {
+                val next = writeQueue.firstOrNull() ?: return
+                if (next.gatt !== gatt) {
+                    writeQueue.removeFirst()  // queued for a link that is gone
+                    continue
+                }
+                if (dispatchWrite(next)) {
+                    writeQueue.removeFirst()
+                    next.sentAtMs = now
+                    writeInFlight = next
+                    return
+                }
+                next.attempts++
+                if (next.attempts >= MAX_WRITE_ATTEMPTS) {
+                    Log.w(next.logTag, "Command write not accepted after ${next.attempts} attempts; dropping")
+                    writeQueue.removeFirst()
+                    continue
+                }
+                handler.postDelayed({ drainWrites() }, WRITE_RETRY_DELAY_MS)
+                return
+            }
+        }
+    }
+
+    private fun dispatchWrite(w: PendingWrite): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            w.gatt.writeCharacteristic(
+                w.characteristic,
+                w.payload,
                 BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
             ) == BluetoothGatt.GATT_SUCCESS
         } else {
             @Suppress("DEPRECATION")
-            characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            w.characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
             @Suppress("DEPRECATION")
-            characteristic.value = payload
+            w.characteristic.value = w.payload
             @Suppress("DEPRECATION")
-            gatt.writeCharacteristic(characteristic)
+            w.gatt.writeCharacteristic(w.characteristic)
         }
-    }
 }

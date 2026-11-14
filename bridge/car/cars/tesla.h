@@ -180,13 +180,30 @@ public:
     }
 };
 
+// DashKit chassis bus: assist is on while TACC is engaged (DAS_control
+// DAS_accState 3 ACC_HOLD / 4 ACC_ON; with openpilot the car only ever sees
+// TACC) or Autosteer is (DAS_status DAS_autopilotState 3-5 ACTIVE_*).
+// DashKit firmware older than the one forwarding DAS_control (0x2B9) never
+// delivers it; keep the previous DAS_lssState rule for that case, although
+// lssState is the lane safety system (2 LKA, 3 ELK, ..., 7 OFF), not ADAS.
+static inline double dashKitAdasOn(const CANParsers& cp) {
+    uint64_t acc = 0;
+    if (!cp.getRaw(0, "DAS_control", "DAS_accState", &acc)) {
+        return cp.get(0, "DAS_status2", "DAS_lssState") >= 2.0 ? 1.0 : 0.0;
+    }
+    double ap = cp.get(0, "DAS_status", "DAS_autopilotState");
+    bool tacc = acc == 3 || acc == 4;
+    bool autosteer = ap >= 3.0 && ap <= 5.0;
+    return (tacc || autosteer) ? 1.0 : 0.0;
+}
+
 class TeslaDashKitMapper : public CarStateMapper {
 public:
     void update(const CANParsers &cp, CarState &cs) override {
         cs.egoSteeringAngle = cp.get(0, "SCCM_steeringAngleSensor", "SCCM_steeringAngle");
         cs.gear = cp.get(0, "DI_systemStatus", "DI_gear");
         cs.egoSpeed = cp.get(0, "DI_speed", "DI_uiSpeed");
-        cs.adasOn = cp.get(0, "DAS_status2", "DAS_lssState") >= 2.0 ? 1.0 : 0.0;
+        cs.adasOn = dashKitAdasOn(cp);
 
         // TODO: Invalid in case of DashKit. Look for an equivalent.
         cs.accSetSpeed = cp.get(0, "DI_state", "DI_digitalSpeed");

@@ -1062,7 +1062,7 @@ BO_ 1010 BMS_kwhCountersMultiplexed: 8 VEH
 
 BO_ 594 BMS_powerAvailable: 8 VEH
  SG_ BMS_hvacPowerBudget: 50|10@1+ (0.02,0) [0|0] "kW" X
- SG_ BMS_maxDischargePower: 16|16@1+ (0.01,0) [0|0] "kW" X
+ SG_ BMS_maxDischargePower: 16|16@1+ (0.013,0) [0|0] "kW" X
  SG_ BMS_maxRegenPower: 0|16@1+ (0.01,0) [0|0] "kW" X
  SG_ BMS_maxStationaryHeatPower: 32|10@1+ (0.01,0) [0|0] "kW" X
  SG_ BMS_powerLimitsState: 48|1@1+ (1,0) [0|0] "" X

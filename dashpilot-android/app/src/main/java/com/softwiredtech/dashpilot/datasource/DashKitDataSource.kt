@@ -90,9 +90,10 @@ class DashKitDataSource(
 
     private fun parseAndEmit(payload: ByteArray) {
         if (payload.isEmpty()) return
-        for (frame in parseCanPacket(payload)) {
-            if (BuildConfig.DEBUG) writeCanLog(frame.bus, frame.address, frame.data)
-            currentState = decoder.decodeFrame(frame.bus, frame.address, frame.data) ?: return
+        val frames = parseCanPacket(payload)
+        if (BuildConfig.DEBUG) frames.forEach { writeCanLog(it.bus, it.address, it.data) }
+        if (frames.isNotEmpty()) {
+            currentState = decoder.decodeFrames(frames) ?: return
         }
         _incoming.tryEmit(currentState)
     }

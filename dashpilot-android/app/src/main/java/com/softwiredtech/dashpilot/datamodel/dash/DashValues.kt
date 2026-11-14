@@ -7,7 +7,9 @@ import java.util.Locale
 fun DashState.dashValues(systemDarkMode: Boolean? = null): Map<String, Any> {
     val c = carState
     val d = displaySettings
-    return mapOf(
+    val values = mutableMapOf<String, Any>(
+        "ambientLightingAvailable" to c.ambientLightingAvailable,
+        "ambientLightingBrightness" to c.ambientLightingBrightness,
         "egoSpeed" to c.egoSpeed,
         "gear" to c.gear,
         "egoSteeringAngle" to c.egoSteeringAngle,
@@ -83,6 +85,10 @@ fun DashState.dashValues(systemDarkMode: Boolean? = null): Map<String, Any> {
         "speedCameraDistance" to speedCameraDistance.toFloat(),
         "speedLimitSignType" to speedLimitSignType(),
     )
+    if (c.ambientLightingAvailable) {
+        values["ambientLightingColor"] = c.ambientLightingColor or 0xFF000000.toInt()
+    }
+    return values
 }
 
 // 0 = round (Vienna convention), 1 = US, 2 = Canada; from the phone's region, like the speed limit units.

@@ -83,7 +83,10 @@ data class CarState(
     val seatBeltRR: Float = 0f,
 
     // Empty until fully assembled from the CAN stream by the native mapper.
-    val vin: String = ""
+    val vin: String = "",
+    val ambientLightingAvailable: Boolean = false,
+    val ambientLightingColor: Int = 0, // Packed RGB (0xRRGGBB).
+    val ambientLightingBrightness: Float = 0f,
 ) {
     fun toImperial(): CarState = copy(
         odometer = odometer * KM_TO_MILES,
@@ -95,7 +98,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 70
+        const val FIELD_COUNT = 73
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

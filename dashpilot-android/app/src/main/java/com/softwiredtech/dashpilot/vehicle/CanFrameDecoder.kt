@@ -87,19 +87,22 @@ class CanFrameDecoder(
                 trunkOpen = values[55].toFloat(),
                 trunkPosition = values[56].toFloat(),
                 frunkOpen = values[57].toFloat(),
-                // Cabin after closures (see CarState::CABIN_OFFSET): mirrors, seat heaters, seat belts.
-                mirrorFoldedL = values[58].toFloat(),
-                mirrorFoldedR = values[59].toFloat(),
-                seatHeatFL = values[60].toFloat(),
-                seatHeatFR = values[61].toFloat(),
-                seatHeatRL = values[62].toFloat(),
-                seatHeatRC = values[63].toFloat(),
-                seatHeatRR = values[64].toFloat(),
-                seatBeltFL = values[65].toFloat(),
-                seatBeltFR = values[66].toFloat(),
-                seatBeltRL = values[67].toFloat(),
-                seatBeltRC = values[68].toFloat(),
-                seatBeltRR = values[69].toFloat()
+                ambientLightingAvailable = values[58] > 0,
+                ambientLightingColor = values[59].toInt(),
+                ambientLightingBrightness = values[60].toFloat(),
+                // Cabin after ambient lighting (see CarState::CABIN_OFFSET): mirrors, seat heaters, seat belts.
+                mirrorFoldedL = values[61].toFloat(),
+                mirrorFoldedR = values[62].toFloat(),
+                seatHeatFL = values[63].toFloat(),
+                seatHeatFR = values[64].toFloat(),
+                seatHeatRL = values[65].toFloat(),
+                seatHeatRC = values[66].toFloat(),
+                seatHeatRR = values[67].toFloat(),
+                seatBeltFL = values[68].toFloat(),
+                seatBeltFR = values[69].toFloat(),
+                seatBeltRL = values[70].toFloat(),
+                seatBeltRC = values[71].toFloat(),
+                seatBeltRR = values[72].toFloat()
             )
         }
 

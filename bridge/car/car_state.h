@@ -101,7 +101,12 @@ struct CarState {
     static constexpr size_t TPMS_COUNT = 12;
     static constexpr size_t DOOR_OFFSET = TPMS_OFFSET + TPMS_COUNT;
     static constexpr size_t DOOR_COUNT = 7;
-    static constexpr size_t CABIN_OFFSET = DOOR_OFFSET + DOOR_COUNT;
+    // Append fields after closures to preserve all existing array indices.
+    double ambientLightingAvailable = 0;
+    double ambientLightingColor = 0;  // Packed RGB (0xRRGGBB).
+    double ambientLightingBrightness = 0;
+    static constexpr size_t AMBIENT_OFFSET = DOOR_OFFSET + DOOR_COUNT;
+    static constexpr size_t CABIN_OFFSET = AMBIENT_OFFSET + 3;
     static constexpr size_t CABIN_COUNT = 12;
     static constexpr size_t FIELD_COUNT = CABIN_OFFSET + CABIN_COUNT;
 
@@ -178,7 +183,11 @@ struct CarState {
         out[DOOR_OFFSET + 5] = trunkPosition;
         out[DOOR_OFFSET + 6] = frunkOpen;
 
-        // Cabin (after closures): mirrors L R, seat heaters FL FR RL RC RR, seat belts FL FR RL RC RR.
+        out[AMBIENT_OFFSET + 0] = ambientLightingAvailable;
+        out[AMBIENT_OFFSET + 1] = ambientLightingColor;
+        out[AMBIENT_OFFSET + 2] = ambientLightingBrightness;
+
+        // Cabin (after ambient lighting): mirrors L R, seat heaters FL FR RL RC RR, seat belts FL FR RL RC RR.
         out[CABIN_OFFSET + 0] = mirrorFoldedL;
         out[CABIN_OFFSET + 1] = mirrorFoldedR;
         out[CABIN_OFFSET + 2] = seatHeatFL;

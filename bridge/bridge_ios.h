@@ -74,6 +74,10 @@ typedef struct {
     double trunkPosition;
     double frunkOpen;
 
+    double ambientLightingAvailable;
+    uint32_t ambientLightingColor;
+    double ambientLightingBrightness;
+
     // Cabin: mirrors folded 0/1, seat heaters 0-3, seat belts 0 empty, 1 unbuckled, 2 buckled.
     double mirrorFoldedL;
     double mirrorFoldedR;

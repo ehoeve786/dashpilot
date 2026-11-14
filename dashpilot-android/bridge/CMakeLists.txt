@@ -106,4 +106,14 @@ set(TESLA_DBC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../app/src/main/assets/vehicles/t
 add_test(NAME tesla_ambient_lighting COMMAND tesla_ambient_lighting_test
         "${TESLA_DBC_DIR}/bus_1_tesla_vehicle.dbc"
         "${TESLA_DBC_DIR}/new_gen_juniper.dbc")
+
+add_executable(tesla_adas_mapper_test
+        tests/tesla_adas_mapper_test.cpp
+        ${MSGQ_ROOT}/dbc/dbc.cc
+        ${MSGQ_ROOT}/dbc/dbcfile.cc
+)
+target_include_directories(tesla_adas_mapper_test PRIVATE ${MSGQ_ROOT})
+target_compile_options(tesla_adas_mapper_test PRIVATE -Wall -Wextra)
+add_test(NAME tesla_adas_mapper COMMAND tesla_adas_mapper_test
+        "${TESLA_DBC_DIR}/bus_1_tesla_vehicle.dbc")
 endif()

@@ -11,6 +11,8 @@ const val PREF_DEV_URL_HINT_SHOWN = "dev_url_hint_shown"
 // Opt-in: Rive dashboards render on a deferred worker, which GPU Canvas (WGSL) content needs.
 const val PREF_DEV_RIVE_GPU_CANVAS = "dev_rive_gpu_canvas"
 const val DEFAULT_DEV_RIVE_GPU_CANVAS = false
+const val PREF_DEV_CAN_LOG = "dev_can_log"
+const val PREF_DEV_CAN_LOG_ALL = "dev_can_log_all"
 
 const val PREF_DASH_APP_DATA_PREFIX = "dash_app_data."
 
@@ -123,6 +125,26 @@ fun isDevRiveGpuCanvasEnabled(context: Context): Boolean =
 fun setDevRiveGpuCanvasEnabled(context: Context, value: Boolean) {
     context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
         .edit { putBoolean(PREF_DEV_RIVE_GPU_CANVAS, value) }
+}
+
+/** Developer option: record the DashKit stream to a CSV (see CanLog). */
+fun isDevCanLogEnabled(context: Context): Boolean =
+    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
+        .getBoolean(PREF_DEV_CAN_LOG, false)
+
+fun setDevCanLogEnabled(context: Context, value: Boolean) {
+    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
+        .edit { putBoolean(PREF_DEV_CAN_LOG, value) }
+}
+
+/** Developer option: while recording, ask stream-all firmware for every frame. */
+fun isDevCanLogAllEnabled(context: Context): Boolean =
+    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
+        .getBoolean(PREF_DEV_CAN_LOG_ALL, false)
+
+fun setDevCanLogAllEnabled(context: Context, value: Boolean) {
+    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
+        .edit { putBoolean(PREF_DEV_CAN_LOG_ALL, value) }
 }
 
 fun isOnboardingCompleted(context: Context): Boolean =

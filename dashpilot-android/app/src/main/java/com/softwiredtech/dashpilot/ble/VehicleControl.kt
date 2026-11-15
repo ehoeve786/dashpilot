@@ -99,6 +99,10 @@ object VehicleControl {
 
     // --- Door unlatch (VCSEC_requests 0x1F9); value = door index ---
     const val CMD_DOOR_UNLATCH: Int = 0x50
+
+    // --- Diagnostic records in the CAN stream (firmware can_diag.h) ---
+    // 1 = on, 0 = off. Not persisted; the DashKit switches it off on disconnect.
+    const val CMD_DIAG_LOG: Int = 0x51
     const val DOOR_FRONT_LEFT: Int = 0
     const val DOOR_FRONT_RIGHT: Int = 1
     const val DOOR_REAR_LEFT: Int = 2

@@ -31,7 +31,7 @@
     <string name="settings_developer_load_rive">Rive fájl betöltése</string>
     <string name="settings_developer_rive_gpu_canvas">GPU Canvas Rive-hoz (kísérleti)</string>
     <string name="settings_developer_can_log">CAN-napló rögzítése</string>
-    <string name="settings_developer_can_log_all">Minden keret naplózása (stream-all firmware)</string>
+    <string name="settings_developer_can_log_all">Minden keret naplózása</string>
     <string name="settings_developer_can_log_hint">A következő DashKit-kapcsolattal indul. Fájlok: Download/DashPilot/can-log-*.csv</string>
     <string name="settings_developer_url_label">Dash app betöltése URL-ről</string>
     <string name="settings_developer_url_load">Betöltés</string>

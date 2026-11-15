@@ -97,20 +97,21 @@ class DashKitDataSource(
         }
     }
 
-    // HELLO says whether this is stream-all firmware. Only then is it safe to
-    // subscribe to whole buses: older firmware matches filter entries exactly
-    // and would forward nothing.
+    // "Log every frame": the decoder's ids plus a whole-bus entry for each of
+    // the CAN buses (0, 1) and the comma 3X buses the DashKit injects (2, 3).
+    // Firmware that matches entries exactly ignores the whole-bus entries and
+    // still forwards the decoder's ids.
     private fun onDiagnostic(frame: RawCanFrame) {
         if (frame.address != CanLog.DIAG_ID_HELLO || frame.data.size < 2) return
         val streamAll = frame.data[1].toInt() == 1
         Log.i(TAG, "DashKit diagnostics on (stream-all firmware: $streamAll)")
-        if (streamAll && !captureAllRequested && isDevCanLogAllEnabled(manager.context)) {
+        if (!captureAllRequested && isDevCanLogAllEnabled(manager.context)) {
             captureAllRequested = true
-            val all = byteArrayOf(
-                0, 1, 0xFF.toByte(), 0xFF.toByte(), 0xFF.toByte(), 0xFF.toByte(),
-                1, 1, 0xFF.toByte(), 0xFF.toByte(), 0xFF.toByte(), 0xFF.toByte(),
-            )
-            Log.i(TAG, "Subscribing to every frame on both buses")
+            val ff = 0xFF.toByte()
+            val all = decoder.canFilterPayload() + (0..3).flatMap { bus ->
+                listOf(bus.toByte(), 1, ff, ff, ff, ff)
+            }.toByteArray()
+            Log.i(TAG, "Subscribing to every frame on buses 0-3")
             manager.writeCommandWithRetry(SERVICE_UUID, FILTER_UUID, all, TAG, "CAN filter (all)")
         }
     }

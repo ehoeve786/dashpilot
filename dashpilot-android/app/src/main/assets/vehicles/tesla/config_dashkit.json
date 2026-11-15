@@ -3,6 +3,8 @@
   "type": "dashkit",
   "buses": [
     { "index": 0, "dbc": "bus_1_tesla_vehicle.dbc" },
-    { "index": 1, "dbc": "bus_1_tesla_vehicle.dbc" }
+    { "index": 1, "dbc": "bus_1_tesla_vehicle.dbc" },
+    { "index": 2, "dbc": "bus_2_tesla_party.dbc" },
+    { "index": 3, "dbc": "bus_2_tesla_party.dbc" }
   ]
 }

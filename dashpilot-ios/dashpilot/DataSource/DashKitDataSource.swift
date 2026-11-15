@@ -39,13 +39,14 @@ final class DashKitDataSource: IDataSource {
     /// `address` is unused — DashKit is found by BLE scan, not by IP.
     func connect(address: String) {
         // Both DashKit buses share one DBC (config_dashkit.json /
-        // config_juniper.json on Android); the mapper reads buses 0 and 1.
+        // config_juniper.json on Android); the mapper reads buses 0 and 1. Buses 2 and 3
+        // are the comma 3X's party bus and Autopilot side, forwarded by the DashKit.
         var dbcContents: [String] = []
         var busIndices: [CInt] = []
-        for bus in [0, 1] {
-            guard let url = Bundle.main.url(forResource: dbcResource, withExtension: "dbc"),
+        for (bus, resource) in [(0, dbcResource), (1, dbcResource), (2, "bus_2_tesla_party"), (3, "bus_2_tesla_party")] {
+            guard let url = Bundle.main.url(forResource: resource, withExtension: "dbc"),
                   let content = try? String(contentsOf: url) else {
-                print("[DashKitDataSource] failed to load \(dbcResource).dbc")
+                print("[DashKitDataSource] failed to load \(resource).dbc")
                 continue
             }
             dbcContents.append(content)

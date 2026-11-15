@@ -392,7 +392,8 @@ function render(c) {
   S.setPill.setAttribute('fill', c.adasOn ? BLUE : '#262A31');
   setText(S.setValue, String(Math.round(setSpeed)));
   // openpilot state (comma 3X via the DashKit) wins over Tesla's own assist state
-  const [aText, aColor] = c.selfdriveActive ? (c.experimentalMode ? ['EXPERIMENTAL', AMBER] : ['OPENPILOT', GREEN]) : ['ASSIST', BLUE];
+  const [aText, aColor] = c.selfdriveActive ? (c.experimentalMode ? ['EXPERIMENTAL', AMBER] : ['OPENPILOT', GREEN])
+    : c.madsActive ? ['MADS', GREEN] : ['ASSIST', BLUE];
   setText(S.assistText, aText);
   S.assistText.setAttribute('fill', aColor);
   S.assistRect.setAttribute('stroke', aColor);

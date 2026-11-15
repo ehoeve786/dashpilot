@@ -143,6 +143,32 @@ extension DashKitDataSource: DashKitGattListener {
         guard characteristic.uuid == DashKitGatt.canCharacteristic else { return }
         parseAndEmit(value)
     }
+
+    // Once notifications are on, tell the DashKit which CAN ids this vehicle's
+    // decoder reads. Stream-all firmware forwards exactly those (any id, no
+    // manifest change needed); older firmware forwards the ones its hardware
+    // filters accept, as before. The DashKit clears the list on disconnect.
+    func onNotificationStateUpdated(_ characteristic: CBCharacteristic, error: Error?) {
+        // Looked up through the characteristic itself: this runs on the manager's
+        // BLE queue, where the manager's own synchronous accessors would deadlock.
+        guard characteristic.uuid == DashKitGatt.canCharacteristic, error == nil,
+              characteristic.isNotifying,
+              let service = characteristic.service,
+              let peripheral = service.peripheral,
+              let filter = service.characteristics?
+                  .first(where: { $0.uuid == DashKitGatt.filterCharacteristic }) else { return }
+        var buffer = [UInt8](repeating: 0, count: 256)
+        let capacity = Int32(buffer.count)
+        var length = 0
+        decoderLock.lock()
+        if let decoder {
+            length = Int(bridge_can_filter_payload(decoder, &buffer, capacity))
+        }
+        decoderLock.unlock()
+        guard length > 0 else { return }
+        print("[DashKitDataSource] subscribing to \((length - 4) / 4) CAN ids")
+        peripheral.writeValue(Data(buffer[0..<length]), for: filter, type: .withResponse)
+    }
 }
 
 // MARK: - C string array helper (same shape as CommaDataSource's private one)

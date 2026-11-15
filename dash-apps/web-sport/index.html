@@ -24,15 +24,15 @@ html, body {
   padding: calc(36 * var(--u)) calc(56 * var(--u)) calc(32 * var(--u));
 }
 #top {
-  height: calc(96 * var(--u)); flex: none;
+  height: calc(136 * var(--u)); flex: none;
   display: flex; align-items: center; justify-content: space-between;
 }
 .blinker { width: calc(120 * var(--u)); height: calc(96 * var(--u)); }
-#chips { display: flex; gap: calc(16 * var(--u)); }
+#chips { display: flex; gap: calc(16 * var(--u)); align-self: flex-end; }  /* low in the bar: clear of the phone's camera cutout */
 .chip {
-  display: none; height: calc(56 * var(--u)); border-radius: calc(28 * var(--u));
+  display: none; height: calc(76 * var(--u)); border-radius: calc(38 * var(--u)); padding: 0 calc(40 * var(--u));
   align-items: center; justify-content: center;
-  font-size: calc(24 * var(--u)); font-weight: 600; letter-spacing: calc(1.5 * var(--u));
+  font-size: calc(34 * var(--u)); font-weight: 600; letter-spacing: calc(2 * var(--u));
 }
 .chip.on { display: flex; }
 #main { flex: 1 1 0; min-height: 0; display: flex; gap: calc(28 * var(--u)); }
@@ -76,9 +76,9 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
   <div id="top">
     <svg class="blinker" id="blinkLeft" viewBox="0 0 120 96"></svg>
     <div id="chips">
-      <div class="chip" id="chipDoor" style="width:calc(230 * var(--u)); background:#33270A; color:#FFB020">DOOR OPEN</div>
-      <div class="chip" id="chipBelt" style="width:calc(300 * var(--u)); background:#3A1210; color:#FF3B30">FASTEN SEATBELT</div>
-      <div class="chip" id="chipLane" style="width:calc(280 * var(--u)); background:#0E1C33; color:#3D8BFF">CHANGING LANE</div>
+      <div class="chip" id="chipDoor" style="background:#33270A; color:#FFB020">DOOR OPEN</div>
+      <div class="chip" id="chipBelt" style="background:#3A1210; color:#FF3B30">FASTEN SEATBELT</div>
+      <div class="chip" id="chipLane" style="background:#0E1C33; color:#3D8BFF">CHANGING LANE</div>
     </div>
     <svg class="blinker" id="blinkRight" viewBox="0 0 120 96"></svg>
   </div>

@@ -599,7 +599,7 @@ private fun DeveloperSection(selectedDashboardId: String, onDashboardSelected: (
             setDevCanLogAllEnabled(context, enabled)
         }
         Text(
-            text = stringResource(R.string.settings_developer_can_log_hint, context.packageName),
+            text = stringResource(R.string.settings_developer_can_log_hint),
             color = DarkColors.TextMuted,
             fontSize = 13.sp
         )

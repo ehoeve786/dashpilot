@@ -225,8 +225,8 @@ const speedAngle = (v) => -135 + clamp(v, 0, 200) / 200 * 270;
   S.setValue = label(S.set, 0, 0, [['SET  ', 22, 'rgba(255,255,255,0.7)', 600, 2], ['0', 34, TEXT, 600, 0]]).lastChild;
 
   S.assist = el(g, 'g', { transform: 'translate(0 -170)', opacity: 0 });
-  el(S.assist, 'rect', { x: -85, y: -22, width: 170, height: 44, rx: 22, fill: 'none', stroke: BLUE, 'stroke-width': 3 });
-  label(S.assist, 0, 0, [['ASSIST', 22, BLUE, 600, 3]]);
+  S.assistRect = el(S.assist, 'rect', { x: -110, y: -22, width: 220, height: 44, rx: 22, fill: 'none', stroke: BLUE, 'stroke-width': 3 });
+  S.assistText = label(S.assist, 0, 0, [['ASSIST', 22, BLUE, 600, 3]]).firstChild;
 
   S.gears = [];
   'PRND'.split('').forEach((letter, i) => {
@@ -391,7 +391,12 @@ function render(c) {
   S.marker.setAttribute('transform', `rotate(${speedAngle(setSpeed).toFixed(2)})`);
   S.setPill.setAttribute('fill', c.adasOn ? BLUE : '#262A31');
   setText(S.setValue, String(Math.round(setSpeed)));
-  S.assist.setAttribute('opacity', c.adasOn || c.madsActive ? 1 : 0);
+  // openpilot state (comma 3X via the DashKit) wins over Tesla's own assist state
+  const [aText, aColor] = c.selfdriveActive ? (c.experimentalMode ? ['EXPERIMENTAL', AMBER] : ['OPENPILOT', GREEN]) : ['ASSIST', BLUE];
+  setText(S.assistText, aText);
+  S.assistText.setAttribute('fill', aColor);
+  S.assistRect.setAttribute('stroke', aColor);
+  S.assist.setAttribute('opacity', c.adasOn || c.madsActive || c.selfdriveActive ? 1 : 0);
   const gear = num(c.gear, 0);
   S.gears.forEach((g, i) => {
     const on = gear === i + 1;
@@ -461,6 +466,8 @@ window.onCarStateUpdate = function () {
   for (const k of NATIVE_KEYS) s[k] = readNative('get' + k[0].toUpperCase() + k.slice(1), undefined);
   s.adasOn = readNative('isAdasOn', false);
   s.madsActive = readNative('isMadsActive', false);
+  s.selfdriveActive = readNative('isSelfdriveActive', false);
+  s.experimentalMode = readNative('isExperimentalMode', false);
   s.changingLane = readNative('isChangingLane', false);
   s.isImperial = readNative('isImperial', false);
   receiveMessage(s);

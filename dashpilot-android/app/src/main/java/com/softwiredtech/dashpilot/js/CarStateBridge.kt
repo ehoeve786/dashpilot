@@ -59,6 +59,7 @@ class CarStateBridge(
     @Volatile private var odometer: Float = 0f
     @Volatile private var experimentalMode: Boolean = false
     @Volatile private var madsActive: Boolean = false
+    @Volatile private var selfdriveActive: Boolean = false
     @Volatile private var phoneBattery: Int = -1
     @Volatile private var currentTime: Long = 0L
     @Volatile private var showPhoneBattery: Boolean = true
@@ -132,6 +133,7 @@ class CarStateBridge(
         odometer = state.odometer
         experimentalMode = state.experimentalMode
         madsActive = state.madsActive
+        selfdriveActive = state.selfdriveActive
         changingLane = state.changingLane
         tpmsPressureFL = state.tpmsPressureFL
         tpmsPressureFR = state.tpmsPressureFR
@@ -193,6 +195,7 @@ class CarStateBridge(
     @JavascriptInterface fun getOdometer(): Float = odometer
     @JavascriptInterface fun isExperimentalMode(): Boolean = experimentalMode
     @JavascriptInterface fun isMadsActive(): Boolean = madsActive
+    @JavascriptInterface fun isSelfdriveActive(): Boolean = selfdriveActive
     @JavascriptInterface fun getPhoneBattery(): Int = phoneBattery
     @JavascriptInterface fun getCurrentTime(): Long = currentTime
     @JavascriptInterface fun getShowPhoneBattery(): Boolean = showPhoneBattery

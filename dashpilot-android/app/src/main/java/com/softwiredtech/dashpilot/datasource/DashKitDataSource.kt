@@ -40,7 +40,6 @@ class DashKitDataSource(
     // diagnostic records go to a CSV. Read once per connection.
     private val canLog = CanLog(manager.context)
     @Volatile private var logging = false
-    @Volatile private var captureAllRequested = false
 
     override fun connect(address: String) {
         manager.addGattListener(this)
@@ -79,13 +78,18 @@ class DashKitDataSource(
     // filters accept, as before. The DashKit clears the list on disconnect.
     override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
         if (descriptor.characteristic?.uuid != CHAR_UUID || status != BluetoothGatt.GATT_SUCCESS) return
+        logging = isDevCanLogEnabled(manager.context)
         val payload = decoder.canFilterPayload()
         if (payload.isEmpty()) return
-        Log.d(TAG, "Subscribing to ${(payload.size - 4) / 4} CAN ids")
-        manager.writeCommandWithRetry(SERVICE_UUID, FILTER_UUID, payload, TAG, "CAN filter")
-
-        logging = isDevCanLogEnabled(manager.context)
-        captureAllRequested = false
+        // "Log every frame": the decoder's ids plus a whole-bus entry for each of the CAN buses (0, 1) and the
+        // comma 3X buses the DashKit injects (2, 3). Sent straight away, not after the diagnostics HELLO, so
+        // firmware with whole-bus entries but without diagnostics captures everything too. Firmware that
+        // matches entries exactly ignores the whole-bus entries and still forwards the decoder's ids.
+        val all = logging && isDevCanLogAllEnabled(manager.context)
+        val ff = 0xFF.toByte()
+        val filter = if (all) payload + (0..3).flatMap { listOf(it.toByte(), 1, ff, ff, ff, ff) }.toByteArray() else payload
+        Log.d(TAG, if (all) "Subscribing to every frame on buses 0-3" else "Subscribing to ${(payload.size - 4) / 4} CAN ids")
+        manager.writeCommandWithRetry(SERVICE_UUID, FILTER_UUID, filter, TAG, "CAN filter")
         if (logging) {
             // Ask the firmware for its diagnostic records; it answers with a
             // HELLO record. Firmware without the opcode rejects the write and
@@ -97,23 +101,9 @@ class DashKitDataSource(
         }
     }
 
-    // "Log every frame": the decoder's ids plus a whole-bus entry for each of
-    // the CAN buses (0, 1) and the comma 3X buses the DashKit injects (2, 3).
-    // Firmware that matches entries exactly ignores the whole-bus entries and
-    // still forwards the decoder's ids.
     private fun onDiagnostic(frame: RawCanFrame) {
         if (frame.address != CanLog.DIAG_ID_HELLO || frame.data.size < 2) return
-        val streamAll = frame.data[1].toInt() == 1
-        Log.i(TAG, "DashKit diagnostics on (stream-all firmware: $streamAll)")
-        if (!captureAllRequested && isDevCanLogAllEnabled(manager.context)) {
-            captureAllRequested = true
-            val ff = 0xFF.toByte()
-            val all = decoder.canFilterPayload() + (0..3).flatMap { bus ->
-                listOf(bus.toByte(), 1, ff, ff, ff, ff)
-            }.toByteArray()
-            Log.i(TAG, "Subscribing to every frame on buses 0-3")
-            manager.writeCommandWithRetry(SERVICE_UUID, FILTER_UUID, all, TAG, "CAN filter (all)")
-        }
+        Log.i(TAG, "DashKit diagnostics on (stream-all firmware: ${frame.data[1].toInt() == 1})")
     }
 
     override fun onCharacteristicChanged(

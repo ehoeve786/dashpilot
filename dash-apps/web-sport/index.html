@@ -534,11 +534,23 @@ function render(c) {
 }
 
 /* ── Data: iOS calls receiveMessage(state); Android calls onCarStateUpdate() ── */
-let pending = null, frame = 0;
+let pending = null, frame = 0, frameAt = 0;
 function receiveMessage(state) {
   pending = state;
-  if (!frame) frame = requestAnimationFrame(() => { frame = 0; const s = pending; pending = null; if (s) render(s); });
+  const now = performance.now();
+  if (frame && now - frameAt < 500) return;  // a frame asked for over 0.5 s ago was lost: ask again
+  frameAt = now;
+  frame = requestAnimationFrame(() => { frame = 0; const s = pending; pending = null; if (s) render(s); });
 }
+// A requested frame that never runs (the WebView was hidden or paused, e.g. by an incoming call) would leave
+// these latches set and nothing would draw again: clear them whenever the page becomes visible.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  frame = 0; easing = 0;
+  if (pending) receiveMessage(pending);
+  startEasing();
+  if (window.car3dResume) window.car3dResume();
+});
 function readNative(method, fallback) {
   try {
     const fn = window.NativeCarState && window.NativeCarState[method];

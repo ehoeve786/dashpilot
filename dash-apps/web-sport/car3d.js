@@ -349,6 +349,7 @@
     if (animating) raf = requestAnimationFrame(tick);
   }
   function schedule() { if (!raf) raf = requestAnimationFrame(tick); }
+  window.car3dResume = () => { raf = 0; dirty = true; schedule(); };  // see visibilitychange in index.html
 
   function update(c) {
     pending = c;

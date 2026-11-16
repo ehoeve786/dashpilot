@@ -36,6 +36,8 @@ class CanLog(private val context: Context) {
         // A full two-bus stream is roughly 5 MB a minute.
         private const val MAX_BYTES = 200L * 1024 * 1024
         private const val FLUSH_INTERVAL_MS = 1000L
+        private const val HEX_UPPER = "0123456789ABCDEF"
+        private const val HEX_LOWER = "0123456789abcdef"
 
         /** Bus byte flag and ids of the firmware's diagnostic records. */
         const val DIAG_BUS_FLAG = 0x10
@@ -61,9 +63,10 @@ class CanLog(private val context: Context) {
             val w = writer ?: open(now)
             val line = buildString(24 + data.size * 2) {
                 append(now - startMs).append(',').append(bus).append(",0x")
-                append(String.format(Locale.US, if (address in 0..0x7FF) "%03X" else "%08X", address))
+                // Hand-rolled hex: String.format ran 9 times per frame, too slow at ~5,000 frames/s.
+                for (shift in (if (address in 0..0x7FF) 8 else 28) downTo 0 step 4) append(HEX_UPPER[address ushr shift and 15])
                 append(',')
-                for (b in data) append(String.format(Locale.US, "%02x", b))
+                for (b in data) { append(HEX_LOWER[b.toInt() ushr 4 and 15]); append(HEX_LOWER[b.toInt() and 15]) }
                 append('\n')
             }
             w.write(line)

@@ -42,6 +42,7 @@ class DashKitDataSource(
     private val canLog = CanLog(manager.context)
     @Volatile private var logging = false
     @Volatile private var allPending = false
+    @Volatile private var wanted: Set<Long> = emptySet()  // bus shl 32 or id, for every id the mapper reads
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
 
     override fun connect(address: String) {
@@ -84,7 +85,8 @@ class DashKitDataSource(
         logging = isDevCanLogEnabled(manager.context)
         val payload = decoder.canFilterPayload()
         if (payload.isEmpty()) return
-        Log.d(TAG, "Subscribing to ${(payload.size - 4) / 4} CAN ids")
+        wanted = filterIds(payload)
+        Log.d(TAG, "Subscribing to ${wanted.size} CAN ids")
         manager.writeCommandWithRetry(SERVICE_UUID, FILTER_UUID, payload, TAG, "CAN filter")
         manager.writeCommandWithRetry(
             VehicleControl.SERVICE_UUID, VehicleControl.CONTROL_CHAR_UUID,
@@ -117,6 +119,24 @@ class DashKitDataSource(
         manager.writeCommandWithRetry(SERVICE_UUID, FILTER_UUID, all, TAG, "CAN filter (all)")
     }
 
+    // The ids in a CAN filter payload: per bus [bus][count][id LE32 x count].
+    private fun filterIds(p: ByteArray): Set<Long> {
+        val ids = HashSet<Long>()
+        var o = 0
+        while (o + 2 <= p.size) {
+            val bus = p[o].toLong() and 0xFF
+            val n = p[o + 1].toInt() and 0xFF
+            o += 2
+            repeat(n) {
+                if (o + 4 > p.size) return ids
+                val id = java.nio.ByteBuffer.wrap(p, o, 4).order(java.nio.ByteOrder.LITTLE_ENDIAN).int.toLong() and 0xFFFFFFFFL
+                ids.add(bus shl 32 or id)
+                o += 4
+            }
+        }
+        return ids
+    }
+
     private fun onDiagnostic(frame: RawCanFrame) {
         if (frame.address != CanLog.DIAG_ID_HELLO || frame.data.size < 2) return
         Log.i(TAG, "DashKit diagnostics on (stream-all firmware: ${frame.data[1].toInt() == 1})")
@@ -140,6 +160,9 @@ class DashKitDataSource(
                 onDiagnostic(frame)   // firmware record, not a CAN frame
                 continue
             }
+            // Decode only what the mapper reads. With "Log every frame" ~5,000 frames/s arrive, and running the
+            // mapper on each one stalled this thread: the dashboard stopped updating and notifications were lost.
+            if (wanted.isNotEmpty() && (frame.bus.toLong() shl 32 or frame.address.toLong()) !in wanted) continue
             currentState = decoder.decodeFrame(frame.bus, frame.address, frame.data) ?: return
         }
         _incoming.tryEmit(currentState)

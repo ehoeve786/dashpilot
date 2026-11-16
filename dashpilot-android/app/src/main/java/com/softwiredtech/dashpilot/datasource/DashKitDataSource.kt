@@ -42,6 +42,12 @@ class DashKitDataSource(
     private val canLog = CanLog(manager.context)
     @Volatile private var logging = false
     @Volatile private var allPending = false
+    private var decoded = 0
+    private var emitted = 0
+    private var emitFailed = 0
+    private var recordAt = 0L
+    @Volatile private var mainPostedAt = 0L
+    @Volatile private var mainLagMs = 0L
     @Volatile private var wanted: Set<Long> = emptySet()  // bus shl 32 or id, for every id the mapper reads
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
 
@@ -93,6 +99,7 @@ class DashKitDataSource(
             VehicleControl.payload(VehicleControl.CMD_COMPACT, 1), TAG, "compact packets"
         )
         handler.removeCallbacksAndMessages(null)
+        mainPostedAt = 0L
         allPending = logging && isDevCanLogAllEnabled(manager.context)
         if (logging) {
             // Ask the firmware for its diagnostic records; it answers with a
@@ -164,7 +171,28 @@ class DashKitDataSource(
             // mapper on each one stalled this thread: the dashboard stopped updating and notifications were lost.
             if (wanted.isNotEmpty() && (frame.bus.toLong() shl 32 or frame.address.toLong()) !in wanted) continue
             currentState = decoder.decodeFrame(frame.bus, frame.address, frame.data) ?: return
+            decoded++
         }
-        _incoming.tryEmit(currentState)
+        if (_incoming.tryEmit(currentState)) emitted++ else emitFailed++
+        if (logging) appRecord()
+    }
+
+    // App-side record in the CAN log every 5 s (bus 31, id 0x1DA5F000), to tell where a frozen dashboard stalls:
+    // [0..1] frames decoded  [2..3] states handed to the dashboard  [4..5] states it refused (collector behind)
+    // [6..7] main-thread delay, ms (how long a task posted to the UI thread has been waiting or took to start)
+    private fun appRecord() {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - recordAt < 5000) return
+        recordAt = now
+        val lag = if (mainPostedAt != 0L) now - mainPostedAt else mainLagMs  // still waiting: its age so far
+        fun put(b: ByteArray, o: Int, v: Long) { val c = v.coerceIn(0, 0xFFFF).toInt(); b[o] = c.toByte(); b[o + 1] = (c shr 8).toByte() }
+        val d = ByteArray(8)
+        put(d, 0, decoded.toLong()); put(d, 2, emitted.toLong()); put(d, 4, emitFailed.toLong()); put(d, 6, lag)
+        canLog.write(31, 0x1DA5F000, d)
+        decoded = 0; emitted = 0; emitFailed = 0
+        if (mainPostedAt == 0L) {
+            mainPostedAt = now
+            handler.post { mainLagMs = android.os.SystemClock.elapsedRealtime() - mainPostedAt; mainPostedAt = 0L }
+        }
     }
 }

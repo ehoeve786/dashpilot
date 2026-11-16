@@ -162,4 +162,52 @@ class DashKitDataSource(
     private fun scanCanLog() {
         canLogFile?.let { MediaScannerConnection.scanFile(context, arrayOf(it.absolutePath), null, null) }
     }
+
+    private fun writeCanLog(bus: Int, address: Int, data: ByteArray) {
+        if (canLogDone) return
+        try {
+            val now = SystemClock.elapsedRealtime()
+            if (canLog == null) {
+                // getExternalFilesDir creates the directory; null if storage is unavailable.
+                val dir = context.getExternalFilesDir(null) ?: error("external files dir unavailable")
+                val stamp = SimpleDateFormat("yyyy-MM-dd-HHmm", Locale.US).format(Date())
+                val file = File(dir, "can-log-$stamp.csv")
+                canLog = BufferedWriter(FileWriter(file, false))
+                canLogFile = file
+                canLogBytes = 0
+                canLogStartMs = now
+                canLogFlushMs = now
+                canLog!!.write("ms,bus,id,data\n")
+                canLog!!.flush()
+                scanCanLog()
+            }
+            val hex = data.joinToString("") { "%02x".format(it) }
+            val line = "${now - canLogStartMs},$bus,0x%03X,$hex\n".format(address)
+            canLog!!.write(line)
+            canLogBytes += line.length
+            if (now - canLogFlushMs > 1000) {
+                canLog!!.flush()
+                canLogFlushMs = now
+            }
+            if (canLogBytes > CAN_LOG_MAX_BYTES) closeCanLog().also { canLogDone = true }
+        } catch (e: Exception) {
+            Log.w(TAG, "CAN log disabled: ${e.message}")
+            canLogDone = true
+            closeCanLog()
+        }
+    }
+
+    private fun closeCanLog() {
+        try {
+            canLog?.close()
+        } catch (_: Exception) {
+        }
+        if (canLog != null) scanCanLog()
+        canLog = null
+    }
+
+    // Files in Android/data only show up over USB (MTP) once the media scanner has seen them.
+    private fun scanCanLog() {
+        canLogFile?.let { MediaScannerConnection.scanFile(context, arrayOf(it.absolutePath), null, null) }
+    }
 }

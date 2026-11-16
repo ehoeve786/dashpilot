@@ -19,6 +19,14 @@ class CanFrameDecoder(
         return arrayToCarState(values)
     }
 
+    /** Grows when the mapper first reads a message; see [usedFilter]. */
+    @Synchronized fun usedVersion(): Int =
+        if (decoderHandle == 0L) 0 else bridge.nativeUsedVersion(decoderHandle)
+
+    /** DashKit CAN filter bytes for every message the mapper reads. */
+    @Synchronized fun usedFilter(): ByteArray =
+        if (decoderHandle == 0L) ByteArray(0) else bridge.nativeUsedFilter(decoderHandle)
+
     @Synchronized fun destroy() {
         bridge.nativeDestroyVehicleDecoder(decoderHandle)
         decoderHandle = 0

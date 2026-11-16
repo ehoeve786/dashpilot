@@ -47,6 +47,8 @@ class VehicleBridge {
     external fun nativeCreateVehicleDecoder(dbcContents: Array<String>, busIndices: IntArray, vehicleType: String): Long
     external fun nativeDecodeCanFrame(decoderHandle: Long, bus: Int, address: Int, data: ByteArray): DoubleArray
     external fun nativeDestroyVehicleDecoder(decoderHandle: Long)
+    external fun nativeUsedVersion(decoderHandle: Long): Int
+    external fun nativeUsedFilter(decoderHandle: Long): ByteArray
 
     // Message
     external fun nativeGetData(msgPtr: Long): ByteArray

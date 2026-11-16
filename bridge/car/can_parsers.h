@@ -1,6 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <map>
+#include <set>
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -50,6 +52,7 @@ public:
         if (it == busIt->second.end()) return 0.0;
 
         const auto& cached = it->second;
+        markUsed(cached);
         auto frameIt = latestFrames_.find(frameKey(maskedBus, cached.address));
         if (frameIt == latestFrames_.end()) return 0.0;
 
@@ -70,17 +73,47 @@ public:
         if (it == busIt->second.end()) return false;
 
         const auto& cached = it->second;
+        markUsed(cached);
         auto frameIt = latestFrames_.find(frameKey(maskedBus, cached.address));
         if (frameIt == latestFrames_.end() || frameIt->second.size() < minLength) return false;
 
         return cached.signal->getRawBits(frameIt->second.data(), frameIt->second.size(), out);
     }
 
+    // Grows each time the mapper reads a message it hadn't read before.
+    int usedVersion() const { return usedVersion_; }
+
+    // The DashKit CAN filter (CADA0002) for every message the mapper has read:
+    // per bus [bus][count][address LE32 x count]. Standard IDs only.
+    std::vector<uint8_t> usedFilter() const {
+        std::map<int, std::set<uint32_t>> ids;
+        for (const auto& [bus, cache] : busSignalCache_)
+            for (const auto& [_, c] : cache)
+                if (c.used && c.address <= 0x7FF) ids[bus].insert(c.address);
+        std::vector<uint8_t> out;
+        for (const auto& [bus, set] : ids) {
+            out.push_back(static_cast<uint8_t>(bus));
+            out.push_back(static_cast<uint8_t>(std::min<size_t>(set.size(), 255)));
+            size_t n = 0;
+            for (uint32_t a : set) {
+                if (n++ == 255) break;
+                for (int i = 0; i < 4; i++) out.push_back(static_cast<uint8_t>(a >> (8 * i)));
+            }
+        }
+        return out;
+    }
+
 private:
     struct CachedSignal {
         uint32_t address;
         const cabana::Signal* signal;
+        mutable bool used = false;
     };
+
+    void markUsed(const CachedSignal& c) const {
+        if (!c.used) { c.used = true; usedVersion_++; }
+    }
+    mutable int usedVersion_ = 0;
 
     static inline uint64_t frameKey(int bus, uint32_t address) {
         return (static_cast<uint64_t>(bus & 3) << 32) | address;

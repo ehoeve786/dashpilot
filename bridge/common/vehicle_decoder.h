@@ -41,6 +41,7 @@ public:
     }
 
     CarState& state() { return state_; }
+    const CANParsers& parsers() const { return parsers_; }
 
 private:
     CANParsers parsers_;

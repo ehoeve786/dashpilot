@@ -33,6 +33,9 @@ class DashKitDataSource(
         private const val TAG = "DashKitDataSource"
         private val SERVICE_UUID = UUID.fromString("CADA0000-CA00-B1E0-B0D6-C000AA0100A1")
         private val CHAR_UUID = UUID.fromString("CADA0001-CA00-B1E0-B0D6-C000AA0100A1")
+        // CAN filter: the DashKit forwards (and its CAN chips receive) only these IDs. Reset to all on disconnect.
+        private val FILTER_UUID = UUID.fromString("CADA0002-CA00-B1E0-B0D6-C000AA0100A1")
+        private const val FILTER_RETRY_MS = 1000L
         // Stop writing a CAN log at about 50 MB (a few minutes of traffic).
         private const val CAN_LOG_MAX_BYTES = 50L * 1024 * 1024
     }
@@ -52,6 +55,9 @@ class DashKitDataSource(
     override val incomingMessages: Flow<CarState> = _incoming.sample(40)
 
     private var currentState = CarState()
+    // Version of the mapper's message set last written to the DashKit; -1 = not yet on this connection.
+    private var filterSent = -1
+    private var filterTriedMs = 0L
 
     override fun connect(address: String) {
         manager.addGattListener(this)
@@ -77,6 +83,7 @@ class DashKitDataSource(
         }
         gatt.setCharacteristicNotification(characteristic, true)
         manager.subscribeWithRetry(gatt, characteristic, TAG, "CAN")
+        filterSent = -1  // the DashKit forwards everything until this connection sends its filter
     }
 
     override fun onCharacteristicChanged(
@@ -95,6 +102,17 @@ class DashKitDataSource(
             currentState = decoder.decodeFrame(frame.bus, frame.address, frame.data) ?: return
         }
         _incoming.tryEmit(currentState)
+        sendFilterIfChanged()
+    }
+
+    // Asks the DashKit for exactly the messages the mapper reads. A new one (a branch reached later) resends the
+    // set; a busy GATT or older firmware without the characteristic retries at most once a second.
+    private fun sendFilterIfChanged() {
+        val v = decoder.usedVersion()
+        val now = SystemClock.elapsedRealtime()
+        if (v == filterSent || v == 0 || now - filterTriedMs < FILTER_RETRY_MS) return
+        filterTriedMs = now
+        if (manager.writeCommand(SERVICE_UUID, FILTER_UUID, decoder.usedFilter(), TAG)) filterSent = v
     }
 
     private fun writeCanLog(bus: Int, address: Int, data: ByteArray) {

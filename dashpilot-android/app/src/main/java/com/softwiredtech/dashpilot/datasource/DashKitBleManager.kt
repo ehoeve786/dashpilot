@@ -152,11 +152,19 @@ class DashKitBleManager(internal val context: Context) {
     @Volatile
     var suppressPings = false
 
+    // For the CAN log's app record: pings Android accepted / refused (another write still in flight), and
+    // writes that came back with an error.
+    @Volatile var pingsSent = 0
+    @Volatile var pingsRefused = 0
+    @Volatile var writeErrors = 0
+
     // Keepalive: reschedules itself while Connected and in the foreground.
     private val pingRunnable = object : Runnable {
         override fun run() {
             if (!appInForeground || _connectionState.value != ConnectionStatus.Connected) return
-            if (!suppressPings) VehicleControl.sendPing(this@DashKitBleManager)
+            if (!suppressPings) {
+                if (VehicleControl.sendPing(this@DashKitBleManager)) pingsSent++ else pingsRefused++
+            }
             handler.postDelayed(this, PING_INTERVAL_MS)
         }
     }
@@ -502,6 +510,7 @@ class DashKitBleManager(internal val context: Context) {
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
+            if (status != BluetoothGatt.GATT_SUCCESS) writeErrors++
             forEachListener { it.onCharacteristicWrite(g, characteristic, status) }
         }
 
@@ -715,7 +724,8 @@ class DashKitBleManager(internal val context: Context) {
         serviceUuid: UUID,
         charUuid: UUID,
         payload: ByteArray,
-        logTag: String
+        logTag: String,
+        noResponse: Boolean = false
     ): Boolean {
         val gatt = gatt ?: run {
             Log.w(logTag, "No GATT connection; cannot write command")
@@ -725,15 +735,15 @@ class DashKitBleManager(internal val context: Context) {
             Log.w(logTag, "Characteristic $charUuid not found; firmware may be older")
             return false
         }
+        // Without a response only if the characteristic offers it (older firmware does not).
+        val type = if (noResponse &&
+            characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0
+        ) BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE else BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            gatt.writeCharacteristic(
-                characteristic,
-                payload,
-                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-            ) == BluetoothGatt.GATT_SUCCESS
+            gatt.writeCharacteristic(characteristic, payload, type) == BluetoothGatt.GATT_SUCCESS
         } else {
             @Suppress("DEPRECATION")
-            characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            characteristic.writeType = type
             @Suppress("DEPRECATION")
             characteristic.value = payload
             @Suppress("DEPRECATION")

@@ -189,6 +189,10 @@ class DashKitDataSource(
         val d = ByteArray(8)
         put(d, 0, decoded.toLong()); put(d, 2, emitted.toLong()); put(d, 4, emitFailed.toLong()); put(d, 6, lag)
         canLog.write(31, 0x1DA5F000, d)
+        // 0x1DA5F001, since the app started: [0..1] pings sent  [2..3] pings Android refused  [4..5] writes that failed
+        val w = ByteArray(8)
+        put(w, 0, manager.pingsSent.toLong()); put(w, 2, manager.pingsRefused.toLong()); put(w, 4, manager.writeErrors.toLong())
+        canLog.write(31, 0x1DA5F001, w)
         decoded = 0; emitted = 0; emitFailed = 0
         if (mainPostedAt == 0L) {
             mainPostedAt = now

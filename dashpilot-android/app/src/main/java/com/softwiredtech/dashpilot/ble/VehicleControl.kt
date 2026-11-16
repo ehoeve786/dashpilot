@@ -170,8 +170,10 @@ object VehicleControl {
         send(manager, CMD_REBOOT, 1)
 
     /** Keepalive ping so the firmware knows this app is still alive. */
+    // Sent without a response where the firmware allows it: a reply lost on a saturated link made Android drop
+    // the connection 30 s later.
     fun sendPing(manager: DashKitBleManager): Boolean =
-        send(manager, CMD_PING, 1)
+        manager.writeCommand(SERVICE_UUID, CONTROL_CHAR_UUID, payload(CMD_PING, 1), TAG, noResponse = true)
 
     /**
      * Write a control command to the DashKit. Returns true if the write was

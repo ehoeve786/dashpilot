@@ -28,6 +28,7 @@ class DashKitDataSource(
         private val CHAR_UUID = UUID.fromString("CADA0001-CA00-B1E0-B0D6-C000AA0100A1")
         // CAN filter (write): the (bus, id) list the DashKit forwards.
         private val FILTER_UUID = UUID.fromString("CADA0002-CA00-B1E0-B0D6-C000AA0100A1")
+        private const val ALL_FALLBACK_MS = 3000L
     }
 
     private val _incoming = MutableSharedFlow<CarState>(replay = 1)
@@ -40,6 +41,8 @@ class DashKitDataSource(
     // diagnostic records go to a CSV. Read once per connection.
     private val canLog = CanLog(manager.context)
     @Volatile private var logging = false
+    @Volatile private var allPending = false
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
 
     override fun connect(address: String) {
         manager.addGattListener(this)
@@ -81,19 +84,14 @@ class DashKitDataSource(
         logging = isDevCanLogEnabled(manager.context)
         val payload = decoder.canFilterPayload()
         if (payload.isEmpty()) return
-        // "Log every frame": the decoder's ids plus a whole-bus entry for each of the CAN buses (0, 1) and the
-        // comma 3X buses the DashKit injects (2, 3). Sent straight away, not after the diagnostics HELLO, so
-        // firmware with whole-bus entries but without diagnostics captures everything too. Firmware that
-        // matches entries exactly ignores the whole-bus entries and still forwards the decoder's ids.
-        val all = logging && isDevCanLogAllEnabled(manager.context)
-        val ff = 0xFF.toByte()
-        val filter = if (all) payload + (0..3).flatMap { listOf(it.toByte(), 1, ff, ff, ff, ff) }.toByteArray() else payload
-        Log.d(TAG, if (all) "Subscribing to every frame on buses 0-3" else "Subscribing to ${(payload.size - 4) / 4} CAN ids")
-        manager.writeCommandWithRetry(SERVICE_UUID, FILTER_UUID, filter, TAG, "CAN filter")
+        Log.d(TAG, "Subscribing to ${(payload.size - 4) / 4} CAN ids")
+        manager.writeCommandWithRetry(SERVICE_UUID, FILTER_UUID, payload, TAG, "CAN filter")
         manager.writeCommandWithRetry(
             VehicleControl.SERVICE_UUID, VehicleControl.CONTROL_CHAR_UUID,
             VehicleControl.payload(VehicleControl.CMD_COMPACT, 1), TAG, "compact packets"
         )
+        handler.removeCallbacksAndMessages(null)
+        allPending = logging && isDevCanLogAllEnabled(manager.context)
         if (logging) {
             // Ask the firmware for its diagnostic records; it answers with a
             // HELLO record. Firmware without the opcode rejects the write and
@@ -102,12 +100,27 @@ class DashKitDataSource(
                 VehicleControl.SERVICE_UUID, VehicleControl.CONTROL_CHAR_UUID,
                 VehicleControl.payload(VehicleControl.CMD_DIAG_LOG, 1), TAG, "diagnostics"
             )
+            // Firmware without diagnostics never sends HELLO: subscribe to everything anyway.
+            handler.postDelayed({ subscribeAll() }, ALL_FALLBACK_MS)
         }
+    }
+
+    // "Log every frame": the decoder's ids plus a whole-bus entry for each of the CAN buses (0, 1) and the comma
+    // 3X buses the DashKit injects (2, 3). It must be the last write of the connection setup: once every frame
+    // is streaming, the DashKit left a later write unanswered and Android dropped the link after 30 s.
+    private fun subscribeAll() {
+        if (!allPending) return
+        allPending = false
+        val ff = 0xFF.toByte()
+        val all = decoder.canFilterPayload() + (0..3).flatMap { listOf(it.toByte(), 1, ff, ff, ff, ff) }.toByteArray()
+        Log.i(TAG, "Subscribing to every frame on buses 0-3")
+        manager.writeCommandWithRetry(SERVICE_UUID, FILTER_UUID, all, TAG, "CAN filter (all)")
     }
 
     private fun onDiagnostic(frame: RawCanFrame) {
         if (frame.address != CanLog.DIAG_ID_HELLO || frame.data.size < 2) return
         Log.i(TAG, "DashKit diagnostics on (stream-all firmware: ${frame.data[1].toInt() == 1})")
+        subscribeAll()
     }
 
     override fun onCharacteristicChanged(

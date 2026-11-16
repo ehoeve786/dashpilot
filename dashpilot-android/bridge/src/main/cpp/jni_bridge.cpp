@@ -215,19 +215,6 @@ Java_com_softwiredtech_dashpilot_jni_VehicleBridge_nativeDecodeCanFrame(
     return result;
 }
 
-JNIEXPORT jint JNICALL
-Java_com_softwiredtech_dashpilot_jni_VehicleBridge_nativeUsedVersion(JNIEnv* env, jobject thiz, jlong decoderHandle) {
-    return reinterpret_cast<VehicleDecoder*>(decoderHandle)->parsers().usedVersion();
-}
-
-JNIEXPORT jbyteArray JNICALL
-Java_com_softwiredtech_dashpilot_jni_VehicleBridge_nativeUsedFilter(JNIEnv* env, jobject thiz, jlong decoderHandle) {
-    auto bytes = reinterpret_cast<VehicleDecoder*>(decoderHandle)->parsers().usedFilter();
-    jbyteArray out = env->NewByteArray(static_cast<jsize>(bytes.size()));
-    env->SetByteArrayRegion(out, 0, static_cast<jsize>(bytes.size()), reinterpret_cast<const jbyte*>(bytes.data()));
-    return out;
-}
-
 JNIEXPORT void JNICALL
 Java_com_softwiredtech_dashpilot_jni_VehicleBridge_nativeDestroyVehicleDecoder(
         JNIEnv* env, jobject thiz,

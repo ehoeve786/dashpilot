@@ -21,6 +21,8 @@ import android.os.Looper
 import android.util.Log
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.util.UUID
+import com.softwiredtech.dashpilot.datamodel.dash.isDevCanLogAllEnabled
+import com.softwiredtech.dashpilot.datamodel.dash.isDevCanLogEnabled
 import com.softwiredtech.dashpilot.ble.VehicleControl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -308,11 +310,10 @@ class DashKitBleManager(internal val context: Context) {
                 // firmware asks for 2M, and the central's preference wins). On 2M
                 // the phone dropped the encrypted stream every ~10 min with a MIC
                 // failure (status 61); the CAN stream needs a fraction of 1M's rate.
-                g.setPreferredPhy(
-                    BluetoothDevice.PHY_LE_1M_MASK,
-                    BluetoothDevice.PHY_LE_1M_MASK,
-                    BluetoothDevice.PHY_OPTION_NO_PREFERRED
-                )
+                // "Log every frame" needs more than 1M carries, so it alone asks for 2M.
+                val phy = if (isDevCanLogEnabled(context) && isDevCanLogAllEnabled(context))
+                    BluetoothDevice.PHY_LE_2M_MASK else BluetoothDevice.PHY_LE_1M_MASK
+                g.setPreferredPhy(phy, phy, BluetoothDevice.PHY_OPTION_NO_PREFERRED)
                 // DashKit's characteristics require an encrypted (paired) link.
                 // Ensure we are bonded before discovering services.
                 when (g.device.bondState) {

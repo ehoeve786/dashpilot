@@ -103,6 +103,10 @@ object VehicleControl {
     // --- Diagnostic records in the CAN stream (firmware can_diag.h) ---
     // 1 = on, 0 = off. Not persisted; the DashKit switches it off on disconnect.
     const val CMD_DIAG_LOG: Int = 0x51
+
+    // --- Compact CAN packets (11 bytes per frame instead of 18) ---
+    // 1 = on. Not persisted; firmware without the opcode rejects the write and keeps the original format.
+    const val CMD_COMPACT: Int = 0x52
     const val DOOR_FRONT_LEFT: Int = 0
     const val DOOR_FRONT_RIGHT: Int = 1
     const val DOOR_REAR_LEFT: Int = 2

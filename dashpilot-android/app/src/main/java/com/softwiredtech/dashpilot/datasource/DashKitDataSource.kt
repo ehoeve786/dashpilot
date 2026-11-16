@@ -90,6 +90,10 @@ class DashKitDataSource(
         val filter = if (all) payload + (0..3).flatMap { listOf(it.toByte(), 1, ff, ff, ff, ff) }.toByteArray() else payload
         Log.d(TAG, if (all) "Subscribing to every frame on buses 0-3" else "Subscribing to ${(payload.size - 4) / 4} CAN ids")
         manager.writeCommandWithRetry(SERVICE_UUID, FILTER_UUID, filter, TAG, "CAN filter")
+        manager.writeCommandWithRetry(
+            VehicleControl.SERVICE_UUID, VehicleControl.CONTROL_CHAR_UUID,
+            VehicleControl.payload(VehicleControl.CMD_COMPACT, 1), TAG, "compact packets"
+        )
         if (logging) {
             // Ask the firmware for its diagnostic records; it answers with a
             // HELLO record. Firmware without the opcode rejects the write and

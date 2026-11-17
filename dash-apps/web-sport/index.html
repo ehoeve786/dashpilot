@@ -18,6 +18,7 @@ html, body {
   -webkit-user-select: none; user-select: none;
 }
 #root {
+  position: relative;
   box-sizing: border-box; height: 100%;
   display: flex; flex-direction: column;
   padding: calc(36 * var(--u)) calc(56 * var(--u)) calc(32 * var(--u));
@@ -35,9 +36,25 @@ html, body {
 }
 .chip.on { display: flex; }
 #main { flex: 1 1 0; min-height: 0; display: flex; gap: calc(28 * var(--u)); }
-#left { flex: 0.95 1 0; min-width: 0; height: 100%; }
+#leftWrap { flex: 0.95 1 0; min-width: 0; height: 100%; position: relative; }
+#left { width: 100%; height: 100%; }
 #speedo { flex: 1.9 1 0; min-width: 0; height: 100%; }
-#right { flex: 1.15 1 0; min-width: 0; display: flex; flex-direction: column; gap: calc(16 * var(--u)); }
+#right { flex: 1.15 1 0; min-width: 0; display: flex; flex-direction: column; gap: calc(16 * var(--u)); position: relative; }
+/* Large size (for a mounted phone): each side shows a few big values; tapping a side opens its detailed
+   panels, which keep their layout underneath so the 3D car stays in place. */
+.big { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+#root.large #leftWrap:not(.detail) > #left,
+#root.large #right:not(.detail) > #tyresWrap,
+#root.large #right:not(.detail) > #climate { visibility: hidden; }
+#root.large #leftWrap:not(.detail) > #leftBig,
+#root.large #right:not(.detail) > #rightBig { display: block; }
+#sizeBtn {
+  position: absolute; left: calc(196 * var(--u)); top: calc(56 * var(--u));
+  width: calc(96 * var(--u)); height: calc(56 * var(--u)); border-radius: calc(28 * var(--u));
+  display: flex; align-items: center; justify-content: center;
+  background: #17191D; color: #59606B; font-size: calc(26 * var(--u)); font-weight: 600;
+}
+#root.large #sizeBtn { background: #262A31; color: #F2F4F7; }
 #tyresWrap { flex: 1 1 0; min-height: 0; position: relative; }
 #tyresWrap > svg { width: 100%; height: 100%; }
 #climate { flex: none; width: 100%; height: calc(200 * var(--u)); }
@@ -65,8 +82,12 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
     </div>
     <svg class="blinker" id="blinkRight" viewBox="0 0 120 96"></svg>
   </div>
+  <div id="sizeBtn">Aa</div>
   <div id="main">
-    <svg id="left" viewBox="0 0 440 880" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="leftWrap">
+      <svg id="left" viewBox="0 0 440 880" preserveAspectRatio="xMidYMid meet"></svg>
+      <svg class="big" id="leftBig" viewBox="0 0 500 880" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
     <svg id="speedo" viewBox="0 0 820 760" preserveAspectRatio="xMidYMid meet"></svg>
     <div id="right">
       <div id="tyresWrap">
@@ -75,6 +96,7 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
         <svg id="perf" viewBox="0 0 460 630" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
       <svg id="climate" viewBox="0 0 460 200" preserveAspectRatio="xMidYMid meet"></svg>
+      <svg class="big" id="rightBig" viewBox="0 0 520 880" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
   </div>
 </div>
@@ -233,9 +255,10 @@ const speedAngle = (v) => -135 + clamp(v, 0, 200) / 200 * 270;
   const all = []; for (let i = 0; i <= 40; i++) all.push(-135 + i * 6.75);
   ticks(g, all.filter((_, i) => i % 4 !== 0), 306, 14, 3, DIM);
   ticks(g, all.filter((_, i) => i % 4 === 0), 306, 30, 6, TEXT);
+  S.dial = [];
   for (let i = 0; i <= 10; i++) {
     const a = (-135 + i * 27) * Math.PI / 180;
-    label(g, 234 * Math.sin(a), -234 * Math.cos(a), [[String(i * 20), 34, SUB, 600, 0]]);
+    S.dial.push(label(g, 234 * Math.sin(a), -234 * Math.cos(a), [[String(i * 20), 34, SUB, 600, 0]]).firstChild);
   }
   S.arc = el(g, 'path', { fill: 'none', stroke: ACCENT, 'stroke-width': 20, 'stroke-linecap': 'round' });
   S.arcCruise = el(g, 'path', { fill: 'none', stroke: BLUE, 'stroke-width': 20, 'stroke-linecap': 'round', opacity: 0 });
@@ -266,8 +289,9 @@ const speedAngle = (v) => -135 + clamp(v, 0, 200) / 200 * 270;
   S.badgeExp = badgeLabel.lastChild;
 
   S.gears = [];
+  S.gearRow = el(g, 'g', { transform: 'translate(0 285)' });
   'PRND'.split('').forEach((letter, i) => {
-    const gg = el(g, 'g', { transform: `translate(${-111 + i * 74} 285)` });
+    const gg = el(S.gearRow, 'g', { transform: `translate(${-111 + i * 74} 0)` });
     const pill = el(gg, 'rect', { x: -30, y: -30, width: 60, height: 60, rx: 16, fill: ACCENT, opacity: 0 });
     const t = label(gg, 0, 0, [[letter, 36, DIM, 600, 0]]).firstChild;
     S.gears.push({ pill, t });
@@ -430,16 +454,114 @@ const F = { peak: { lat: 0, brake: 0, accel: 0, torque: 0 }, trail: [] };
   caption(svg, 310, 562, 'PEAK');
   F.tq = label(svg, 150, 596, [['0', 28, TEXT, 600, 0], [' Nm', 18, SUB, 400, 0]]).firstChild;
   F.tqPeak = label(svg, 310, 596, [['0', 28, TEXT, 600, 0], [' Nm', 18, SUB, 400, 0]]).firstChild;
-  let perf = false;
-  try { perf = localStorage.getItem('sportPage') === 'perf'; } catch (_) {}
-  $('right').classList.toggle('perf', perf);
-  $('tyresWrap').addEventListener('click', () => {
-    perf = !perf;
-    $('right').classList.toggle('perf', perf);
-    try { localStorage.setItem('sportPage', perf ? 'perf' : 'tyres'); } catch (_) {}
-  });
   // Peak g per direction over 36 bearings, drawn as the friction-circle envelope.
   for (let i = 0; i < 36; i++) F.trail.push(0);
+})();
+
+/* ── Large size: a few values per side, sized to read from a mounted phone ── */
+const B = { tyres: {} };
+function bigCaption(svg, x, y, s) { return label(svg, x, y, [[s, 26, SUB, 600, 3]]); }
+(function buildBig() {
+  const L = $('leftBig');
+  const tileL = (y, h) => el(L, 'rect', { x: 0, y, width: 500, height: h, rx: 28, fill: TILE });
+  // Power (or charge power), with the regen / drive bar.
+  tileL(0, 270);
+  B.powerCaption = bigCaption(L, 250, 42, 'POWER').firstChild;
+  const kw = label(L, 250, 134, [['0', 150, TEXT, 600, -5], [' kW', 48, SUB, 400, 0]]);
+  B.kw = kw.firstChild;
+  el(L, 'rect', { x: 40, y: 216, width: 420, height: 20, rx: 10, fill: TRACK });
+  B.regen = el(L, 'rect', { y: 216, height: 20, rx: 10, fill: GREEN, width: 0, x: 250 });
+  B.drive = el(L, 'rect', { x: 250, y: 216, height: 20, rx: 10, fill: ACCENT, width: 0 });
+  el(L, 'rect', { x: 247, y: 206, width: 6, height: 40, rx: 3, fill: TEXT });
+  // Battery: state of charge.
+  tileL(290, 270);
+  bigCaption(L, 250, 332, 'BATTERY');
+  B.soc = label(L, 250, 424, [['0', 150, TEXT, 600, -5], ['%', 60, SUB, 400, 0]]).firstChild;
+  el(L, 'rect', { x: 40, y: 506, width: 420, height: 20, rx: 10, fill: TRACK });
+  B.socFill = el(L, 'rect', { x: 40, y: 506, width: 0, height: 20, rx: 10, fill: GREEN });
+  // Range estimate and energy left.
+  tileL(580, 300);
+  bigCaption(L, 250, 622, 'RANGE');
+  B.range = label(L, 250, 714, [['0', 140, TEXT, 600, -4], [' km', 48, SUB, 400, 0]]);
+  B.kwh = label(L, 250, 822, [['0', 60, TEXT, 600, 0], [' kWh', 36, SUB, 400, 0]]).firstChild;
+
+  const R = $('rightBig');
+  const tileR = (y, h) => el(R, 'rect', { x: 0, y, width: 520, height: h, rx: 28, fill: TILE });
+  // Climate: setpoints, then fan and mode on one line.
+  tileR(0, 330);
+  B.climateCaption = label(R, 260, 42, [['CLIMATE', 24, SUB, 600, 2]]).firstChild;
+  B.tempL = label(R, 134, 142, [['--', 92, TEXT, 600, -2], ['', 56, SUB, 400, 0]]);
+  B.tempR = label(R, 386, 142, [['--', 92, TEXT, 600, -2], ['', 56, SUB, 400, 0]]);
+  bigCaption(R, 134, 214, 'DRIVER');
+  bigCaption(R, 386, 214, 'PASSENGER');
+  B.fan = label(R, 260, 282, [['', 36, TEXT, 600, 1], ['', 36, SUB, 600, 1]]);
+  // G-force right now.
+  tileR(350, 250);
+  bigCaption(R, 260, 392, 'G-FORCE');
+  B.g = label(R, 260, 492, [['--', 140, TEXT, 600, -4], ['', 48, SUB, 400, 0]]);
+  // Tyre pressures, laid out like the car.
+  tileR(620, 260);
+  B.tyreCaption = bigCaption(R, 260, 662, 'TYRES').firstChild;
+  [['FL', 140, 732], ['FR', 380, 732], ['RL', 140, 818], ['RR', 380, 818]].forEach(([w, x, y]) => {
+    B.tyres[w] = label(R, x, y, [['--', 76, DIM, 600, -2]]).firstChild;
+  });
+})();
+
+/* ── Size and pages. "Aa" switches between the detailed layout and the large one; the choice is kept.
+      Large: tap a side for its detail, tap again to return (right side: big → tyres → performance → big).
+      Detailed: tap the tyres panel to switch between tyres and performance, as before. ── */
+const View = { large: false, leftDetail: false, right: 'tyres' };
+function store(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+function stored(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
+function applyView() {
+  const large = View.large;
+  $('root').classList.toggle('large', large);
+  $('leftWrap').classList.toggle('detail', View.leftDetail);
+  $('right').classList.toggle('detail', View.right !== 'big');
+  $('right').classList.toggle('perf', View.right === 'perf');
+  // Speedometer: larger dial numbers, gear row, set speed, engagement badge, limit sign and stop distance.
+  for (const t of S.dial) t.setAttribute('font-size', large ? 42 : 34);
+  S.gearRow.setAttribute('transform', `translate(0 285) scale(${large ? 1.35 : 1})`);
+  // The set-speed pill sits between the dial's 0 and 200, so it can only grow a little.
+  S.set.setAttribute('transform', large ? 'translate(0 168) scale(1.1)' : 'translate(0 170)');
+  S.limit.setAttribute('transform', large ? 'translate(751 90) scale(1.15)' : 'translate(740 84)');
+  S.stop.setAttribute('x', large ? 64 : 52);
+  S.stop.firstChild.setAttribute('font-size', large ? 40 : 32);
+  S.stop.lastChild.setAttribute('font-size', large ? 26 : 20);
+}
+(function initView() {
+  const size = stored('sportSize');
+  // No choice made yet: large on a phone-sized screen, detailed on a tablet.
+  View.large = size ? size === 'large' : Math.min(window.innerWidth, window.innerHeight) < 500;
+  const page = stored('sportPage');
+  View.right = View.large ? (page === 'tyres' || page === 'perf' ? page : 'big') : (page === 'perf' ? 'perf' : 'tyres');
+  View.leftDetail = View.large && stored('sportLeft') === 'detail';
+  applyView();
+  $('sizeBtn').addEventListener('click', () => {
+    View.large = !View.large;
+    View.leftDetail = false;
+    View.right = View.large ? 'big' : 'tyres';
+    store('sportSize', View.large ? 'large' : 'detail');
+    store('sportLeft', 'big');
+    store('sportPage', View.right);
+    applyView();
+  });
+  $('leftWrap').addEventListener('click', () => {
+    if (!View.large) return;
+    View.leftDetail = !View.leftDetail;
+    store('sportLeft', View.leftDetail ? 'detail' : 'big');
+    applyView();
+  });
+  $('right').addEventListener('click', (e) => {
+    if (View.large) {
+      View.right = { big: 'tyres', tyres: 'perf', perf: 'big' }[View.right];
+    } else {
+      if (!$('tyresWrap').contains(e.target)) return;
+      View.right = View.right === 'perf' ? 'tyres' : 'perf';
+    }
+    store('sportPage', View.right);
+    applyView();
+  });
 })();
 
 /* ── Render ── */
@@ -527,6 +649,19 @@ function render(c) {
   const vMin = num(c.cellVoltMin, 0), vMax = num(c.cellVoltMax, 0);
   const cells = vMin > 0 && vMax > 0 ? [vMin.toFixed(3), '–', vMax.toFixed(3), ` V · Δ${Math.round((vMax - vMin) * 1000)} mV`] : ['--', '', '', ''];
   cells.forEach((t, i) => setText(P.cells.childNodes[i], t));
+  // Large size, left side
+  setText(B.powerCaption, charging ? 'CHARGING' : 'POWER');
+  setText(B.kw, $('pKw').textContent);
+  B.kw.setAttribute('fill', charging ? GREEN : TEXT);
+  B.drive.setAttribute('width', (Math.max(0, power) * 2.1).toFixed(1));
+  B.regen.setAttribute('x', (250 - regenW / 1.8 * 2.1).toFixed(1));
+  B.regen.setAttribute('width', (regenW / 1.8 * 2.1).toFixed(1));
+  setText(B.soc, String(Math.round(soc)));
+  B.socFill.setAttribute('width', (soc * 4.2).toFixed(1));
+  B.socFill.setAttribute('fill', soc < 19 ? RED : GREEN);
+  setText(B.range.firstChild, String(Math.round(imperial ? rangeKm * 0.621371 : rangeKm)));
+  setText(B.range.lastChild, imperial ? ' mi' : ' km');
+  setText(B.kwh, usable.toFixed(1));
 
   // Speedometer
   const sweep = arc(330, -135, speedAngle(speed));
@@ -550,6 +685,9 @@ function render(c) {
   S.gDot.setAttribute('cy', (clamp(gy, -1, 1) * 44).toFixed(1));
   setText(S.gValue, moving ? gNow.toFixed(2) + ' g' : '');
   if (hasG) renderPerf(gx, gy, gNow, tq);
+  setText(B.g.firstChild, moving ? gNow.toFixed(2) : '--');
+  B.g.firstChild.setAttribute('fill', moving ? TEXT : DIM);
+  setText(B.g.lastChild, moving ? ' g' : '');
   setText(S.speed, String(Math.round(speed)));
   S.speed.setAttribute('fill', over >= 0.5 ? RED : TEXT);
   setText(S.unit, imperial ? 'mph' : 'km/h');
@@ -570,6 +708,8 @@ function render(c) {
     S.badgeRect.setAttribute('stroke', engaged[1]);
     S.badgeRect.setAttribute('x', -w / 2);
     S.badgeRect.setAttribute('width', w);
+    // Large size: as big as fits between the dial's 60 and 140.
+    S.badge.setAttribute('transform', `translate(0 -158) scale(${View.large ? Math.min(1.3, 300 / w).toFixed(2) : 1})`);
   }
   // Traffic light (0 none, 1 red, 2 green, 3 yellow) or stop sign, with the distance to the stop line. The
   // DashKit says which one the line belongs to (2 stop sign, 14 all-way stop, 3 light; 254 m = none); a source
@@ -613,7 +753,10 @@ function render(c) {
     setText(r.t.lastChild, t > -100 ? (imperial ? '°F' : '°C') : '');
     r.b.setAttribute('opacity', b >= 0 ? 1 : 0);
     setText(r.b.firstChild, b >= 0 ? b.toFixed(1) : '');
+    setText(B.tyres[w], p >= 0 ? String(Math.round(p * 14.5038)) : '--');
+    B.tyres[w].setAttribute('fill', p >= 0 ? TEXT : DIM);
   }
+  setText(B.tyreCaption, 'TYRES  ·  PSI');
 
   // Climate (setpoints arrive in display units; fan 0 off, 1-10, 11 auto)
   const climateOn = num(c.hvacPowerState, 0) > 0;
@@ -635,6 +778,16 @@ function render(c) {
   const cabin = num(c.cabinTemp, 0), hum = num(c.cabinHumidity, 0), out = num(c.outsideTemp, 0);
   const cab = [cabin !== 0 ? `CABIN ${Math.round(cabin)}°` : '', hum > 0 ? `${Math.round(hum)}%` : '', out !== 0 ? `OUT ${Math.round(out)}°` : ''];
   setText(C.caption, cab.some(Boolean) ? cab.filter(Boolean).join('  ·  ') : 'CLIMATE');
+  // Large size, climate
+  setText(B.climateCaption, C.caption.textContent);
+  for (const [n, v] of [[B.tempL, num(c.acTemp, 0)], [B.tempR, num(c.acTempRight, 0)]]) {
+    setText(n.firstChild, fmtTemp(v));
+    setText(n.lastChild, v > 0 ? '°' : '');
+    n.setAttribute('opacity', climateOn ? 1 : 0.25);
+  }
+  setText(B.fan.firstChild, climateOn ? 'FAN ' + C.fan.firstChild.textContent : 'CLIMATE OFF');
+  B.fan.firstChild.setAttribute('fill', climateOn ? TEXT : DIM);
+  setText(B.fan.lastChild, climateOn && ac ? '  ·  ' + ac : '');
 
   // Doors, frunk, trunk: the liftgate angle folds the trunk; unlatched with no angle reads ajar.
   for (const w of ['FL', 'FR', 'RL', 'RR']) {

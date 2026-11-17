@@ -15,6 +15,7 @@
 // the normal cp.get() path would silently corrupt the top byte(s).
 class TeslaVinUpdater {
 public:
+    explicit TeslaVinUpdater(int bus = 1) : bus_(bus) {}
     void update(const CANParsers& cp, CarState& cs) {
         if (seen_ == kAllSegments) return;
         for (size_t i = 0; i < kSegments.size(); i++) {
@@ -22,7 +23,7 @@ public:
             const Segment& seg = kSegments[i];
 
             uint64_t raw;
-            if (!cp.getRaw(1, "VIN_info", seg.signal, &raw)) continue;
+            if (!cp.getRaw(bus_, "VIN_info", seg.signal, &raw)) continue;
 
             char chars[7];
             for (int b = 0; b < 7; b++) chars[b] = static_cast<char>(raw >> (8 * b));
@@ -41,6 +42,7 @@ public:
     }
 
 private:
+    int bus_;
     struct Segment {
         const char* signal;
         int textStart;   // first payload byte; earlier bytes must be zero
@@ -99,20 +101,23 @@ static inline double latchOpen(double latchStatus) {
 
 // Per-door, trunk and frunk latch state plus the powered-liftgate angle, from
 // the vehicle bus (DashKit forwards 0x102, 0x103, 0x142 and 0x2E1).
+// The body controllers' status messages (VCLEFT/VCRIGHT_doorStatus, VCFRONT_status, VCFRONT_sensors, VIN_info)
+// are on both buses with the same contents and rate on a legacy Model Y. The DashKit mapper reads them on the
+// chassis bus, whose CAN chip has filters to spare, leaving the vehicle bus chip's for messages only it carries.
 static inline void updateClosures(const CANParsers& cp, CarState& cs) {
-    cs.doorOpenFL = latchOpen(cp.get(1, "VCLEFT_doorStatus", "VCLEFT_frontLatchStatus"));
-    cs.doorOpenRL = latchOpen(cp.get(1, "VCLEFT_doorStatus", "VCLEFT_rearLatchStatus"));
-    cs.doorOpenFR = latchOpen(cp.get(1, "VCRIGHT_doorStatus", "VCRIGHT_frontLatchStatus"));
-    cs.doorOpenRR = latchOpen(cp.get(1, "VCRIGHT_doorStatus", "VCRIGHT_rearLatchStatus"));
-    cs.trunkOpen = latchOpen(cp.get(1, "VCRIGHT_doorStatus", "VCRIGHT_trunkLatchStatus"));
+    cs.doorOpenFL = latchOpen(cp.get(0, "VCLEFT_doorStatus", "VCLEFT_frontLatchStatus"));
+    cs.doorOpenRL = latchOpen(cp.get(0, "VCLEFT_doorStatus", "VCLEFT_rearLatchStatus"));
+    cs.doorOpenFR = latchOpen(cp.get(0, "VCRIGHT_doorStatus", "VCRIGHT_frontLatchStatus"));
+    cs.doorOpenRR = latchOpen(cp.get(0, "VCRIGHT_doorStatus", "VCRIGHT_rearLatchStatus"));
+    cs.trunkOpen = latchOpen(cp.get(0, "VCRIGHT_doorStatus", "VCRIGHT_trunkLatchStatus"));
     // VCLEFT_liftgateStatus is multiplexed: the angle lives on mux 1. Keep the
     // last angle across mux-0 frames. Closed reads slightly negative on some cars.
     if (static_cast<int>(cp.get(1, "VCLEFT_liftgateStatus", "VCLEFT_liftgateStatusIndex")) == 1) {
         cs.trunkPosition = std::max(0.0, cp.get(1, "VCLEFT_liftgateStatus", "VCLEFT_liftgatePosition"));
     }
     // VCFRONT_status is multiplexed: the frunk latch lives on mux 0.
-    if (static_cast<int>(cp.get(1, "VCFRONT_status", "VCFRONT_statusIndex")) == 0) {
-        cs.frunkOpen = latchOpen(cp.get(1, "VCFRONT_status", "VCFRONT_frunkLatchStatus"));
+    if (static_cast<int>(cp.get(0, "VCFRONT_status", "VCFRONT_statusIndex")) == 0) {
+        cs.frunkOpen = latchOpen(cp.get(0, "VCFRONT_status", "VCFRONT_frunkLatchStatus"));
     }
 }
 
@@ -131,8 +136,8 @@ static inline double seatBelt(bool occupied, bool buckled) {
 // (VCLEFT_switchStatus mux 0) read 1 OFF / 2 ON; the right one reports the
 // passenger's occupancy (1 OCCUPIED) and its buckles (1 LATCHED).
 static inline void updateCabin(const CANParsers& cp, CarState& cs) {
-    cs.mirrorFoldedL = mirrorFolded(cp.get(1, "VCLEFT_doorStatus", "VCLEFT_mirrorFoldState"));
-    cs.mirrorFoldedR = mirrorFolded(cp.get(1, "VCRIGHT_doorStatus", "VCRIGHT_mirrorFoldState"));
+    cs.mirrorFoldedL = mirrorFolded(cp.get(0, "VCLEFT_doorStatus", "VCLEFT_mirrorFoldState"));
+    cs.mirrorFoldedR = mirrorFolded(cp.get(0, "VCRIGHT_doorStatus", "VCRIGHT_mirrorFoldState"));
 
     cs.seatHeatFL = cp.get(1, "UI_vehicleControl", "UI_frontLeftSeatHeatReq");
     cs.seatHeatFR = cp.get(1, "UI_vehicleControl", "UI_frontRightSeatHeatReq");
@@ -160,8 +165,8 @@ static inline void updateDrive(const CANParsers& cp, CarState& cs) {
         cs.cellVoltMin = cp.get(1, "BMS_bmbMinMax", "BMS_brickVoltageMin");
         cs.cellVoltMax = cp.get(1, "BMS_bmbMinMax", "BMS_brickVoltageMax");
     }
-    cs.coolantBatIn = cp.get(1, "VCFRONT_sensors", "VCFRONT_tempCoolantBatInlet");
-    cs.outsideTemp = cp.get(1, "VCFRONT_sensors", "VCFRONT_tempAmbientFiltered");
+    cs.coolantBatIn = cp.get(0, "VCFRONT_sensors", "VCFRONT_tempCoolantBatInlet");
+    cs.outsideTemp = cp.get(0, "VCFRONT_sensors", "VCFRONT_tempAmbientFiltered");
     cs.cabinHumidity = cp.get(1, "VCRIGHT_thsStatus", "VCRIGHT_thsHumidity");
     // Mux 1 carries the interior estimate; raw 240 (80 degC) is SNA.
     if (static_cast<int>(cp.get(1, "VCRIGHT_logging1Hz", "VCRIGHT_logging1HzIndex")) == 1) {
@@ -276,8 +281,8 @@ public:
 
 
         // VCFRONT_status is multiplexed: VCFRONT_anyDoorOpen lives on mux 0
-        if (static_cast<int>(cp.get(1, "VCFRONT_status", "VCFRONT_statusIndex")) == 0) {
-            cs.anyDoorOpen = cp.get(1, "VCFRONT_status", "VCFRONT_anyDoorOpen");
+        if (static_cast<int>(cp.get(0, "VCFRONT_status", "VCFRONT_statusIndex")) == 0) {
+            cs.anyDoorOpen = cp.get(0, "VCFRONT_status", "VCFRONT_anyDoorOpen");
         }
 
         // VCLEFT_switchStatus is multiplexed: VCLEFT_frontBuckleSwitch lives on mux 0
@@ -329,7 +334,7 @@ public:
 private:
     BlinkerHold leftBlinkerHold_;
     BlinkerHold rightBlinkerHold_;
-    TeslaVinUpdater vin_;
+    TeslaVinUpdater vin_{0};
 };
 
 // New-gen Model Y (Juniper) with new_gen_juniper.dbc on both buses. Comma and

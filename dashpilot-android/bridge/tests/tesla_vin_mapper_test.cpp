@@ -49,11 +49,12 @@ struct Harness {
     CarState cs;
 
     Harness() {
+        cp.addBus(0, kVehicleDbc);   // the DashKit mapper reads VIN_info on the chassis bus
         cp.addBus(1, kVehicleDbc);
         cp.buildCache();
     }
 
-    void feed(const std::string& data, int bus = 1, uint32_t address = 0x405) {
+    void feed(const std::string& data, int bus = 0, uint32_t address = 0x405) {
         cp.updateFrame(bus, address, reinterpret_cast<const uint8_t*>(data.data()),
                        data.size());
         mapper.update(cp, cs);
@@ -114,7 +115,7 @@ void rejects_zero_padding_violation_on_mux_a() {
 
 void ignores_frames_outside_the_vin_contract() {
     Harness h;
-    h.feed(frameA(), 0, 0x405);   // wrong bus
+    h.feed(frameA(), 1, 0x405);   // wrong bus
     h.feed(frameB(), 1, 0x404);   // wrong CAN id
     h.feed(vinFrame(0x20, "JUNKJUN", 1)); // unknown mux
     std::string short_frame = frameC();

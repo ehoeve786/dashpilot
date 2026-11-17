@@ -74,26 +74,27 @@ void dashkit_mapper_subscribes_to_what_it_reads() {
 
     // Chassis bus.
     for (const char* m : {"SCCM_steeringAngleSensor", "DI_systemStatus", "DI_speed", "DAS_status",
-                          "DAS_status2", "DAS_road", "RCM_inertial2"}) {
+                          "DAS_status2", "DAS_road", "RCM_inertial2", "VCFRONT_status", "VCFRONT_sensors",
+                          "VCLEFT_doorStatus", "VCRIGHT_doorStatus", "VIN_info"}) {
         CHECK(rig.has(subs, 0, m));
     }
     // Vehicle bus.
-    for (const char* m : {"VCLEFT_lightStatus", "VCRIGHT_lightStatus", "VCFRONT_status",
+    for (const char* m : {"VCLEFT_lightStatus", "VCRIGHT_lightStatus",
                           "VCLEFT_switchStatus", "UI_hvacRequest", "BMS_energyStatus",
                           "BMS_powerAvailable", "BMS_hvBusStatus", "BMS_bmbMinMax", "DI_odometerStatus",
-                          "VIN_info", "VCSEC_TPMSData", "VCLEFT_doorStatus", "VCRIGHT_doorStatus",
+                          "VCSEC_TPMSData",
                           "VCLEFT_liftgateStatus", "UI_ambientLightingCtrls", "VCRIGHT_restraintStatus",
-                          "UI_vehicleControl", "VCLEFT_switchStatus", "COMMA_status", "DI_torque",
-                          "BMS_status", "VCRIGHT_logging1Hz", "VCFRONT_sensors", "VCRIGHT_thsStatus"}) {
+                          "UI_vehicleControl", "COMMA_status", "DI_torque",
+                          "BMS_status", "VCRIGHT_logging1Hz", "VCRIGHT_thsStatus"}) {
         CHECK(rig.has(subs, 1, m));
     }
     // Nothing else: a message the mapper stops reading leaves the list too.
     CHECK(subs.size() == 31);
     // Messages only read once a frame has arrived are still found on an empty
     // parser (muxed TPMS and liftgate, the VIN, ambient lighting).
-    CHECK(rig.has(subs, 1, "VCSEC_TPMSData") && rig.has(subs, 1, "VIN_info"));
-    // Per bus: the chassis copy of a vehicle-bus message is not subscribed.
-    CHECK(!rig.has(subs, 0, "VCFRONT_status") && !rig.has(subs, 1, "DI_systemStatus"));
+    CHECK(rig.has(subs, 1, "VCSEC_TPMSData") && rig.has(subs, 0, "VIN_info"));
+    // Per bus: the other bus's copy is not subscribed.
+    CHECK(!rig.has(subs, 1, "VCFRONT_status") && !rig.has(subs, 1, "DI_systemStatus"));
     CHECK(std::is_sorted(subs.begin(), subs.end()));
 }
 

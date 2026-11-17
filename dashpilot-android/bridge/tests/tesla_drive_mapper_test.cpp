@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     CHECK(cs.cellVoltMin == 0 && cs.cellVoltMax == 0);
     feed(1, 0x332, "f9197d061724");                 // mux 1
     CHECK(near(cs.cellVoltMin, 3.322) && near(cs.cellVoltMax, 3.324));
-    feed(1, 0x321, "2a7aa8660266d00e");             // VCFRONT_sensors
+    feed(0, 0x321, "2a7aa8660266d00e");             // VCFRONT_sensors (chassis bus)
     CHECK(near(cs.coolantBatIn, 29.25) && near(cs.outsideTemp, 11.0));
     feed(1, 0x383, "971829004be0600c");             // VCRIGHT_thsStatus
     CHECK(cs.cabinHumidity == 20);

@@ -141,11 +141,14 @@ struct Harness {
     CarState cs;
 
     Harness() {
+        cp.addBus(0, kVehicleDbc);
         cp.addBus(1, kVehicleDbc);
         cp.buildCache();
     }
 
-    void feed(uint32_t address, const std::string& data, int bus = 1) {
+    // Door, frunk and VIN status are read on the chassis bus (same contents there); the rest on the vehicle bus.
+    void feed(uint32_t address, const std::string& data, int bus = -1) {
+        if (bus < 0) bus = address == 0x102 || address == 0x103 || address == 0x2E1 || address == 0x405 ? 0 : 1;
         cp.updateFrame(bus, address, reinterpret_cast<const uint8_t*>(data.data()), data.size());
         mapper.update(cp, cs);
     }

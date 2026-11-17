@@ -256,7 +256,8 @@ public:
         cs.rightBlindSpot = cp.get(0, "DAS_status", "DAS_blindSpotRearRight");
         cs.fusedSpeedLimit = cp.get(0, "DAS_status", "DAS_fusedSpeedLimit");
         cs.trafficLightColor = cp.get(0, "DAS_road", "DAS_trafficLightColor");
-        cs.stopLineDist = cp.get(0, "DAS_road", "DAS_stopLineDist");
+        cs.stopLineDist = cp.get(0, "DAS_road", "DAS_stopLineDist");  // metres, 254 = none
+        cs.trafficControlType = cp.get(0, "DAS_road", "DAS_controlType");
 
         // openpilot state from the comma 3X over its USB link to the DashKit, which forwards it as
         // COMMA_status (0x7F0, bus 1; app-only, never on CAN). All zero once the C3X goes quiet for 1 s.

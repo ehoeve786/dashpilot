@@ -51,6 +51,7 @@ extension DashState {
             ("accelPedal", .number(c.accelPedal)),
             ("chargeStatus", .number(c.chargeStatus)),
             ("chargeLimit", .number(c.chargeLimit)),
+            ("trafficControlType", .number(c.trafficControlType)),
             ("buckleStatus", .number(c.buckleStatus)),
             ("odometer", .number(c.odometer)),
             ("adasOn", .bool(c.adasOn)),

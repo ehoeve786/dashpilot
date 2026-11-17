@@ -66,6 +66,14 @@ int main(int argc, char** argv) {
     feed(1, 0x212, "19dc4341130c01a6");             // Supercharging
     CHECK(cs.chargeStatus == 3 && near(cs.chargeLimit, 134.0));
 
+    // DAS_road: stop line in metres, and what it belongs to.
+    feed(0, 0x25D, "18160e384610");                 // stop sign, 14 m
+    CHECK(cs.trafficControlType == 2 && cs.stopLineDist == 14 && cs.trafficLightColor == 0);
+    feed(0, 0x25D, "181c1c2b4004");                 // traffic light, yellow, 28 m
+    CHECK(cs.trafficControlType == 3 && cs.stopLineDist == 28 && cs.trafficLightColor == 3);
+    feed(0, 0x25D, "0000fe000000");                 // nothing ahead
+    CHECK(cs.trafficControlType == 0 && cs.stopLineDist == 254);
+
     if (failures) {
         std::printf("%d check(s) failed\n", failures);
         return 1;

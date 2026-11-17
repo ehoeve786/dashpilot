@@ -277,6 +277,14 @@ const speedAngle = (v) => -135 + clamp(v, 0, 200) / 200 * 270;
   S.light = el(svg, 'g', { transform: 'translate(52 86)', opacity: 0 });
   el(S.light, 'rect', { x: -32, y: -78, width: 64, height: 156, rx: 20, fill: '#15181D', stroke: '#262A31', 'stroke-width': 2 });
   S.lamps = [-46, 0, 46].map((y) => el(S.light, 'circle', { cy: y, r: 18, fill: '#22262D' }));
+  // Stop sign (red octagon) in the same place, for stop signs and all-way stops.
+  S.sign = el(svg, 'g', { transform: 'translate(52 86)', opacity: 0 });
+  const oct = []; for (let i = 0; i < 8; i++) { const a = (i + 0.5) * Math.PI / 4; oct.push([48 * Math.cos(a), 48 * Math.sin(a), 4]); }
+  el(S.sign, 'path', { d: roundedPoly(oct), fill: '#D7261E', stroke: '#FFFFFF', 'stroke-width': 4 });
+  label(S.sign, 0, 0, [['STOP', 23, '#FFFFFF', 600, 0.5]]);
+  S.allWay = label(S.sign, 0, 70, [['ALL-WAY', 15, '#111111', 600, 1]]);
+  S.allWayBg = el(S.sign, 'rect', { x: -40, y: 58, width: 80, height: 24, rx: 4, fill: '#FFFFFF' });
+  S.sign.insertBefore(S.allWayBg, S.allWay);
   S.stop = label(svg, 52, 200, [['', 32, TEXT, 600, 0], [' m', 20, SUB, 400, 0]]);
 
   // Speed limit sign: round (Vienna convention), US "SPEED LIMIT" or Canada "MAXIMUM".
@@ -563,10 +571,18 @@ function render(c) {
     S.badgeRect.setAttribute('x', -w / 2);
     S.badgeRect.setAttribute('width', w);
   }
-  // Traffic light (0 none, 1 red, 2 green, 3 yellow) and stop line (127.5 m = none).
-  const light = num(c.trafficLightColor, 0), stopDist = num(c.stopLineDist, 0);
-  const hasStop = stopDist > 0 && stopDist < 127;
-  S.light.setAttribute('opacity', light > 0 || hasStop ? 1 : 0);
+  // Traffic light (0 none, 1 red, 2 green, 3 yellow) or stop sign, with the distance to the stop line. The
+  // DashKit says which one the line belongs to (2 stop sign, 14 all-way stop, 3 light; 254 m = none); a source
+  // without that (0) shows the light whenever there is a stop line closer than 127 m.
+  const light = num(c.trafficLightColor, 0), stopDist = num(c.stopLineDist, 0), tc = num(c.trafficControlType, 0);
+  const isSign = tc === 2 || tc === 14;
+  const isLight = tc === 3 || (tc === 0 && (light > 0 || stopDist < 127));
+  const hasStop = (isSign || isLight) && stopDist > 0 && stopDist < (tc ? 254 : 127);
+  S.light.setAttribute('opacity', isLight && (light > 0 || hasStop) ? 1 : 0);
+  S.sign.setAttribute('opacity', isSign ? 1 : 0);
+  S.allWay.setAttribute('opacity', tc === 14 ? 1 : 0);
+  S.allWayBg.setAttribute('opacity', tc === 14 ? 1 : 0);
+  S.stop.setAttribute('y', isSign ? (tc === 14 ? 186 : 166) : 200);
   const lit = { 1: [0, RED], 3: [1, AMBER], 2: [2, GREEN] }[light];
   S.lamps.forEach((l, i) => l.setAttribute('fill', lit && lit[0] === i ? lit[1] : '#22262D'));
   S.stop.setAttribute('opacity', hasStop ? 1 : 0);

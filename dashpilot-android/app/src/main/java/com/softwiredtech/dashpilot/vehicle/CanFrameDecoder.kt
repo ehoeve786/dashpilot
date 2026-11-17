@@ -122,7 +122,8 @@ class CanFrameDecoder(
                 accelLat = values[81].toFloat(),
                 accelPedal = values[82].toFloat(),
                 chargeStatus = values[83].toFloat(),
-                chargeLimit = values[84].toFloat()
+                chargeLimit = values[84].toFloat(),
+                trafficControlType = values[85].toFloat()
             )
         }
 

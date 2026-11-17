@@ -105,6 +105,7 @@ typedef struct {
     double accelPedal;
     double chargeStatus;
     double chargeLimit;
+    double trafficControlType;
 } BridgeCarState;
 
 // Context

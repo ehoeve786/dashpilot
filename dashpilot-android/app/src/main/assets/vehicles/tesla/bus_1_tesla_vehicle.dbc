@@ -1376,7 +1376,8 @@ BO_ 1885 CP_sensorData: 8 VEH
  SG_ CP_refVoltage m7 : 8|8@1+ (0.0070588235,0) [0|1.7999999925] "V"  Receiver
 
 BO_ 605 DAS_road: 6 XXX
- SG_ DAS_stopLineDist : 16|8@1+ (0.5,0) [0|127.5] "m" XXX
+ SG_ DAS_controlType : 11|5@1+ (1,0) [0|31] "" XXX
+ SG_ DAS_stopLineDist : 16|8@1+ (1,0) [0|254] "m" XXX
  SG_ DAS_trafficLightColor : 26|3@0+ (1,0) [0|7] "" XXX
 
 BO_ 669 CP_dcChargeStatus: 4 VEH

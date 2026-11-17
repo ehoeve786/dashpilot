@@ -95,7 +95,7 @@ struct CarState {
     // outside and cabin temperatures (degC); cabin humidity (%); wheel torque (Nm, at the axle: DI_torque);
     // longitudinal and lateral acceleration (m/s^2, RCM_inertial2); accelerator pedal (%); charge status
     // (BMS_uiChargeStatus: 0 disconnected, 1 no power, 2 about to charge, 3 charging, 4 complete, 5 stopped);
-    // charge power the battery can take (kW, 0 when not available).
+    // charge power the battery can take (kW, 0 when not available); traffic control type.
     double cellVoltMin = 0;
     double cellVoltMax = 0;
     double coolantBatIn = 0;
@@ -108,6 +108,9 @@ struct CarState {
     double accelPedal = 0;
     double chargeStatus = 0;
     double chargeLimit = 0;
+    // What the stop line belongs to (DAS_road, Autopilot's traffic control): 0 none, 2 stop sign, 3 traffic light,
+    // 14 all-way stop; others are yields, crosswalks, junctions. 0 also from sources that do not report it.
+    double trafficControlType = 0;
 
     // Vehicle VIN, empty until fully assembled by the mapper.
     static constexpr size_t VIN_LENGTH = 17;
@@ -127,7 +130,7 @@ struct CarState {
     static constexpr size_t CABIN_OFFSET = AMBIENT_OFFSET + 3;
     static constexpr size_t CABIN_COUNT = 12;
     static constexpr size_t DRIVE_OFFSET = CABIN_OFFSET + CABIN_COUNT;
-    static constexpr size_t DRIVE_COUNT = 12;
+    static constexpr size_t DRIVE_COUNT = 13;
     static constexpr size_t FIELD_COUNT = DRIVE_OFFSET + DRIVE_COUNT;
 
     void toArray(double* out) const {
@@ -223,7 +226,8 @@ struct CarState {
 
         // Driving data (after the cabin), in the order declared above.
         const double drive[DRIVE_COUNT] = {cellVoltMin, cellVoltMax, coolantBatIn, outsideTemp, cabinTemp, cabinHumidity,
-                                           wheelTorque, accelLong, accelLat, accelPedal, chargeStatus, chargeLimit};
+                                           wheelTorque, accelLong, accelLat, accelPedal, chargeStatus, chargeLimit,
+                                           trafficControlType};
         for (size_t i = 0; i < DRIVE_COUNT; i++) out[DRIVE_OFFSET + i] = drive[i];
     }
 };

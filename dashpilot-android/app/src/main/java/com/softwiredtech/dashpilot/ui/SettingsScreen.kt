@@ -464,7 +464,8 @@ fun SettingsScreen(
 
             DeveloperSection(
                 selectedDashboardId = selectedDashboardId.value,
-                onDashboardSelected = { id -> selectedDashboardId.value = id }
+                onDashboardSelected = { id -> selectedDashboardId.value = id },
+                bleManager = bleManager
             )
 
             if (BuildConfig.DEBUG) {
@@ -521,7 +522,11 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun DeveloperSection(selectedDashboardId: String, onDashboardSelected: (String) -> Unit) {
+private fun DeveloperSection(
+    selectedDashboardId: String,
+    onDashboardSelected: (String) -> Unit,
+    bleManager: DashKitBleManager?
+) {
     val context = LocalContext.current
     var urlDraft by remember { mutableStateOf(getDevDashboardUrl(context)) }
     var urlInvalid by remember { mutableStateOf(false) }
@@ -592,11 +597,13 @@ private fun DeveloperSection(selectedDashboardId: String, onDashboardSelected: (
     SettingsToggle(stringResource(R.string.settings_developer_can_log), canLog) { enabled ->
         canLog = enabled
         setDevCanLogEnabled(context, enabled)
+        bleManager?.reconnect()   // read once per connection
     }
     if (canLog) {
         SettingsToggle(stringResource(R.string.settings_developer_can_log_all), canLogAll) { enabled ->
             canLogAll = enabled
             setDevCanLogAllEnabled(context, enabled)
+            bleManager?.reconnect()
         }
         Text(
             text = stringResource(R.string.settings_developer_can_log_hint),

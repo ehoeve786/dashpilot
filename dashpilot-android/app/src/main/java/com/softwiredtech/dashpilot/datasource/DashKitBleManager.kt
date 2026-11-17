@@ -579,6 +579,14 @@ class DashKitBleManager(internal val context: Context) {
             false
         }
 
+    /** Options read when a connection is set up (PHY, CAN log, "Log every frame") apply to a new one. */
+    fun reconnect() {
+        val state = _connectionState.value
+        if (state != ConnectionStatus.Connected && state != ConnectionStatus.Connecting) return
+        disconnect()
+        connect()
+    }
+
     fun disconnect() {
         userInitiatedDisconnect = true
         // Drops pending timeouts, scheduled retries and the discovery delay.

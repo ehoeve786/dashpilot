@@ -91,6 +91,24 @@ struct CarState {
     double seatBeltRC = 0;
     double seatBeltRR = 0;
 
+    // Driving data for the Sport dashboard. Cell voltage min/max (V, BMS_bmbMinMax mux 1); battery coolant inlet,
+    // outside and cabin temperatures (degC); cabin humidity (%); wheel torque (Nm, at the axle: DI_torque);
+    // longitudinal and lateral acceleration (m/s^2, RCM_inertial2); accelerator pedal (%); charge status
+    // (BMS_uiChargeStatus: 0 disconnected, 1 no power, 2 about to charge, 3 charging, 4 complete, 5 stopped);
+    // charge power the battery can take (kW, 0 when not available).
+    double cellVoltMin = 0;
+    double cellVoltMax = 0;
+    double coolantBatIn = 0;
+    double outsideTemp = 0;
+    double cabinTemp = 0;
+    double cabinHumidity = 0;
+    double wheelTorque = 0;
+    double accelLong = 0;
+    double accelLat = 0;
+    double accelPedal = 0;
+    double chargeStatus = 0;
+    double chargeLimit = 0;
+
     // Vehicle VIN, empty until fully assembled by the mapper.
     static constexpr size_t VIN_LENGTH = 17;
     char vin[VIN_LENGTH + 1] = {};
@@ -108,7 +126,9 @@ struct CarState {
     static constexpr size_t AMBIENT_OFFSET = DOOR_OFFSET + DOOR_COUNT;
     static constexpr size_t CABIN_OFFSET = AMBIENT_OFFSET + 3;
     static constexpr size_t CABIN_COUNT = 12;
-    static constexpr size_t FIELD_COUNT = CABIN_OFFSET + CABIN_COUNT;
+    static constexpr size_t DRIVE_OFFSET = CABIN_OFFSET + CABIN_COUNT;
+    static constexpr size_t DRIVE_COUNT = 12;
+    static constexpr size_t FIELD_COUNT = DRIVE_OFFSET + DRIVE_COUNT;
 
     void toArray(double* out) const {
         // Party bus
@@ -200,5 +220,10 @@ struct CarState {
         out[CABIN_OFFSET + 9] = seatBeltRL;
         out[CABIN_OFFSET + 10] = seatBeltRC;
         out[CABIN_OFFSET + 11] = seatBeltRR;
+
+        // Driving data (after the cabin), in the order declared above.
+        const double drive[DRIVE_COUNT] = {cellVoltMin, cellVoltMax, coolantBatIn, outsideTemp, cabinTemp, cabinHumidity,
+                                           wheelTorque, accelLong, accelLat, accelPedal, chargeStatus, chargeLimit};
+        for (size_t i = 0; i < DRIVE_COUNT; i++) out[DRIVE_OFFSET + i] = drive[i];
     }
 };

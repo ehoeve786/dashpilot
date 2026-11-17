@@ -1,0 +1,75 @@
+// Host-run test for the Sport dashboard's driving data in the Tesla DashKit mapper (updateDrive in
+// bridge/car/cars/tesla.h). Frames are real ones from a legacy Model Y's full-bus capture, decoded with the DBC the
+// app ships. Run by ctest with that DBC's path.
+
+#include "common/vehicle_decoder.h"
+
+#include <cmath>
+#include <cstdio>
+#include <fstream>
+#include <iterator>
+#include <string>
+#include <vector>
+
+static int failures = 0;
+#define CHECK(cond)                                                          \
+    do {                                                                     \
+        if (!(cond)) {                                                       \
+            std::printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #cond);      \
+            failures++;                                                      \
+        }                                                                    \
+    } while (0)
+
+static bool near(double a, double b) { return std::fabs(a - b) < 1e-6; }
+
+static std::vector<uint8_t> hex(const char* s) {
+    std::vector<uint8_t> out;
+    for (; s[0] && s[1]; s += 2) out.push_back(static_cast<uint8_t>(std::stoi(std::string(s, 2), nullptr, 16)));
+    return out;
+}
+
+int main(int argc, char** argv) {
+    if (argc != 2) return 1;
+    std::ifstream file(argv[1]);
+    const std::string dbc{std::istreambuf_iterator<char>(file), {}};
+    CHECK(!dbc.empty());
+    VehicleDecoder decoder({dbc, dbc}, {0, 1}, "dashkit");
+    const auto& cs = decoder.state();
+    auto feed = [&](int bus, uint32_t id, const char* data) {
+        auto d = hex(data);
+        decoder.updateFrame(bus, id, d.data(), d.size());
+        decoder.updateMapper();
+    };
+
+    feed(1, 0x332, "f8197d061724");                 // BMS_bmbMinMax mux 0 (thermistors): cells untouched
+    CHECK(cs.cellVoltMin == 0 && cs.cellVoltMax == 0);
+    feed(1, 0x332, "f9197d061724");                 // mux 1
+    CHECK(near(cs.cellVoltMin, 3.322) && near(cs.cellVoltMax, 3.324));
+    feed(1, 0x321, "2a7aa8660266d00e");             // VCFRONT_sensors
+    CHECK(near(cs.coolantBatIn, 29.25) && near(cs.outsideTemp, 11.0));
+    feed(1, 0x383, "971829004be0600c");             // VCRIGHT_thsStatus
+    CHECK(cs.cabinHumidity == 20);
+    feed(1, 0x2B3, "016d6c6f606b6e74");             // VCRIGHT_logging1Hz mux 1
+    CHECK(near(cs.cabinTemp, 15.5));
+    feed(1, 0x2B3, "016d6cf0606b6e74");             // raw 240 = SNA: keeps the last reading
+    CHECK(near(cs.cabinTemp, 15.5));
+    feed(1, 0x2B3, "026d6c10606b6e74");             // another mux: ignored
+    CHECK(near(cs.cabinTemp, 15.5));
+    feed(0, 0x111, "e6ffacff99e91034");             // RCM_inertial2
+    CHECK(near(cs.accelLong, -0.0325) && near(cs.accelLat, -0.105));
+    feed(0, 0x118, "ca6a950066c88004");             // DI_systemStatus
+    CHECK(near(cs.accelPedal, 40.8));
+    feed(1, 0x108, "00c20e1a0ade0025");             // DI_torque
+    CHECK(cs.wheelTorque == 646);
+    feed(1, 0x212, "1804004082ff07c4");             // BMS_status driving: charge power SNA
+    CHECK(cs.chargeStatus == 2 && cs.chargeLimit == 0);
+    feed(1, 0x212, "19dc4341130c01a6");             // Supercharging
+    CHECK(cs.chargeStatus == 3 && near(cs.chargeLimit, 134.0));
+
+    if (failures) {
+        std::printf("%d check(s) failed\n", failures);
+        return 1;
+    }
+    std::printf("tesla_drive_mapper_test: all checks passed\n");
+    return 0;
+}

@@ -77,6 +77,18 @@ static void carStateToBridge(const CarState& cs, BridgeCarState* out) {
     out->seatBeltRL = cs.seatBeltRL;
     out->seatBeltRC = cs.seatBeltRC;
     out->seatBeltRR = cs.seatBeltRR;
+    out->cellVoltMin = cs.cellVoltMin;
+    out->cellVoltMax = cs.cellVoltMax;
+    out->coolantBatIn = cs.coolantBatIn;
+    out->outsideTemp = cs.outsideTemp;
+    out->cabinTemp = cs.cabinTemp;
+    out->cabinHumidity = cs.cabinHumidity;
+    out->wheelTorque = cs.wheelTorque;
+    out->accelLong = cs.accelLong;
+    out->accelLat = cs.accelLat;
+    out->accelPedal = cs.accelPedal;
+    out->chargeStatus = cs.chargeStatus;
+    out->chargeLimit = cs.chargeLimit;
 }
 
 static std::atomic<bool> receiveLoopRunning{false};

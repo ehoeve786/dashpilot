@@ -91,6 +91,20 @@ typedef struct {
     double seatBeltRL;
     double seatBeltRC;
     double seatBeltRR;
+
+    // Driving data: see CarState in car/car_state.h.
+    double cellVoltMin;
+    double cellVoltMax;
+    double coolantBatIn;
+    double outsideTemp;
+    double cabinTemp;
+    double cabinHumidity;
+    double wheelTorque;
+    double accelLong;
+    double accelLat;
+    double accelPedal;
+    double chargeStatus;
+    double chargeLimit;
 } BridgeCarState;
 
 // Context

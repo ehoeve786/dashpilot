@@ -109,7 +109,20 @@ class CanFrameDecoder(
                 seatBeltFR = values[69].toFloat(),
                 seatBeltRL = values[70].toFloat(),
                 seatBeltRC = values[71].toFloat(),
-                seatBeltRR = values[72].toFloat()
+                seatBeltRR = values[72].toFloat(),
+                // Driving data after the cabin (CarState::DRIVE_OFFSET).
+                cellVoltMin = values[73].toFloat(),
+                cellVoltMax = values[74].toFloat(),
+                coolantBatIn = values[75].toFloat(),
+                outsideTemp = values[76].toFloat(),
+                cabinTemp = values[77].toFloat(),
+                cabinHumidity = values[78].toFloat(),
+                wheelTorque = values[79].toFloat(),
+                accelLong = values[80].toFloat(),
+                accelLat = values[81].toFloat(),
+                accelPedal = values[82].toFloat(),
+                chargeStatus = values[83].toFloat(),
+                chargeLimit = values[84].toFloat()
             )
         }
 

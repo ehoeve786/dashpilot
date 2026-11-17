@@ -82,6 +82,21 @@ data class CarState(
     val seatBeltRC: Float = 0f,
     val seatBeltRR: Float = 0f,
 
+    // Driving data (see bridge/car/car_state.h): cell voltages V, temperatures, humidity %, wheel torque Nm,
+    // acceleration m/s^2, pedal %, charge status 0-5 and the charge power the battery can take, kW.
+    val cellVoltMin: Float = 0f,
+    val cellVoltMax: Float = 0f,
+    val coolantBatIn: Float = 0f,
+    val outsideTemp: Float = 0f,
+    val cabinTemp: Float = 0f,
+    val cabinHumidity: Float = 0f,
+    val wheelTorque: Float = 0f,
+    val accelLong: Float = 0f,
+    val accelLat: Float = 0f,
+    val accelPedal: Float = 0f,
+    val chargeStatus: Float = 0f,
+    val chargeLimit: Float = 0f,
+
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = "",
     val ambientLightingAvailable: Boolean = false,
@@ -94,11 +109,14 @@ data class CarState(
         packTMax = if (packTMax != 0f) packTMax * 1.8f + 32f else 0f,
         acTemp = if (acTemp != 0f) acTemp * 1.8f + 32f else 0f,
         acTempRight = if (acTempRight != 0f) acTempRight * 1.8f + 32f else 0f,
+        coolantBatIn = if (coolantBatIn != 0f) coolantBatIn * 1.8f + 32f else 0f,
+        outsideTemp = if (outsideTemp != 0f) outsideTemp * 1.8f + 32f else 0f,
+        cabinTemp = if (cabinTemp != 0f) cabinTemp * 1.8f + 32f else 0f,
         fusedSpeedLimit = if (speedLimitSignsInKm()) fusedSpeedLimit * KM_TO_MILES else fusedSpeedLimit,
     )
 
     companion object {
-        const val FIELD_COUNT = 73
+        const val FIELD_COUNT = 85
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

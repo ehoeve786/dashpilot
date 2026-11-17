@@ -152,6 +152,31 @@ static inline void updateCabin(const CANParsers& cp, CarState& cs) {
     }
 }
 
+// Driving data for the Sport dashboard. Each message is read on the bus where it is cheapest (checked against
+// full-bus captures of a legacy Model Y): 0x108 runs at 10/s on the vehicle bus but 100/s on the chassis bus.
+// Not used, because this DBC does not match the car: DI_temperature, DI_estimatedBrakeTemp, DI_limits.
+static inline void updateDrive(const CANParsers& cp, CarState& cs) {
+    if (static_cast<int>(cp.get(1, "BMS_bmbMinMax", "BMS_bmbMinMaxMultiplexer")) == 1) {
+        cs.cellVoltMin = cp.get(1, "BMS_bmbMinMax", "BMS_brickVoltageMin");
+        cs.cellVoltMax = cp.get(1, "BMS_bmbMinMax", "BMS_brickVoltageMax");
+    }
+    cs.coolantBatIn = cp.get(1, "VCFRONT_sensors", "VCFRONT_tempCoolantBatInlet");
+    cs.outsideTemp = cp.get(1, "VCFRONT_sensors", "VCFRONT_tempAmbientFiltered");
+    cs.cabinHumidity = cp.get(1, "VCRIGHT_thsStatus", "VCRIGHT_thsHumidity");
+    // Mux 1 carries the interior estimate; raw 240 (80 degC) is SNA.
+    if (static_cast<int>(cp.get(1, "VCRIGHT_logging1Hz", "VCRIGHT_logging1HzIndex")) == 1) {
+        double t = cp.get(1, "VCRIGHT_logging1Hz", "VCRIGHT_cabinTempInterior");
+        if (t < 80.0) cs.cabinTemp = t;
+    }
+    cs.wheelTorque = cp.get(1, "DI_torque", "DI_torqueActual");
+    cs.accelLong = cp.get(0, "RCM_inertial2", "RCM_longitudinalAccel");
+    cs.accelLat = cp.get(0, "RCM_inertial2", "RCM_lateralAccel");
+    cs.accelPedal = cp.get(0, "DI_systemStatus", "DI_accelPedalPos");
+    cs.chargeStatus = cp.get(1, "BMS_status", "BMS_uiChargeStatus");
+    double limit = cp.get(1, "BMS_status", "BMS_chgPowerAvailable");
+    cs.chargeLimit = limit < 255.0 ? limit : 0.0;  // raw 2047 (255.875 kW) = SNA
+}
+
 static inline void updateVehicleBus(const CANParsers& cp, CarState& cs) {
     // Vehicle bus specific signals
     // BMS_energyStatus is multiplexed: mux 0 has pack/remaining energy, mux 1 has energyBuffer
@@ -261,6 +286,7 @@ public:
 
         updateClosures(cp, cs);
         updateCabin(cp, cs);
+        updateDrive(cp, cs);
 
         // Climate setpoint temperature (degC) from the vehicle bus.
         cs.acTemp = cp.get(1, "UI_hvacRequest", "UI_hvacReqTempSetpointLeft");

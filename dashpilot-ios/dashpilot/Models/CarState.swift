@@ -85,6 +85,18 @@ struct CarState: Codable {
     var seatBeltRL: Float = 0
     var seatBeltRC: Float = 0
     var seatBeltRR: Float = 0
+    var cellVoltMin: Float = 0
+    var cellVoltMax: Float = 0
+    var coolantBatIn: Float = 0
+    var outsideTemp: Float = 0
+    var cabinTemp: Float = 0
+    var cabinHumidity: Float = 0
+    var wheelTorque: Float = 0
+    var accelLong: Float = 0
+    var accelLat: Float = 0
+    var accelPedal: Float = 0
+    var chargeStatus: Float = 0
+    var chargeLimit: Float = 0
 
     init() {}
 
@@ -159,6 +171,18 @@ struct CarState: Codable {
         seatBeltRL = Float(bridge.seatBeltRL)
         seatBeltRC = Float(bridge.seatBeltRC)
         seatBeltRR = Float(bridge.seatBeltRR)
+        cellVoltMin = Float(bridge.cellVoltMin)
+        cellVoltMax = Float(bridge.cellVoltMax)
+        coolantBatIn = Float(bridge.coolantBatIn)
+        outsideTemp = Float(bridge.outsideTemp)
+        cabinTemp = Float(bridge.cabinTemp)
+        cabinHumidity = Float(bridge.cabinHumidity)
+        wheelTorque = Float(bridge.wheelTorque)
+        accelLong = Float(bridge.accelLong)
+        accelLat = Float(bridge.accelLat)
+        accelPedal = Float(bridge.accelPedal)
+        chargeStatus = Float(bridge.chargeStatus)
+        chargeLimit = Float(bridge.chargeLimit)
     }
 
     private static let kmToMiles: Float = 0.621371
@@ -177,6 +201,9 @@ struct CarState: Codable {
         c.packTMax = packTMax != 0 ? packTMax * 1.8 + 32 : 0
         c.acTemp = acTemp != 0 ? acTemp * 1.8 + 32 : 0
         c.acTempRight = acTempRight != 0 ? acTempRight * 1.8 + 32 : 0
+        c.coolantBatIn = coolantBatIn != 0 ? coolantBatIn * 1.8 + 32 : 0
+        c.outsideTemp = outsideTemp != 0 ? outsideTemp * 1.8 + 32 : 0
+        c.cabinTemp = cabinTemp != 0 ? cabinTemp * 1.8 + 32 : 0
         if Self.speedLimitSignsInKm() {
             c.fusedSpeedLimit = fusedSpeedLimit * Self.kmToMiles
         }
@@ -255,5 +282,17 @@ struct CarState: Codable {
         seatBeltRL           = try c.decodeIfPresent(Float.self, forKey: .seatBeltRL) ?? 0
         seatBeltRC           = try c.decodeIfPresent(Float.self, forKey: .seatBeltRC) ?? 0
         seatBeltRR           = try c.decodeIfPresent(Float.self, forKey: .seatBeltRR) ?? 0
+        cellVoltMin = try c.decodeIfPresent(Float.self, forKey: .cellVoltMin) ?? 0
+        cellVoltMax = try c.decodeIfPresent(Float.self, forKey: .cellVoltMax) ?? 0
+        coolantBatIn = try c.decodeIfPresent(Float.self, forKey: .coolantBatIn) ?? 0
+        outsideTemp = try c.decodeIfPresent(Float.self, forKey: .outsideTemp) ?? 0
+        cabinTemp = try c.decodeIfPresent(Float.self, forKey: .cabinTemp) ?? 0
+        cabinHumidity = try c.decodeIfPresent(Float.self, forKey: .cabinHumidity) ?? 0
+        wheelTorque = try c.decodeIfPresent(Float.self, forKey: .wheelTorque) ?? 0
+        accelLong = try c.decodeIfPresent(Float.self, forKey: .accelLong) ?? 0
+        accelLat = try c.decodeIfPresent(Float.self, forKey: .accelLat) ?? 0
+        accelPedal = try c.decodeIfPresent(Float.self, forKey: .accelPedal) ?? 0
+        chargeStatus = try c.decodeIfPresent(Float.self, forKey: .chargeStatus) ?? 0
+        chargeLimit = try c.decodeIfPresent(Float.self, forKey: .chargeLimit) ?? 0
     }
 }

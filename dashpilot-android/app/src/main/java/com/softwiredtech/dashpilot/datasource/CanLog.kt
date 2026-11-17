@@ -53,7 +53,11 @@ class CanLog(private val context: Context) {
     private var bytes = 0L
     private var startMs = 0L
     private var lastFlushMs = 0L
-    private var failed = false
+    @Volatile private var failed = false
+    // Rows collect here and go to the file once a second on [io]: a write to shared storage can block for a second
+    // or more, and on the Bluetooth callback thread that held up every notification behind it.
+    private var pending = StringBuilder()
+    private val io = java.util.concurrent.Executors.newSingleThreadExecutor()
 
     @Synchronized
     fun write(bus: Int, address: Int, data: ByteArray) {
@@ -69,10 +73,10 @@ class CanLog(private val context: Context) {
                 for (b in data) { append(HEX_LOWER[b.toInt() ushr 4 and 15]); append(HEX_LOWER[b.toInt() and 15]) }
                 append('\n')
             }
-            w.write(line)
+            pending.append(line)
             bytes += line.length
             if (now - lastFlushMs > FLUSH_INTERVAL_MS) {
-                w.flush()
+                hand(w)
                 lastFlushMs = now
             }
             if (bytes > MAX_BYTES) {
@@ -91,10 +95,8 @@ class CanLog(private val context: Context) {
         startMs = now
         lastFlushMs = now
         bytes = 0
-        return (openInDownloads(name) ?: openInAppFiles(name)).also {
-            it.write("ms,bus,id,data\n")
-            writer = it
-        }
+        pending.append("ms,bus,id,data\n")
+        return (openInDownloads(name) ?: openInAppFiles(name)).also { writer = it }
     }
 
     // Public Downloads through MediaStore. Not marked pending: the file should
@@ -125,13 +127,26 @@ class CanLog(private val context: Context) {
         return BufferedWriter(FileWriter(file))
     }
 
+    // Passes the collected rows to [io], which writes and flushes them.
+    private fun hand(w: BufferedWriter, then: (() -> Unit)? = null) {
+        val chunk = pending
+        pending = StringBuilder(chunk.length)
+        io.execute {
+            try {
+                w.write(chunk.toString())
+                w.flush()
+            } catch (e: Exception) {
+                if (!failed) Log.w(TAG, "CAN log disabled: ${e.message}")
+                failed = true
+            }
+            then?.invoke()
+        }
+    }
+
     /** Ends the current file; the next [write] starts a new one. */
     @Synchronized
     fun close() {
-        try {
-            writer?.close()
-        } catch (_: Exception) {
-        }
+        writer?.let { w -> hand(w) { runCatching { w.close() } } }
         writer = null
         if (!failed) bytes = 0
     }

@@ -43,6 +43,7 @@ class DashKitDataSource(
     @Volatile private var logging = false
     @Volatile private var allPending = false
     private var decoded = 0
+    private var handleMaxMs = 0L   // longest time this thread spent on one notification, last 5 s
     private var emitted = 0
     private var emitFailed = 0
     private var recordAt = 0L
@@ -156,7 +157,9 @@ class DashKitDataSource(
         value: ByteArray
     ) {
         if (characteristic.uuid != CHAR_UUID) return
+        val t0 = android.os.SystemClock.elapsedRealtime()
         parseAndEmit(value)
+        handleMaxMs = maxOf(handleMaxMs, android.os.SystemClock.elapsedRealtime() - t0)
     }
 
     private fun parseAndEmit(payload: ByteArray) {
@@ -190,8 +193,10 @@ class DashKitDataSource(
         put(d, 0, decoded.toLong()); put(d, 2, emitted.toLong()); put(d, 4, emitFailed.toLong()); put(d, 6, lag)
         canLog.write(31, 0x1DA5F000, d)
         // 0x1DA5F001, since the app started: [0..1] pings sent  [2..3] pings Android refused  [4..5] writes that failed
+        // [6..7] longest time spent handling one notification in the last 5 s, ms (a stall here holds up all others)
         val w = ByteArray(8)
         put(w, 0, manager.pingsSent.toLong()); put(w, 2, manager.pingsRefused.toLong()); put(w, 4, manager.writeErrors.toLong())
+        put(w, 6, handleMaxMs); handleMaxMs = 0
         canLog.write(31, 0x1DA5F001, w)
         decoded = 0; emitted = 0; emitFailed = 0
         if (mainPostedAt == 0L) {

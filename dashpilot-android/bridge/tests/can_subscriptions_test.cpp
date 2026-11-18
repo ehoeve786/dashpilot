@@ -98,6 +98,25 @@ void dashkit_mapper_subscribes_to_what_it_reads() {
     CHECK(std::is_sorted(subs.begin(), subs.end()));
 }
 
+// The legacy Model Y loads one DBC per bus (config_dashkit.json). Its mapper must find every message there under
+// the same id as in the single DBC, or that message silently drops out of the subscription.
+void legacy_per_bus_dbcs_give_the_same_list() {
+    Rig one("bus_1_tesla_vehicle.dbc");
+    TeslaDashKitMapper a;
+    Subs want = probeCanSubscriptions(one.cp, a);
+
+    CANParsers cp;
+    cp.addBus(0, readFile(std::string(DBC_DIR) + "/tesla_legacy_model_y_chassis.dbc"));
+    cp.addBus(1, readFile(std::string(DBC_DIR) + "/tesla_legacy_model_y_vehicle.dbc"));
+    cp.buildCache();
+    TeslaDashKitMapper b;
+    Subs got = probeCanSubscriptions(cp, b);
+    CHECK(got == want);
+    for (const auto& s : want) {
+        if (std::find(got.begin(), got.end(), s) == got.end()) std::printf("  missing: bus %d id 0x%03X\n", s.first, s.second);
+    }
+}
+
 void juniper_mapper_has_its_own_list() {
     Rig rig("new_gen_juniper.dbc");
     TeslaJuniperMapper mapper;
@@ -152,6 +171,7 @@ void filter_wire_format() {
 
 int main() {
     dashkit_mapper_subscribes_to_what_it_reads();
+    legacy_per_bus_dbcs_give_the_same_list();
     juniper_mapper_has_its_own_list();
     probing_does_not_disturb_decoding();
     filter_wire_format();

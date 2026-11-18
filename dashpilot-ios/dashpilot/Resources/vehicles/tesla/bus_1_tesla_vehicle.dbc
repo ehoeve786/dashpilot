@@ -1086,7 +1086,7 @@ BO_ 530 BMS_status: 8 VEH
  SG_ BMS_activeHeatingWorthwhile: 5|1@1+ (1,0) [0|0] "" X
  SG_ BMS_chargeRequest: 29|1@1+ (1,0) [0|0] "" X
  SG_ BMS_chargeRetryCount: 49|4@1+ (1,0) [0|0] "" X
- SG_ BMS_chgPowerAvailable: 38|11@1+ (0.125,0) [0|0] "kW" X
+ SG_ BMS_chgPowerAvailable: 39|12@1+ (0.125,0) [0|0] "kW" X
  SG_ BMS_contactorState: 8|3@1+ (1,0) [0|0] "" X
  SG_ BMS_cpMiaOnHvs: 6|1@1+ (1,0) [0|0] "" X
  SG_ BMS_diLimpRequest: 35|1@1+ (1,0) [0|0] "" X
@@ -8770,7 +8770,7 @@ BO_ 611 VCRIGHT_logging10Hz: 8 VEH
 
 
 BO_ 691 VCRIGHT_logging1Hz: 8 VEH
- SG_ VCRIGHT_logging1HzIndex M : 0|4@1+ (1,0) [0|11] "" X
+ SG_ VCRIGHT_logging1HzIndex M : 0|5@1+ (1,0) [0|16] "" X
  SG_ VCRIGHT_LHPanelAirflowBlocked m3 : 54|1@1+ (1,0) [0|1] "" X
  SG_ VCRIGHT_RHPanelAirflowBlocked m3 : 55|1@1+ (1,0) [0|1] "" X
  SG_ VCRIGHT_cabinTempBreathLevel m1 : 56|8@1+ (0.5,-40) [-40|80] "C" X
@@ -10083,7 +10083,7 @@ VAL_ 1010 BMS_kwhCounter_Id 0 "MUX0" 1 "MUX1" 2 "MUX2" 3 "MUX3" 4 "END";
 
 VAL_ 594 BMS_powerLimitsState 0 "NOT_CALCULATED_FOR_DRIVE" 1 "CALCULATED_FOR_DRIVE";
 
-VAL_ 530 BMS_chgPowerAvailable 2047 "BMS_chgPowerAvailable_SNA";
+VAL_ 530 BMS_chgPowerAvailable 4095 "BMS_chgPowerAvailable_SNA";
 VAL_ 530 BMS_contactorState 0 "SNA" 1 "OPEN" 2 "OPENING" 3 "CLOSING" 4 "CLOSED" 5 "WELDED" 6 "BLOCKED";
 VAL_ 530 BMS_diLimpRequest 0 "NONE" 1 "WELDED";
 VAL_ 530 BMS_ecuLogUploadRequest 0 "NONE" 1 "1" 2 "2" 3 "3";

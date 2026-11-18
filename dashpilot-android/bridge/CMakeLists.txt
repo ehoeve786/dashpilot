@@ -113,7 +113,10 @@ add_executable(tesla_drive_mapper_test
 )
 target_include_directories(tesla_drive_mapper_test PRIVATE ${MSGQ_ROOT})
 target_compile_options(tesla_drive_mapper_test PRIVATE -Wall -Wextra)
-add_test(NAME tesla_drive_mapper COMMAND tesla_drive_mapper_test "${TESLA_DBC_DIR}/bus_1_tesla_vehicle.dbc")
+add_test(NAME tesla_drive_mapper COMMAND tesla_drive_mapper_test
+        "${TESLA_DBC_DIR}/tesla_legacy_model_y_chassis.dbc" "${TESLA_DBC_DIR}/tesla_legacy_model_y_vehicle.dbc")
+add_test(NAME tesla_drive_mapper_ios_dbc COMMAND tesla_drive_mapper_test
+        "${TESLA_DBC_DIR}/bus_1_tesla_vehicle.dbc" "${TESLA_DBC_DIR}/bus_1_tesla_vehicle.dbc")
 add_executable(can_subscriptions_test
         tests/can_subscriptions_test.cpp
         ${MSGQ_ROOT}/dbc/dbc.cc

@@ -179,7 +179,7 @@ static inline void updateDrive(const CANParsers& cp, CarState& cs) {
     cs.accelPedal = cp.get(0, "DI_systemStatus", "DI_accelPedalPos");
     cs.chargeStatus = cp.get(1, "BMS_status", "BMS_uiChargeStatus");
     double limit = cp.get(1, "BMS_status", "BMS_chgPowerAvailable");
-    cs.chargeLimit = limit < 255.0 ? limit : 0.0;  // raw 2047 (255.875 kW) = SNA
+    cs.chargeLimit = limit < 511.0 ? limit : 0.0;  // raw 4095 (511.875 kW) = SNA
 }
 
 static inline void updateVehicleBus(const CANParsers& cp, CarState& cs) {

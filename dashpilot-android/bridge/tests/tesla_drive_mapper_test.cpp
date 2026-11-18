@@ -1,6 +1,6 @@
 // Host-run test for the Sport dashboard's driving data in the Tesla DashKit mapper (updateDrive in
-// bridge/car/cars/tesla.h). Frames are real ones from a legacy Model Y's full-bus capture, decoded with the DBC the
-// app ships. Run by ctest with that DBC's path.
+// bridge/car/cars/tesla.h). Frames are real ones from a legacy Model Y's full-bus capture, decoded with the DBCs the
+// app ships. Run by ctest with the chassis-bus and vehicle-bus DBC paths.
 
 #include "common/vehicle_decoder.h"
 
@@ -29,11 +29,12 @@ static std::vector<uint8_t> hex(const char* s) {
 }
 
 int main(int argc, char** argv) {
-    if (argc != 2) return 1;
-    std::ifstream file(argv[1]);
-    const std::string dbc{std::istreambuf_iterator<char>(file), {}};
-    CHECK(!dbc.empty());
-    VehicleDecoder decoder({dbc, dbc}, {0, 1}, "dashkit");
+    if (argc != 3) return 1;
+    std::ifstream chassisFile(argv[1]), vehicleFile(argv[2]);
+    const std::string chassis{std::istreambuf_iterator<char>(chassisFile), {}};
+    const std::string vehicle{std::istreambuf_iterator<char>(vehicleFile), {}};
+    CHECK(!chassis.empty() && !vehicle.empty());
+    VehicleDecoder decoder({chassis, vehicle}, {0, 1}, "dashkit");
     const auto& cs = decoder.state();
     auto feed = [&](int bus, uint32_t id, const char* data) {
         auto d = hex(data);
@@ -63,8 +64,8 @@ int main(int argc, char** argv) {
     CHECK(cs.wheelTorque == 646);
     feed(1, 0x212, "1804004082ff07c4");             // BMS_status driving: charge power SNA
     CHECK(cs.chargeStatus == 2 && cs.chargeLimit == 0);
-    feed(1, 0x212, "19dc4341130c01a6");             // Supercharging
-    CHECK(cs.chargeStatus == 3 && near(cs.chargeLimit, 134.0));
+    feed(1, 0x212, "19dc4341130c01a6");             // Supercharging at 65 kW
+    CHECK(cs.chargeStatus == 3 && near(cs.chargeLimit, 67.0));
 
     // DAS_road: stop line in metres, and what it belongs to.
     feed(0, 0x25D, "18160e384610");                 // stop sign, 14 m

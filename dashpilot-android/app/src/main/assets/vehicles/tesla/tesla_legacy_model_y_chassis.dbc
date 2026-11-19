@@ -2864,6 +2864,30 @@ BO_ 1815 RCM_imuOffsets: 7 Vector__XXX
 
 
 
+BO_ 1776 UNK_6F0_alive: 2 Vector__XXX
+ SG_ UNK_6F0_crc : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ UNK_6F0_counter : 8|4@1+ (1,0) [0|15] "" Vector__XXX
+
+BO_ 1779 UNK_6F3_alive: 3 Vector__XXX
+ SG_ UNK_6F3_crc : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ UNK_6F3_counter : 8|4@1+ (1,0) [0|15] "" Vector__XXX
+
+BO_ 654 UNK_28E_alive: 8 Vector__XXX
+ SG_ UNK_28E_checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ UNK_28E_counter : 8|4@1+ (1,0) [0|15] "" Vector__XXX
+
+BO_ 655 UNK_28F_alive: 8 Vector__XXX
+ SG_ UNK_28F_checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ UNK_28F_counter : 8|4@1+ (1,0) [0|15] "" Vector__XXX
+
+BO_ 608 UNK_260: 8 Vector__XXX
+ SG_ UNK_260_flag : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ UNK_260_counter : 52|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ UNK_260_checksum : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 337 UNK_151: 8 Vector__XXX
+ SG_ UNK_151_state : 48|2@1+ (1,0) [0|3] "" Vector__XXX
+
 CM_ BO_ 49 "ESP32-DualCAN Model3_CH. Seen on this car: 8-byte frames; fit good (bits covered 92%, mux 100%, ranges 100%).";
 CM_ BO_ 81 "ESP32-DualCAN Model3_CH. Seen on this car: 8-byte frames; fit good (bits covered 92%, mux 100%, ranges 100%).";
 CM_ BO_ 82 "ESP32-DualCAN Model3_CH. Seen on this car: 8-byte frames; fit ok (bits covered 100%, mux 100%, ranges 100%).";
@@ -3003,6 +3027,12 @@ CM_ BO_ 1617 "ESP32-DualCAN Model3_CH. Seen on this car: 8-byte frames; fit ok (
 CM_ BO_ 1806 "ESP32-DualCAN Model3_CH. Seen on this car: 8-byte frames; fit good (bits covered 100%, mux 100%, ranges 100%).";
 CM_ BO_ 1807 "ESP32-DualCAN Model3_CH. Seen on this car: 8-byte frames; fit good (bits covered 100%, mux 100%, ranges 100%).";
 CM_ BO_ 1815 "ESP32-DualCAN Model3_CH. Seen on this car: 7-byte frames; fit ok (bits covered 100%, mux 100%, ranges 100%).";
+CM_ BO_ 1776 "Alive message: checksum + counter only; no data seen (route 494, 2026-11-19). CRC-8 SAE J1850 over byte 1.";
+CM_ BO_ 1779 "Alive message: checksum + counter only; no data seen (route 494, 2026-11-19). CRC-8 SAE J1850 over bytes 1-2; byte 2 always 0.";
+CM_ BO_ 654 "Alive message: checksum + counter only; no data seen (route 494, 2026-11-19). Byte sum + 0x90; bytes 2-7 constant.";
+CM_ BO_ 655 "Alive message: checksum + counter only; no data seen (route 494, 2026-11-19). Byte sum + 0x91; bytes 2-7 constant.";
+CM_ BO_ 608 "Unknown 10 Hz: bit 0 flag, counter at 52; byte 7 = byte sum + 0x62.";
+CM_ BO_ 337 "Unknown 1 Hz status: only bits 48-49 change.";
 BA_DEF_ BO_  "GenMsgCycleTime" INT 0 65535;
 BA_DEF_DEF_  "GenMsgCycleTime" 0;
 BA_ "GenMsgCycleTime" BO_ 258 100;

@@ -1707,6 +1707,25 @@ BO_ 2047 GTW_carConfig: 8 Vector__XXX
 
 
 
+BO_ 1728 UNK_6C0_alive: 2 Vector__XXX
+ SG_ UNK_6C0_crc : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ UNK_6C0_counter : 8|4@1+ (1,0) [0|15] "" Vector__XXX
+
+BO_ 1762 UNK_6E2_alive: 3 Vector__XXX
+ SG_ UNK_6E2_crc : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ UNK_6E2_counter : 8|4@1+ (1,0) [0|15] "" Vector__XXX
+
+BO_ 1272 UNK_4F8_alive: 8 Vector__XXX
+ SG_ UNK_4F8_checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ UNK_4F8_counter : 8|4@1+ (1,0) [0|15] "" Vector__XXX
+
+BO_ 337 UNK_151: 8 Vector__XXX
+ SG_ UNK_151_state : 48|2@1+ (1,0) [0|3] "" Vector__XXX
+
+CM_ BO_ 1728 "Alive message: checksum + counter only; no data seen (route 494, 2026-11-19). CRC-8 SAE J1850 over byte 1.";
+CM_ BO_ 1762 "Alive message: checksum + counter only; no data seen (route 494, 2026-11-19). CRC-8 SAE J1850 over bytes 1-2; byte 2 always 0.";
+CM_ BO_ 1272 "Alive message: checksum + counter only; no data seen (route 494, 2026-11-19). Byte sum + 0xFC.";
+CM_ BO_ 337 "Unknown 1 Hz status: only bits 48-49 change.";
 VAL_ 49 EPAS3P_state 0 "STANDBY" 1 "DRIVE" 2 "SUPPORT" 3 "CHARGE" 4 "FEIM" 5 "CLEAR_FAULT" 6 "FAULT" 7 "WELD" 8 "TEST" 9 "SNA" 10 "DIAG" ;
 VAL_ 81 EPAS3S_state 0 "STANDBY" 1 "DRIVE" 2 "SUPPORT" 3 "CHARGE" 4 "FEIM" 5 "CLEAR_FAULT" 6 "FAULT" 7 "WELD" 8 "TEST" 9 "SNA" 10 "DIAG" ;
 VAL_ 84 DI_ah_vehicleSpeedLimit 511 "SNA" ;

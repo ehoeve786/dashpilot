@@ -116,4 +116,16 @@ target_include_directories(tesla_adas_mapper_test PRIVATE ${MSGQ_ROOT})
 target_compile_options(tesla_adas_mapper_test PRIVATE -Wall -Wextra)
 add_test(NAME tesla_adas_mapper COMMAND tesla_adas_mapper_test
         "${TESLA_DBC_DIR}/bus_1_tesla_vehicle.dbc")
+
+add_executable(can_subscriptions_test
+        tests/can_subscriptions_test.cpp
+        ${MSGQ_ROOT}/dbc/dbc.cc
+        ${MSGQ_ROOT}/dbc/dbcfile.cc
+)
+target_include_directories(can_subscriptions_test PRIVATE ${MSGQ_ROOT})
+target_compile_options(can_subscriptions_test PRIVATE -Wall -Wextra)
+# Runs against the DBC files the Android app ships.
+target_compile_definitions(can_subscriptions_test PRIVATE
+        DBC_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../app/src/main/assets/vehicles/tesla")
+add_test(NAME can_subscriptions COMMAND can_subscriptions_test)
 endif()

@@ -3,6 +3,7 @@ package com.softwiredtech.dashpilot.datasource
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
 import android.util.Log
 import com.softwiredtech.dashpilot.datamodel.dash.CarState
 import com.softwiredtech.dashpilot.vehicle.CanFrameDecoder
@@ -22,6 +23,8 @@ class DashKitDataSource(
         private const val TAG = "DashKitDataSource"
         private val SERVICE_UUID = UUID.fromString("CADA0000-CA00-B1E0-B0D6-C000AA0100A1")
         private val CHAR_UUID = UUID.fromString("CADA0001-CA00-B1E0-B0D6-C000AA0100A1")
+        // CAN filter (write): the (bus, id) list the DashKit forwards.
+        private val FILTER_UUID = UUID.fromString("CADA0002-CA00-B1E0-B0D6-C000AA0100A1")
     }
 
     private val _incoming = MutableSharedFlow<CarState>(replay = 1)
@@ -53,6 +56,18 @@ class DashKitDataSource(
         }
         gatt.setCharacteristicNotification(characteristic, true)
         manager.subscribeWithRetry(gatt, characteristic, TAG, "CAN")
+    }
+
+    // Once notifications are on, tell the DashKit which CAN ids this vehicle's
+    // decoder reads. Stream-all firmware forwards exactly those (any id, no
+    // manifest change needed); older firmware forwards the ones its hardware
+    // filters accept, as before. The DashKit clears the list on disconnect.
+    override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+        if (descriptor.characteristic?.uuid != CHAR_UUID || status != BluetoothGatt.GATT_SUCCESS) return
+        val payload = decoder.canFilterPayload()
+        if (payload.isEmpty()) return
+        Log.d(TAG, "Subscribing to ${(payload.size - 4) / 4} CAN ids")
+        manager.writeCommand(SERVICE_UUID, FILTER_UUID, payload, TAG)
     }
 
     override fun onCharacteristicChanged(

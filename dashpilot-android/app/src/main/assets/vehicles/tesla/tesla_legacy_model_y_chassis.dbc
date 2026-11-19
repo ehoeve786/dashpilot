@@ -564,11 +564,17 @@ BO_ 586 DAS_visualDebug: 8 Vector__XXX
  SG_ DAS_autosteerVehiclesUsage : 4|2@1+ (1,0) [0|0] "" Vector__XXX
 
 BO_ 599 DI_speed: 8 VEH
- SG_ DI_uiSpeedUnits : 32|1@1+ (1,0) [0|0] ""  X
- SG_ DI_uiSpeed : 24|8@1+ (1,0) [0|0] ""  X
- SG_ DI_vehicleSpeed : 12|12@1+ (0.08,-40) [0|0] "kph"  X
- SG_ DI_speedCounter : 8|4@1+ (1,0) [0|0] ""  X
- SG_ DI_speedChecksum : 0|8@1+ (1,0) [0|0] ""  X
+ SG_ DI_longControlCommandActive : 60|1@1+ (1,0) [0|1] ""  X
+ SG_ DI_autoEnableHazards : 59|1@1+ (1,0) [0|1] ""  X
+ SG_ DI_velocityEstimatorState : 56|3@1+ (1,0) [0|7] ""  X
+ SG_ DI_vehicleSpeed : 43|13@1+ (0.08,-40) [-40|615.28] "kph"  X
+ SG_ DI_sideslipEstimate : 35|8@1- (0.0025,0) [-0.32|0.3175] "rad"  X
+ SG_ DI_accelPedalPressed : 34|1@1+ (1,0) [0|1] ""  X
+ SG_ DI_uiSpeedUnits : 33|1@1+ (1,0) [0|1] ""  X
+ SG_ DI_uiSpeed : 24|9@1+ (1,0) [0|510] ""  X
+ SG_ DI_opdVehicleModelSpeedRef : 12|12@1+ (0.08,-40) [-40|285] "kph"  X
+ SG_ DI_speedCounter : 8|4@1+ (1,0) [0|15] ""  X
+ SG_ DI_speedChecksum : 0|8@1+ (1,0) [0|255] ""  X
 
 BO_ 601 APP_status: 8 Vector__XXX
  SG_ APP_statusChecksum : 56|8@1+ (1,0) [0|0] "" Vector__XXX
@@ -3192,9 +3198,9 @@ VAL_ 586 DAS_autosteerModelUsage 0 "REJECTED_UNAVAILABLE" 1 "AVAILABLE" 2 "FUSED
 VAL_ 586 DAS_autosteerNavigationUsage 0 "REJECTED_UNAVAILABLE" 1 "AVAILABLE" 2 "FUSED" 3 "BLACKLISTED" ;
 VAL_ 586 DAS_autosteerHPPUsage 0 "REJECTED_UNAVAILABLE" 1 "AVAILABLE" 2 "FUSED" 3 "BLACKLISTED" ;
 VAL_ 586 DAS_autosteerVehiclesUsage 0 "REJECTED_UNAVAILABLE" 1 "AVAILABLE" 2 "FUSED" 3 "BLACKLISTED" ;
+VAL_ 599 DI_opdVehicleModelSpeedRef 4095 "SNA" ;
 VAL_ 599 DI_uiSpeedUnits 0 "MPH" 1 "KPH" ;
 VAL_ 599 DI_uiSpeed 255 "SNA" ;
-VAL_ 599 DI_vehicleSpeed 4095 "SNA" ;
 VAL_ 601 APP_sentryState 0 "OFF" 1 "IDLE" 2 "ARMED" 3 "AWARE" 4 "PANIC" 5 "QUIET" 6 "SNA" ;
 VAL_ 601 APP_fsdRevokeStrikeoutCount 7 "SNA" ;
 VAL_ 601 APP_fsdSuspendState 0 "NOT_SUSPENDED" 1 "SUSPENDED" 3 "SNA" ;

@@ -4,7 +4,7 @@
   "buses": [
     { "index": 0, "dbc": "tesla_legacy_model_y_chassis.dbc" },
     { "index": 1, "dbc": "tesla_legacy_model_y_vehicle.dbc" },
-    { "index": 2, "dbc": "bus_2_tesla_party.dbc" },
-    { "index": 3, "dbc": "bus_2_tesla_party.dbc" }
+    { "index": 2, "dbc": "tesla_legacy_model_y_party.dbc" },
+    { "index": 3, "dbc": "tesla_legacy_model_y_party.dbc" }
   ]
 }

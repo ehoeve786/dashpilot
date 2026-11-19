@@ -1001,11 +1001,17 @@ BO_ 595 UI_ventPanelControlRequest: 8 Vector__XXX
  SG_ UI_ventPanelControlRequestIndex M : 0|1@1+ (1,0) [0|0] "" Vector__XXX
 
 BO_ 599 DI_speed: 8 VEH
- SG_ DI_uiSpeedUnits : 32|1@1+ (1,0) [0|0] ""  X
- SG_ DI_uiSpeed : 24|8@1+ (1,0) [0|0] ""  X
- SG_ DI_vehicleSpeed : 12|12@1+ (0.08,-40) [0|0] "kph"  X
- SG_ DI_speedCounter : 8|4@1+ (1,0) [0|0] ""  X
- SG_ DI_speedChecksum : 0|8@1+ (1,0) [0|0] ""  X
+ SG_ DI_longControlCommandActive : 60|1@1+ (1,0) [0|1] ""  X
+ SG_ DI_autoEnableHazards : 59|1@1+ (1,0) [0|1] ""  X
+ SG_ DI_velocityEstimatorState : 56|3@1+ (1,0) [0|7] ""  X
+ SG_ DI_vehicleSpeed : 43|13@1+ (0.08,-40) [-40|615.28] "kph"  X
+ SG_ DI_sideslipEstimate : 35|8@1- (0.0025,0) [-0.32|0.3175] "rad"  X
+ SG_ DI_accelPedalPressed : 34|1@1+ (1,0) [0|1] ""  X
+ SG_ DI_uiSpeedUnits : 33|1@1+ (1,0) [0|1] ""  X
+ SG_ DI_uiSpeed : 24|9@1+ (1,0) [0|510] ""  X
+ SG_ DI_opdVehicleModelSpeedRef : 12|12@1+ (0.08,-40) [-40|285] "kph"  X
+ SG_ DI_speedCounter : 8|4@1+ (1,0) [0|15] ""  X
+ SG_ DI_speedChecksum : 0|8@1+ (1,0) [0|255] ""  X
 
 BO_ 602 VCSEC_TPMSDisplay: 6 Vector__XXX
  SG_ VCSEC_TPMSDisplayHardWarningIndicationRR : 41|1@1+ (1,0) [0|0] "" Vector__XXX
@@ -6782,9 +6788,9 @@ VAL_ 595 UI_hvacReqActiveVents 0 "BOTH" 1 "LEFT" 2 "RIGHT" ;
 VAL_ 595 UI_ventPanelRightLateralMode 0 "SINGLE" 1 "SPLIT" ;
 VAL_ 595 UI_ventPanelLeftLateralMode 0 "SINGLE" 1 "SPLIT" ;
 VAL_ 595 UI_ventPanelControlRequestIndex 0 "0" 1 "1" ;
+VAL_ 599 DI_opdVehicleModelSpeedRef 4095 "SNA" ;
 VAL_ 599 DI_uiSpeedUnits 0 "MPH" 1 "KPH" ;
 VAL_ 599 DI_uiSpeed 255 "SNA" ;
-VAL_ 599 DI_vehicleSpeed 4095 "SNA" ;
 VAL_ 602 VCSEC_TPMSDisplayHardWarningIndicationRR 0 "NOT_INDICATED" 1 "INDICATED" ;
 VAL_ 602 VCSEC_TPMSDisplayHardWarningIndicationRL 0 "NOT_INDICATED" 1 "INDICATED" ;
 VAL_ 602 VCSEC_TPMSDisplayHardWarningIndicationFR 0 "NOT_INDICATED" 1 "INDICATED" ;

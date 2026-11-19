@@ -27,6 +27,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Installs beside the Play Store app instead of replacing it
+            applicationIdSuffix = ".debug"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true

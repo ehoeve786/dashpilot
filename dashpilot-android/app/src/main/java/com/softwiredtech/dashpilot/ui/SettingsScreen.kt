@@ -16,13 +16,11 @@ import com.softwiredtech.dashpilot.datamodel.dash.DEV_RIVE_DASHBOARD_ID
 import com.softwiredtech.dashpilot.datamodel.dash.DEV_URL_DASHBOARD_ID
 import com.softwiredtech.dashpilot.datamodel.dash.getDevDashboardUrl
 import com.softwiredtech.dashpilot.datamodel.dash.saveDevDashboardUrl
-import com.softwiredtech.dashpilot.datamodel.dash.isDevRiveGpuCanvasEnabled
 import com.softwiredtech.dashpilot.datamodel.dash.isDevCanLogEnabled
 import com.softwiredtech.dashpilot.datamodel.dash.setDevCanLogEnabled
 import com.softwiredtech.dashpilot.datamodel.dash.isDevCanLogAllEnabled
 import com.softwiredtech.dashpilot.datamodel.dash.setDevCanLogAllEnabled
 import com.softwiredtech.dashpilot.datamodel.dash.saveDevRiveFileUri
-import com.softwiredtech.dashpilot.datamodel.dash.setDevRiveGpuCanvasEnabled
 import com.softwiredtech.dashpilot.datamodel.dash.saveSelectedDashboard
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -586,11 +584,6 @@ private fun DeveloperSection(
     if (loadedRiveFile && selectedDashboardId == DEV_RIVE_DASHBOARD_ID) {
         LoadedConfirmation()
         Spacer(modifier = Modifier.height(8.dp))
-    }
-    var riveGpuCanvas by remember { mutableStateOf(isDevRiveGpuCanvasEnabled(context)) }
-    SettingsToggle(stringResource(R.string.settings_developer_rive_gpu_canvas), riveGpuCanvas) { enabled ->
-        riveGpuCanvas = enabled
-        setDevRiveGpuCanvasEnabled(context, enabled)
     }
     var canLog by remember { mutableStateOf(isDevCanLogEnabled(context)) }
     var canLogAll by remember { mutableStateOf(isDevCanLogAllEnabled(context)) }

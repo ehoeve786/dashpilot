@@ -30,7 +30,6 @@
     <string name="dashboard_name_dev_url">Dash-App-URL</string>
     <string name="settings_section_developer">Entwickler</string>
     <string name="settings_developer_load_rive">Rive-Datei laden</string>
-    <string name="settings_developer_rive_gpu_canvas">GPU Canvas für Rive (experimentell)</string>
     <string name="settings_developer_can_log">CAN-Log aufzeichnen</string>
     <string name="settings_developer_can_log_all">Jeden Frame aufzeichnen</string>
     <string name="settings_developer_can_log_hint">Beginnt mit der nächsten DashKit-Verbindung. Dateien: Download/DashPilot/can-log-*.csv</string>

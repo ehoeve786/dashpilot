@@ -86,9 +86,14 @@ val vehicleControls: List<ControlAction> = listOf(
         active = { ControlsState.preheatOn },
         gestureValue = 2,
         perform = { manager ->
+            // The new state shows once the command is queued; if it then never
+            // reaches the DashKit, show the old state again.
             val next = !ControlsState.preheatOn
             if (manager == null ||
-                VehicleControl.send(manager, VehicleControl.CMD_BATTERY_PREHEAT, if (next) 1 else 0)
+                VehicleControl.send(
+                    manager, VehicleControl.CMD_BATTERY_PREHEAT, if (next) 1 else 0,
+                    onDropped = { ControlsState.preheatOn = !next }
+                )
             ) {
                 ControlsState.preheatOn = next
             }
@@ -123,8 +128,11 @@ val vehicleControls: List<ControlAction> = listOf(
         perform = { manager ->
             val opcode = if (ControlsState.chargePortOpen) VehicleControl.CMD_CHARGE_PORT_CLOSE
             else VehicleControl.CMD_CHARGE_PORT_OPEN
-            if (manager == null || VehicleControl.send(manager, opcode, 1)) {
-                ControlsState.chargePortOpen = !ControlsState.chargePortOpen
+            val was = ControlsState.chargePortOpen
+            if (manager == null ||
+                VehicleControl.send(manager, opcode, 1, onDropped = { ControlsState.chargePortOpen = was })
+            ) {
+                ControlsState.chargePortOpen = !was
             }
         }
     ),
@@ -137,8 +145,14 @@ val vehicleControls: List<ControlAction> = listOf(
         perform = { manager ->
             val value = if (ControlsState.mirrorsFolded) VehicleControl.MIRROR_UNFOLD
             else VehicleControl.MIRROR_FOLD
-            if (manager == null || VehicleControl.send(manager, VehicleControl.CMD_MIRROR_FOLD, value)) {
-                ControlsState.mirrorsFolded = !ControlsState.mirrorsFolded
+            val was = ControlsState.mirrorsFolded
+            if (manager == null ||
+                VehicleControl.send(
+                    manager, VehicleControl.CMD_MIRROR_FOLD, value,
+                    onDropped = { ControlsState.mirrorsFolded = was }
+                )
+            ) {
+                ControlsState.mirrorsFolded = !was
             }
         }
     ),
@@ -149,8 +163,11 @@ val vehicleControls: List<ControlAction> = listOf(
         active = { ControlsState.rearFanOn },
         gestureValue = 7,
         perform = { manager ->
-            if (manager == null || VehicleControl.sendRearFanToggle(manager)) {
-                ControlsState.rearFanOn = !ControlsState.rearFanOn
+            val was = ControlsState.rearFanOn
+            if (manager == null ||
+                VehicleControl.sendRearFanToggle(manager, onDropped = { ControlsState.rearFanOn = was })
+            ) {
+                ControlsState.rearFanOn = !was
             }
         }
     ),

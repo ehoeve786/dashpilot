@@ -118,7 +118,13 @@ final class DashKitDataSource: IDataSource {
         let now = ProcessInfo.processInfo.systemUptime
         guard now - lastEmit >= Self.emitInterval else { return }
         lastEmit = now
-        continuation?.yield(CarState(from: state))
+        let carState = CarState(from: state)
+        // The Preheat button follows the DashKit when it reports its state (reconnect, app restart, gesture).
+        if carState.dashkitPreheat >= 0 {
+            let on = carState.dashkitPreheat > 0
+            DispatchQueue.main.async { if ControlsState.shared.preheatOn != on { ControlsState.shared.preheatOn = on } }
+        }
+        continuation?.yield(carState)
     }
 }
 

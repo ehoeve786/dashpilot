@@ -4546,6 +4546,9 @@ BO_ 2032 COMMA_status: 8 X
  SG_ COMMA_mads : 3|1@1+ (1,0) [0|1] "" X
  SG_ COMMA_vCruise : 8|8@1+ (1,0) [0|255] "kph" X
 
+BO_ 2035 DASHKIT_status: 1 X
+ SG_ DASHKIT_preheat : 0|1@1+ (1,0) [0|1] "" X
+
 BO_ 2033 GTW_hrl: 7 VEH
  SG_ GTW_hrlIndex M: 0|2@1+ (1,0) [0|0] "" X
  SG_ GTW_hrlPagesCount m1: 8|32@0+ (1,0) [0|0] "" X

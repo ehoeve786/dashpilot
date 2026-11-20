@@ -100,6 +100,8 @@ data class CarState(
     val trafficControlType: Float = 0f,
     // kW the car is putting into heating the battery (preconditioning); 0 when it is not.
     val batteryHeatPower: Float = 0f,
+    // DashKit preheat injection: 1 on, 0 off, -1 not reported.
+    val dashkitPreheat: Float = -1f,
 
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = "",
@@ -120,7 +122,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 87
+        const val FIELD_COUNT = 88
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

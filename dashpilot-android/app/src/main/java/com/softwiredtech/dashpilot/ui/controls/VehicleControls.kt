@@ -45,7 +45,8 @@ import com.softwiredtech.dashpilot.R
 
 /**
  * Session-scoped toggle state for controls the firmware exposes as separate
- * on/off (or open/close) opcodes — there is no readback from the car, so this
+ * on/off (or open/close) opcodes — there is no readback from the car (preheat
+ * aside: the DashKit reports it, see ConnectionViewModel), so this
  * is shared in-memory between the Controls and Home screens and reset per run.
  */
 object ControlsState {

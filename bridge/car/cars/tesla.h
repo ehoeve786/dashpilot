@@ -267,6 +267,10 @@ public:
         cs.stopLineDist = cp.get(0, "DAS_road", "DAS_stopLineDist");  // metres, 254 = none
         cs.trafficControlType = cp.get(0, "DAS_road", "DAS_controlType");
 
+        // DASHKIT_status (0x7F3, bus 1; app-only, from the DashKit once a second and on a change).
+        uint64_t preheat = 0;
+        if (cp.getRaw(1, "DASHKIT_status", "DASHKIT_preheat", &preheat)) cs.dashkitPreheat = static_cast<double>(preheat);
+
         // openpilot state from the comma 3X over its USB link to the DashKit, which forwards it as
         // COMMA_status (0x7F0, bus 1; app-only, never on CAN). All zero once the C3X goes quiet for 1 s.
         cs.selfdriveActive = cp.get(1, "COMMA_status", "COMMA_active");

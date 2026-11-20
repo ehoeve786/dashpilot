@@ -91,6 +91,7 @@ static void carStateToBridge(const CarState& cs, BridgeCarState* out) {
     out->chargeLimit = cs.chargeLimit;
     out->trafficControlType = cs.trafficControlType;
     out->batteryHeatPower = cs.batteryHeatPower;
+    out->dashkitPreheat = cs.dashkitPreheat;
 }
 
 static std::atomic<bool> receiveLoopRunning{false};

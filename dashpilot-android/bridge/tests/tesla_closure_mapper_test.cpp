@@ -277,7 +277,7 @@ void closures_round_trip_through_the_double_array() {
     double out[CarState::FIELD_COUNT];
     h.cs.toArray(out);
     CHECK(CarState::DOOR_OFFSET == 51 && CarState::DOOR_COUNT == 7);
-    CHECK(CarState::CABIN_OFFSET == 61 && CarState::DRIVE_OFFSET == 73 && CarState::FIELD_COUNT == 87);
+    CHECK(CarState::CABIN_OFFSET == 61 && CarState::DRIVE_OFFSET == 73 && CarState::FIELD_COUNT == 88);
     CHECK(out[CarState::DOOR_OFFSET + 0] == 1);   // FL
     CHECK(out[CarState::DOOR_OFFSET + 1] == 0);   // FR
     CHECK(out[CarState::DOOR_OFFSET + 2] == 0);   // RL

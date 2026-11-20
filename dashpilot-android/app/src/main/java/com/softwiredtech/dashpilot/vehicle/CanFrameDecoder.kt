@@ -124,7 +124,8 @@ class CanFrameDecoder(
                 chargeStatus = values[83].toFloat(),
                 chargeLimit = values[84].toFloat(),
                 trafficControlType = values[85].toFloat(),
-                batteryHeatPower = values[86].toFloat()
+                batteryHeatPower = values[86].toFloat(),
+                dashkitPreheat = values[87].toFloat()
             )
         }
 

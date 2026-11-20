@@ -78,6 +78,12 @@ int main(int argc, char** argv) {
     // VCFRONT_vehicleStatus mux 1: battery heating power target (frames from a drive to a Supercharger).
     feed(1, 0x3A1, "29d240e53c005050");             // not heating
     CHECK(cs.batteryHeatPower == 0);
+    // DASHKIT_status: the DashKit's preheat injection, unknown until it reports.
+    CHECK(cs.dashkitPreheat == -1);
+    feed(1, 0x7F3, "01");
+    CHECK(cs.dashkitPreheat == 1);
+    feed(1, 0x7F3, "00");
+    CHECK(cs.dashkitPreheat == 0);
     feed(1, 0x3A1, "29fa408f3c88d02a");             // preconditioning, 6.8 kW
     CHECK(near(cs.batteryHeatPower, 6.8));
     feed(1, 0x3A1, "e84d00ca0078425d");             // mux 0 (other signals on the same bits): value kept

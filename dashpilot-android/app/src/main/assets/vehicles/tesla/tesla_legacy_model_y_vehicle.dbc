@@ -6133,6 +6133,9 @@ BO_ 2032 COMMA_status: 8 X
  SG_ COMMA_experimental : 1|1@1+ (1,0) [0|1] ""  X
  SG_ COMMA_active : 0|1@1+ (1,0) [0|1] ""  X
 
+BO_ 2035 DASHKIT_status: 1 X
+ SG_ DASHKIT_preheat : 0|1@1+ (1,0) [0|1] "" X
+
 BO_ 2036 GTW_canLogAvailability: 1 Vector__XXX
  SG_ GTW_canLogServiceAvailability : 0|2@1+ (1,0) [0|0] "" Vector__XXX
 

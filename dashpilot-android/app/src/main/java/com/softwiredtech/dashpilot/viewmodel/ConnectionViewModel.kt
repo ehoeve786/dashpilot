@@ -58,6 +58,7 @@ import com.softwiredtech.dashpilot.datamodel.dash.AcSwingSettings
 import com.softwiredtech.dashpilot.datamodel.dash.getAcSwing
 import com.softwiredtech.dashpilot.datamodel.dash.setAcSwing
 import com.softwiredtech.dashpilot.datamodel.dash.setSportKickdownPercent
+import com.softwiredtech.dashpilot.ui.controls.ControlsState
 import com.softwiredtech.dashpilot.ui.controls.controlById
 import com.softwiredtech.dashpilot.datasource.DataSourceType
 import com.softwiredtech.dashpilot.datasource.CommaDataSource
@@ -476,6 +477,8 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
                 _displaySettings,
                 _speedCameraDistance
             ) { carState, battery, settings, camDist ->
+                // The Preheat button follows the DashKit when it reports its state (reconnect, app restart, gesture).
+                if (carState.dashkitPreheat >= 0f) ControlsState.preheatOn = carState.dashkitPreheat > 0f
                 val converted = if (settings.useImperial) carState.toImperial() else carState
                 DashState(
                     carState = converted,

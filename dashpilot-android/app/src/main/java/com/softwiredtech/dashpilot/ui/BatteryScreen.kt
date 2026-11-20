@@ -105,7 +105,8 @@ fun BatteryScreen(
                 listOf(
                     stringResource(R.string.battery_power) to powerText(car),
                     stringResource(R.string.battery_max_discharge) to kilowattText(car.maxDischargePower),
-                    stringResource(R.string.battery_max_regen) to kilowattText(car.maxRegenPower)
+                    stringResource(R.string.battery_max_regen) to kilowattText(car.maxRegenPower),
+                    stringResource(R.string.battery_heating) to kilowattText(car.batteryHeatPower)
                 )
             )
 

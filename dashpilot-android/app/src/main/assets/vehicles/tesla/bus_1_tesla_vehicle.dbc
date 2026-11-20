@@ -7936,6 +7936,8 @@ BO_ 929 VCFRONT_vehicleStatus: 8 VEH
  SG_ VCFRONT_thermalSystemType : 5|1@1+ (1,0) [0|1] "" X
  SG_ VCFRONT_vehicleStatusChecksum: 56|8@1+ (1,0) [0|0] "" X
  SG_ VCFRONT_vehicleStatusCounter: 52|4@1+ (1,0) [0|0] "" X
+ SG_ VCFRONT_vehicleStatusMuxIndex : 0|1@1+ (1,0) [0|1] "" X
+ SG_ VCFRONT_hpBattHeatingPowerTrgt : 41|7@1+ (100,0) [0|12700] "W" X
 
 BO_ 864 VCLEFT_alertMatrix: 8 VEH
  SG_ VCLEFT_matrixIndex M: 0|4@1+ (1,0) [0|0] "" X

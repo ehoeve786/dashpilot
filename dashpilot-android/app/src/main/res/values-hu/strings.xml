@@ -325,6 +325,7 @@
     <string name="battery_power">Teljesítmény</string>
     <string name="battery_max_discharge">Max. kisütés</string>
     <string name="battery_max_regen">Max. újratöltés</string>
+    <string name="battery_heating">Akkufűtés</string>
     <string name="battery_section_pack">Akkupack</string>
     <string name="battery_voltage">Feszültség</string>
     <string name="battery_current">Áramerősség</string>

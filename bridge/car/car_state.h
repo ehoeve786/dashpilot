@@ -111,6 +111,9 @@ struct CarState {
     // What the stop line belongs to (DAS_road, Autopilot's traffic control): 0 none, 2 stop sign, 3 traffic light,
     // 14 all-way stop; others are yields, crosswalks, junctions. 0 also from sources that do not report it.
     double trafficControlType = 0;
+    // Battery heating power the thermal controller is aiming for (kW, VCFRONT_vehicleStatus): above 0 while the
+    // battery is preconditioned, by the car (Supercharger navigation) or by the DashKit's preheat command.
+    double batteryHeatPower = 0;
 
     // Vehicle VIN, empty until fully assembled by the mapper.
     static constexpr size_t VIN_LENGTH = 17;
@@ -130,7 +133,7 @@ struct CarState {
     static constexpr size_t CABIN_OFFSET = AMBIENT_OFFSET + 3;
     static constexpr size_t CABIN_COUNT = 12;
     static constexpr size_t DRIVE_OFFSET = CABIN_OFFSET + CABIN_COUNT;
-    static constexpr size_t DRIVE_COUNT = 13;
+    static constexpr size_t DRIVE_COUNT = 14;
     static constexpr size_t FIELD_COUNT = DRIVE_OFFSET + DRIVE_COUNT;
 
     void toArray(double* out) const {
@@ -227,7 +230,7 @@ struct CarState {
         // Driving data (after the cabin), in the order declared above.
         const double drive[DRIVE_COUNT] = {cellVoltMin, cellVoltMax, coolantBatIn, outsideTemp, cabinTemp, cabinHumidity,
                                            wheelTorque, accelLong, accelLat, accelPedal, chargeStatus, chargeLimit,
-                                           trafficControlType};
+                                           trafficControlType, batteryHeatPower};
         for (size_t i = 0; i < DRIVE_COUNT; i++) out[DRIVE_OFFSET + i] = drive[i];
     }
 };

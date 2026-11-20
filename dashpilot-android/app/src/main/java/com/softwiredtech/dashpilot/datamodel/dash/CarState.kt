@@ -98,6 +98,8 @@ data class CarState(
     val chargeLimit: Float = 0f,
     // 0 none / unknown, 2 stop sign, 3 traffic light, 14 all-way stop (see bridge/car/car_state.h).
     val trafficControlType: Float = 0f,
+    // kW the car is putting into heating the battery (preconditioning); 0 when it is not.
+    val batteryHeatPower: Float = 0f,
 
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = "",
@@ -118,7 +120,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 86
+        const val FIELD_COUNT = 87
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

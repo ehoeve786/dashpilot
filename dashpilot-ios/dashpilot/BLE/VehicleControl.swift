@@ -21,7 +21,7 @@ enum VehicleControl {
     // --- UI_vehicleControl2 (0x3B3) ---
     static let cmdGlovebox = 0x0F              // 1=open (UI_gloveboxRequest)
 
-    // --- Battery preheat (firmware fakes UI_tripPlanning 0x082) ---
+    // --- Battery preheat (firmware fakes UI_tripPlanning, 0x347; 0x082 before the 2026 car software) ---
     static let cmdBatteryPreheat = 0x35        // 1=start injecting preheat, 0=stop
 
     // --- UI_chargeRequest (0x333) ---

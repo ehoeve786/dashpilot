@@ -52,6 +52,7 @@ extension DashState {
             ("chargeStatus", .number(c.chargeStatus)),
             ("chargeLimit", .number(c.chargeLimit)),
             ("trafficControlType", .number(c.trafficControlType)),
+            ("batteryHeatPower", .number(c.batteryHeatPower)),
             ("buckleStatus", .number(c.buckleStatus)),
             ("odometer", .number(c.odometer)),
             ("adasOn", .bool(c.adasOn)),

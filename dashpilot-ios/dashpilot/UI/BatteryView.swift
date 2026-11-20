@@ -49,7 +49,8 @@ struct BatteryView: View {
                     section("Power", rows: [
                         ("Power", powerText),
                         ("Max Discharge", kilowattText(car?.maxDischargePower)),
-                        ("Max Regen", kilowattText(car?.maxRegenPower))
+                        ("Max Regen", kilowattText(car?.maxRegenPower)),
+                        ("Battery Heating", kilowattText(car?.batteryHeatPower))
                     ])
 
                     Spacer().frame(height: 28)

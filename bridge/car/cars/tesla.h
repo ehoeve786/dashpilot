@@ -180,6 +180,9 @@ static inline void updateDrive(const CANParsers& cp, CarState& cs) {
     cs.chargeStatus = cp.get(1, "BMS_status", "BMS_uiChargeStatus");
     double limit = cp.get(1, "BMS_status", "BMS_chgPowerAvailable");
     cs.chargeLimit = limit < 511.0 ? limit : 0.0;  // raw 4095 (511.875 kW) = SNA
+    if (static_cast<int>(cp.get(1, "VCFRONT_vehicleStatus", "VCFRONT_vehicleStatusMuxIndex")) == 1) {  // on mux 1
+        cs.batteryHeatPower = cp.get(1, "VCFRONT_vehicleStatus", "VCFRONT_hpBattHeatingPowerTrgt") / 1000.0;
+    }
 }
 
 static inline void updateVehicleBus(const CANParsers& cp, CarState& cs) {

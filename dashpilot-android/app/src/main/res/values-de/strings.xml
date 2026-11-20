@@ -326,6 +326,7 @@
     <string name="battery_power">Leistung</string>
     <string name="battery_max_discharge">Max. Entladung</string>
     <string name="battery_max_regen">Max. Rekuperation</string>
+    <string name="battery_heating">Akkuheizung</string>
     <string name="battery_section_pack">Akkupack</string>
     <string name="battery_voltage">Spannung</string>
     <string name="battery_current">Strom</string>

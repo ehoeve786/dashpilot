@@ -329,6 +329,7 @@
     <string name="battery_power">Power</string>
     <string name="battery_max_discharge">Max Discharge</string>
     <string name="battery_max_regen">Max Regen</string>
+    <string name="battery_heating">Battery Heating</string>
     <string name="battery_section_pack">Pack</string>
     <string name="battery_voltage">Voltage</string>
     <string name="battery_current">Current</string>

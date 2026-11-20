@@ -75,6 +75,14 @@ int main(int argc, char** argv) {
     feed(0, 0x25D, "0000fe000000");                 // nothing ahead
     CHECK(cs.trafficControlType == 0 && cs.stopLineDist == 254);
 
+    // VCFRONT_vehicleStatus mux 1: battery heating power target (frames from a drive to a Supercharger).
+    feed(1, 0x3A1, "29d240e53c005050");             // not heating
+    CHECK(cs.batteryHeatPower == 0);
+    feed(1, 0x3A1, "29fa408f3c88d02a");             // preconditioning, 6.8 kW
+    CHECK(near(cs.batteryHeatPower, 6.8));
+    feed(1, 0x3A1, "e84d00ca0078425d");             // mux 0 (other signals on the same bits): value kept
+    CHECK(near(cs.batteryHeatPower, 6.8));
+
     if (failures) {
         std::printf("%d check(s) failed\n", failures);
         return 1;

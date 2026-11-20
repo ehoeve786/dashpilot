@@ -150,8 +150,8 @@ object VehicleControl {
     }
 
     /** Toggle the rear AC fan (firmware flips OFF <-> HIGH; value ignored). */
-    fun sendRearFanToggle(manager: DashKitBleManager): Boolean =
-        send(manager, CMD_REAR_FAN_TOGGLE, 1)
+    fun sendRearFanToggle(manager: DashKitBleManager, onDropped: (() -> Unit)? = null): Boolean =
+        send(manager, CMD_REAR_FAN_TOGGLE, 1, onDropped)
 
     /** Toggle mirror auto-dip while in reverse (no-op outside reverse; value ignored). */
     fun sendMirrorDipToggle(manager: DashKitBleManager): Boolean =
@@ -167,12 +167,13 @@ object VehicleControl {
 
     /**
      * Write a control command to the DashKit. Returns true if the write was
-     * dispatched (not necessarily acknowledged). No-op returning false if the
-     * link is down or the control characteristic is unavailable.
+     * queued (not necessarily acknowledged). No-op returning false if the
+     * link is down or the control characteristic is unavailable. [onDropped]
+     * runs on the main thread if the queued command never takes effect.
      */
-    fun send(manager: DashKitBleManager, opcode: Int, value: Int): Boolean {
+    fun send(manager: DashKitBleManager, opcode: Int, value: Int, onDropped: (() -> Unit)? = null): Boolean {
         Log.d(TAG, "Sending control 0x%02X value=%d".format(opcode, value and 0xFFFF))
-        return manager.writeCommand(SERVICE_UUID, CONTROL_CHAR_UUID, payload(opcode, value), TAG)
+        return manager.writeCommand(SERVICE_UUID, CONTROL_CHAR_UUID, payload(opcode, value), TAG, onDropped)
     }
 
     fun payload(opcode: Int, value: Int): ByteArray {

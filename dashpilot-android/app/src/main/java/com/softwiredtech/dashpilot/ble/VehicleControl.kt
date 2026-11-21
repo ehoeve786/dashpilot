@@ -51,7 +51,7 @@ object VehicleControl {
     // The firmware persists it in NVS (wiper_off module).
     const val CMD_WIPER_OFF_ENABLE: Int = 0x41
     // Turn signal off when shifting into Park (firmware signal_off module, persisted in NVS).
-    const val CMD_SIGNAL_OFF_ENABLE: Int = 0x4F
+    const val CMD_SIGNAL_OFF_ENABLE: Int = 0x53
 
     // --- Enter BLE pairing mode ---
     // Opens a window on the firmware during which one new (not-yet-bonded) device

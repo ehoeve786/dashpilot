@@ -11,6 +11,7 @@ struct AutomationsView: View {
     @Environment(ConnectionViewModel.self) private var connectionVM
 
     @AppStorage("wiper_off_automation") private var wiperOff: Bool = false
+    @AppStorage("signal_off_automation") private var signalOff: Bool = false
     @AppStorage("climate_keep_automation") private var climateKeep: Bool = false
     @AppStorage("climate_keep_minutes") private var climateKeepMinutes: Int = 5
     @AppStorage("sport_kickdown_automation") private var sportKickdown: Bool = false
@@ -38,6 +39,17 @@ struct AutomationsView: View {
                         title: "Wiper Off",
                         subtitle: "Keep wipers disabled automatically",
                         isOn: $wiperOff
+                    )
+
+                    Spacer().frame(height: 28)
+
+                    SectionLabel("Lights")
+                    Spacer().frame(height: 8)
+                    AutomationRow(
+                        icon: "parkingsign",
+                        title: "Signal Off in Park",
+                        subtitle: "Cancel a turn signal left on when you shift into Park",
+                        isOn: $signalOff
                     )
 
                     Spacer().frame(height: 28)
@@ -99,6 +111,11 @@ struct AutomationsView: View {
         .onChange(of: wiperOff) { _, newValue in
             if let manager = connectionVM.bleManager {
                 VehicleControl.sendWiperOff(manager, enabled: newValue)
+            }
+        }
+        .onChange(of: signalOff) { _, newValue in
+            if let manager = connectionVM.bleManager {
+                VehicleControl.sendSignalOff(manager, enabled: newValue)
             }
         }
         .onChange(of: climateKeep) { _, newValue in

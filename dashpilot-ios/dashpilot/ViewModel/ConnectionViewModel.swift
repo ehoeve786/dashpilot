@@ -164,6 +164,8 @@ final class ConnectionViewModel {
         }
         let wiperOff = UserDefaults.standard.bool(forKey: "wiper_off_automation")
         VehicleControl.sendWiperOff(manager, enabled: wiperOff)
+        let signalOff = UserDefaults.standard.bool(forKey: "signal_off_automation")
+        VehicleControl.sendSignalOff(manager, enabled: signalOff)
         let climateKeep = UserDefaults.standard.bool(forKey: "climate_keep_automation")
         VehicleControl.sendClimateKeep(manager, enabled: climateKeep)
         let climateKeepMinutes = UserDefaults.standard.integer(forKey: "climate_keep_minutes")

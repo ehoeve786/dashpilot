@@ -79,6 +79,7 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
       <div class="chip" id="chipDoor" style="background:#33270A; color:#FFB020">DOOR OPEN</div>
       <div class="chip" id="chipBelt" style="background:#3A1210; color:#FF3B30">FASTEN SEATBELT</div>
       <div class="chip" id="chipLane" style="background:#0E1C33; color:#3D8BFF">CHANGING LANE</div>
+      <div class="chip" id="chipHeat" style="background:#331A0A; color:#FF8A3D">BATTERY HEATING</div>
     </div>
     <svg class="blinker" id="blinkRight" viewBox="0 0 120 96"></svg>
   </div>
@@ -601,6 +602,7 @@ function render(c) {
   $('chipDoor').classList.toggle('on', num(c.anyDoorOpen, 0) > 0);
   $('chipBelt').classList.toggle('on', c.buckleStatus !== undefined && num(c.buckleStatus, 1) === 0);
   $('chipLane').classList.toggle('on', !!c.changingLane);
+  $('chipHeat').classList.toggle('on', num(c.batteryHeatPower, 0) > 0);  // the car heating the pack: preheat, Supercharger navigation or cold
   const lbs = num(c.leftBlindSpot, 0), rbs = num(c.rightBlindSpot, 0);
   $('bsLeft').style.opacity = clamp(lbs, 0, 1);
   $('bsLeftUrgent').style.opacity = clamp(lbs - 1, 0, 1);
@@ -839,7 +841,7 @@ for (const w of ['FL', 'FR', 'RL', 'RR']) NATIVE_KEYS.push('tpmsPressure' + w, '
 NATIVE_KEYS.push('mirrorFoldedL', 'mirrorFoldedR');
 for (const s of ['FL', 'FR', 'RL', 'RC', 'RR']) NATIVE_KEYS.push('seatHeat' + s, 'seatBelt' + s);
 NATIVE_KEYS.push('cellVoltMin', 'cellVoltMax', 'coolantBatIn', 'outsideTemp', 'cabinTemp', 'cabinHumidity', 'wheelTorque',
-  'accelLong', 'accelLat', 'accelPedal', 'chargeStatus', 'chargeLimit', 'trafficControlType');
+  'accelLong', 'accelLat', 'accelPedal', 'chargeStatus', 'chargeLimit', 'trafficControlType', 'batteryHeatPower');
 window.onCarStateUpdate = function () {
   const s = {};
   for (const k of NATIVE_KEYS) s[k] = readNative('get' + k[0].toUpperCase() + k.slice(1), undefined);

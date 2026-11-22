@@ -26,6 +26,14 @@ android {
 
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // CI points this at the key from the DEBUG_KEYSTORE_BASE64 secret, the same as the local
+            // ~/.android/debug.keystore, so any debug build installs as an update of another.
+            System.getenv("DEBUG_KEYSTORE")?.let { storeFile = file(it) }
+        }
+    }
+
     buildTypes {
         debug {
             // Installs beside the Play Store app instead of replacing it

@@ -94,6 +94,14 @@ enum VehicleControl {
     // Momentary latch release like the Tesla app's "Unlatch Door". The
     // firmware refuses it while the car is in R/N/D.
     static let cmdDoorUnlatch = 0x50
+
+    // --- BLE role with two phones on one DashKit ---
+    // 0 = this phone sends the commands, ahead of a phone that didn't send it,
+    // whatever the connect order; 1 = read-only (dashboard only). Per
+    // connection, not persisted on the DashKit.
+    static let cmdBleRole = 0x4F
+    /// UserDefaults key: with two phones, whether this one sends the commands.
+    static let keyDashKitControl = "dashkit_control"
     static let doorFrontLeft = 0
     static let doorFrontRight = 1
     static let doorRearLeft = 2
@@ -109,6 +117,12 @@ enum VehicleControl {
     @discardableResult
     static func sendWiperOff(_ manager: DashKitBleManager, enabled: Bool) -> Bool {
         send(manager, opcode: cmdWiperOffEnable, value: enabled ? 1 : 0)
+    }
+
+    /// This phone sends the commands (true) or only shows the dashboard (false).
+    @discardableResult
+    static func sendBleRole(_ manager: DashKitBleManager, controls: Bool) -> Bool {
+        send(manager, opcode: cmdBleRole, value: controls ? 0 : 1)
     }
 
     /// Ask the DashKit to open a pairing window for one new device.

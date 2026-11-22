@@ -175,6 +175,18 @@ fun setCarModel(context: Context, model: CarModel) {
         .edit { putInt(PREF_CAR_MODEL, model.id) }
 }
 
+// With two phones on one DashKit, whether this one sends the commands.
+const val PREF_DASHKIT_CONTROL = "dashkit_control"
+
+fun getDashKitControl(context: Context): Boolean =
+    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
+        .getBoolean(PREF_DASHKIT_CONTROL, true)
+
+fun setDashKitControl(context: Context, value: Boolean) {
+    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
+        .edit { putBoolean(PREF_DASHKIT_CONTROL, value) }
+}
+
 fun getWiperOffAutomation(context: Context): Boolean =
     context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
         .getBoolean(PREF_WIPER_OFF_AUTOMATION, DEFAULT_WIPER_OFF_AUTOMATION)

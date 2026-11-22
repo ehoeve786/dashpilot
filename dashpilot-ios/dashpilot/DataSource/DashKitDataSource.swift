@@ -158,6 +158,14 @@ extension DashKitDataSource: DashKitGattListener {
               let peripheral = service.peripheral,
               let filter = service.characteristics?
                   .first(where: { $0.uuid == DashKitGatt.filterCharacteristic }) else { return }
+        // Which phone sends the commands when two are connected. Firmware
+        // without it rejects the write.
+        if let control = service.characteristics?
+            .first(where: { $0.uuid == DashKitGatt.controlCharacteristic }) {
+            let controls = UserDefaults.standard.object(forKey: VehicleControl.keyDashKitControl) as? Bool ?? true
+            let role = UInt8(controls ? 0 : 1)
+            peripheral.writeValue(Data([UInt8(VehicleControl.cmdBleRole), role, 0]), for: control, type: .withResponse)
+        }
         var buffer = [UInt8](repeating: 0, count: 512)
         let capacity = Int32(buffer.count)
         var length = 0

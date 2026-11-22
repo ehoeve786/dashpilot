@@ -5,7 +5,9 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.util.Log
+import com.softwiredtech.dashpilot.ble.VehicleControl
 import com.softwiredtech.dashpilot.datamodel.dash.CarState
+import com.softwiredtech.dashpilot.datamodel.dash.getDashKitControl
 import com.softwiredtech.dashpilot.vehicle.CanFrameDecoder
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -65,6 +67,12 @@ class DashKitDataSource(
     // last phone disconnects.
     override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
         if (descriptor.characteristic?.uuid != CHAR_UUID || status != BluetoothGatt.GATT_SUCCESS) return
+        // Which phone sends the commands when two are connected. Firmware without it rejects the write.
+        manager.writeCommandWithRetry(
+            VehicleControl.SERVICE_UUID, VehicleControl.CONTROL_CHAR_UUID,
+            VehicleControl.payload(VehicleControl.CMD_BLE_ROLE, if (getDashKitControl(manager.context)) 0 else 1),
+            TAG, "BLE role"
+        )
         val payload = decoder.canFilterPayload()
         if (payload.isEmpty()) {
             // No mapper for this vehicle, or more ids than one write carries.

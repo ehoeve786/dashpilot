@@ -99,6 +99,11 @@ object VehicleControl {
 
     // --- Door unlatch (VCSEC_requests 0x1F9); value = door index ---
     const val CMD_DOOR_UNLATCH: Int = 0x50
+
+    // --- BLE role with two phones on one DashKit ---
+    // 0 = this phone sends the commands, ahead of a phone that didn't send it, whatever the connect order;
+    // 1 = read-only (dashboard only). Per connection, not persisted on the DashKit.
+    const val CMD_BLE_ROLE: Int = 0x4F
     const val DOOR_FRONT_LEFT: Int = 0
     const val DOOR_FRONT_RIGHT: Int = 1
     const val DOOR_REAR_LEFT: Int = 2
@@ -109,6 +114,10 @@ object VehicleControl {
         send(manager, CMD_MULTI_FINGER_ACTION, (fingers shl 8) or (actionValue and 0xFF))
 
     /** Enable or disable the firmware's auto wiper-off automation. */
+    /** This phone sends the commands (true) or only shows the dashboard (false). */
+    fun sendBleRole(manager: DashKitBleManager, controls: Boolean): Boolean =
+        send(manager, CMD_BLE_ROLE, if (controls) 0 else 1)
+
     fun sendWiperOff(manager: DashKitBleManager, enabled: Boolean): Boolean =
         send(manager, CMD_WIPER_OFF_ENABLE, if (enabled) 1 else 0)
 

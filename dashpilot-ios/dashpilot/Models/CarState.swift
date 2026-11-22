@@ -100,6 +100,7 @@ struct CarState: Codable {
     var trafficControlType: Float = 0
     var batteryHeatPower: Float = 0
     var dashkitPreheat: Float = -1
+    var dashkitKickdown: Float = -1
 
     init() {}
 
@@ -189,6 +190,7 @@ struct CarState: Codable {
         trafficControlType = Float(bridge.trafficControlType)
         batteryHeatPower = Float(bridge.batteryHeatPower)
         dashkitPreheat = Float(bridge.dashkitPreheat)
+        dashkitKickdown = Float(bridge.dashkitKickdown)
     }
 
     private static let kmToMiles: Float = 0.621371
@@ -303,5 +305,6 @@ struct CarState: Codable {
         trafficControlType = try c.decodeIfPresent(Float.self, forKey: .trafficControlType) ?? 0
         batteryHeatPower = try c.decodeIfPresent(Float.self, forKey: .batteryHeatPower) ?? 0
         dashkitPreheat = try c.decodeIfPresent(Float.self, forKey: .dashkitPreheat) ?? -1
+        dashkitKickdown = try c.decodeIfPresent(Float.self, forKey: .dashkitKickdown) ?? -1
     }
 }

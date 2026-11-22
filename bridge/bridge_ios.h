@@ -108,6 +108,7 @@ typedef struct {
     double trafficControlType;
     double batteryHeatPower;
     double dashkitPreheat;
+    double dashkitKickdown;
 } BridgeCarState;
 
 // Context

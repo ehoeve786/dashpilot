@@ -4548,6 +4548,7 @@ BO_ 2032 COMMA_status: 8 X
 
 BO_ 2035 DASHKIT_status: 1 X
  SG_ DASHKIT_preheat : 0|1@1+ (1,0) [0|1] "" X
+ SG_ DASHKIT_kickdown : 1|1@1+ (1,0) [0|1] "" X
 
 BO_ 2033 GTW_hrl: 7 VEH
  SG_ GTW_hrlIndex M: 0|2@1+ (1,0) [0|0] "" X

@@ -102,6 +102,8 @@ data class CarState(
     val batteryHeatPower: Float = 0f,
     // DashKit preheat injection: 1 on, 0 off, -1 not reported.
     val dashkitPreheat: Float = -1f,
+    // DashKit sport kick-down injecting Standard: 1 Standard, 0 not, -1 not reported.
+    val dashkitKickdown: Float = -1f,
 
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = "",
@@ -122,7 +124,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 88
+        const val FIELD_COUNT = 89
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

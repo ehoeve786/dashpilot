@@ -49,6 +49,7 @@ fun DashState.dashValues(systemDarkMode: Boolean? = null): Map<String, Any> {
         "chargeLimit" to c.chargeLimit,
         "trafficControlType" to c.trafficControlType,
         "batteryHeatPower" to c.batteryHeatPower,
+        "dashkitKickdown" to c.dashkitKickdown,
         "buckleStatus" to c.buckleStatus,
         "odometer" to c.odometer,
         "adasOn" to c.adasOn,

@@ -84,6 +84,12 @@ int main(int argc, char** argv) {
     CHECK(cs.dashkitPreheat == 1);
     feed(1, 0x7F3, "00");
     CHECK(cs.dashkitPreheat == 0);
+    // Bit 1: kick-down injecting Standard.
+    CHECK(cs.dashkitKickdown == 0);
+    feed(1, 0x7F3, "02");
+    CHECK(cs.dashkitKickdown == 1 && cs.dashkitPreheat == 0);
+    feed(1, 0x7F3, "03");
+    CHECK(cs.dashkitKickdown == 1 && cs.dashkitPreheat == 1);
     feed(1, 0x3A1, "29fa408f3c88d02a");             // preconditioning, 6.8 kW
     CHECK(near(cs.batteryHeatPower, 6.8));
     feed(1, 0x3A1, "e84d00ca0078425d");             // mux 0 (other signals on the same bits): value kept

@@ -117,6 +117,9 @@ struct CarState {
     // Whether the DashKit is injecting its battery preheat request (DASHKIT_status): 1 on, 0 off, -1 not reported
     // (firmware without it, or another source).
     double dashkitPreheat = -1;
+    // Whether the DashKit's sport kick-down is injecting Standard over Chill (DASHKIT_status): 1 Standard,
+    // 0 not, -1 not reported. The car's own UI_pedalMap keeps saying Chill meanwhile.
+    double dashkitKickdown = -1;
 
     // Vehicle VIN, empty until fully assembled by the mapper.
     static constexpr size_t VIN_LENGTH = 17;
@@ -136,7 +139,7 @@ struct CarState {
     static constexpr size_t CABIN_OFFSET = AMBIENT_OFFSET + 3;
     static constexpr size_t CABIN_COUNT = 12;
     static constexpr size_t DRIVE_OFFSET = CABIN_OFFSET + CABIN_COUNT;
-    static constexpr size_t DRIVE_COUNT = 15;
+    static constexpr size_t DRIVE_COUNT = 16;
     static constexpr size_t FIELD_COUNT = DRIVE_OFFSET + DRIVE_COUNT;
 
     void toArray(double* out) const {
@@ -233,7 +236,7 @@ struct CarState {
         // Driving data (after the cabin), in the order declared above.
         const double drive[DRIVE_COUNT] = {cellVoltMin, cellVoltMax, coolantBatIn, outsideTemp, cabinTemp, cabinHumidity,
                                            wheelTorque, accelLong, accelLat, accelPedal, chargeStatus, chargeLimit,
-                                           trafficControlType, batteryHeatPower, dashkitPreheat};
+                                           trafficControlType, batteryHeatPower, dashkitPreheat, dashkitKickdown};
         for (size_t i = 0; i < DRIVE_COUNT; i++) out[DRIVE_OFFSET + i] = drive[i];
     }
 };

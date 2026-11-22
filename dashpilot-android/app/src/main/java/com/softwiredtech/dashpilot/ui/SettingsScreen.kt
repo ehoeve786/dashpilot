@@ -2,6 +2,8 @@ package com.softwiredtech.dashpilot.ui
 
 import android.content.Context
 import com.softwiredtech.dashpilot.datamodel.dash.setDevUrlHintShown
+import com.softwiredtech.dashpilot.datamodel.dash.getDashKitControl
+import com.softwiredtech.dashpilot.datamodel.dash.setDashKitControl
 import com.softwiredtech.dashpilot.datamodel.dash.isDevUrlHintShown
 import androidx.compose.ui.platform.LocalFocusManager
 import android.content.Intent
@@ -823,6 +825,28 @@ private fun PairNewDeviceSection(bleManager: DashKitBleManager) {
 }
 
 @Composable
+private fun ControlPhoneSection(bleManager: DashKitBleManager) {
+    val context = LocalContext.current
+    var controls by remember { mutableStateOf(getDashKitControl(context)) }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SectionHeader(stringResource(R.string.settings_section_two_phones))
+        Spacer(modifier = Modifier.height(8.dp))
+        SettingsToggle(stringResource(R.string.settings_toggle_dashkit_control), controls) { enabled ->
+            controls = enabled
+            setDashKitControl(context, enabled)
+            VehicleControl.sendBleRole(bleManager, enabled)
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.settings_dashkit_control_caption),
+            color = DarkColors.TextMuted,
+            fontSize = 12.sp
+        )
+    }
+}
+
+@Composable
 private fun DashKitSettingsContent(
     bleManager: DashKitBleManager,
     updateManager: FirmwareUpdateManager,
@@ -849,6 +873,9 @@ private fun DashKitSettingsContent(
     Spacer(modifier = Modifier.height(24.dp))
 
     PairNewDeviceSection(bleManager)
+    Spacer(modifier = Modifier.height(24.dp))
+
+    ControlPhoneSection(bleManager)
     Spacer(modifier = Modifier.height(24.dp))
 
     TeslaKeySection(

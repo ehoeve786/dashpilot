@@ -19,6 +19,7 @@ struct DashKitSettingsView: View {
     @State private var showRebootDialog = false
     @State private var pairStatus: String?
     @State private var rebootStatus: String?
+    @AppStorage(VehicleControl.keyDashKitControl) private var controlsCar = true
 
     private var connected: Bool {
         bleManager.connectionState == .connected
@@ -29,6 +30,7 @@ struct DashKitSettingsView: View {
             firmwareInfoSection
             FirmwareUpdateSection(updateManager: updateManager, connected: connected)
             pairingSection
+            twoPhonesSection
             maintenanceSection
         }
         // On connect, read the installed version and check for updates.
@@ -93,6 +95,29 @@ struct DashKitSettingsView: View {
                     .foregroundColor(mutedText)
                     .font(.system(size: 13))
             }
+        }
+    }
+
+    // MARK: - Two phones
+
+    private var twoPhonesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionHeader("Two phones")
+            HStack {
+                Text("Control the car from this phone")
+                    .foregroundColor(.white)
+                    .font(.system(size: 16))
+                Spacer()
+                Toggle("", isOn: $controlsCar)
+                    .labelsHidden()
+                    .tint(accent)
+            }
+            Text("With two phones on the DashKit, the one with this on sends the commands. Turn it off to use this phone as a dashboard only.")
+                .foregroundColor(mutedText)
+                .font(.system(size: 12))
+        }
+        .onChange(of: controlsCar) { _, newValue in
+            VehicleControl.sendBleRole(bleManager, controls: newValue)
         }
     }
 

@@ -208,6 +208,9 @@
     <string name="settings_tesla_reset_sent">Removing Tesla connection…</string>
     <string name="settings_tesla_reset_failed">Couldn\'t remove the connection. Try again.</string>
     <string name="tesla_connection_removing">Removing connection…</string>
+    <string name="settings_section_two_phones">Two phones</string>
+    <string name="settings_toggle_dashkit_control">Control the car from this phone</string>
+    <string name="settings_dashkit_control_caption">With two phones on the DashKit, the one with this on sends the commands. Turn it off to use this phone as a dashboard only.</string>
     <string name="settings_pair_caption">Pairs another phone — separate from your Tesla connection.</string>
 
     <!-- Common -->

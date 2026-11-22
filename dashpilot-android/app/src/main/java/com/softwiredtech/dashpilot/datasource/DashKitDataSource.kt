@@ -99,10 +99,6 @@ class DashKitDataSource(
             VehicleControl.SERVICE_UUID, VehicleControl.CONTROL_CHAR_UUID,
             VehicleControl.payload(VehicleControl.CMD_COMPACT, 1), TAG, "compact packets"
         )
-        manager.writeCommandWithRetry(
-            VehicleControl.SERVICE_UUID, VehicleControl.CONTROL_CHAR_UUID,
-            VehicleControl.payload(VehicleControl.CMD_BLE_ROLE, 0), TAG, "claim control"
-        )
         handler.removeCallbacksAndMessages(null)
         mainPostedAt = 0L
         allPending = logging && isDevCanLogAllEnabled(manager.context)

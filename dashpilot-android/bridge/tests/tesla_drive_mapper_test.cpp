@@ -106,8 +106,14 @@ int main(int argc, char** argv) {
     CHECK(cs.userPresent == 0);
     feed(1, 0x29D, "e803e51300");                   // made up: 125 A (0.125 A/bit) at 373.0 V
     CHECK(std::fabs(cs.chargerPower - 125 * 5093 * 0.0732422 / 1000) < 1e-3);
-    feed(1, 0x7F0, "01501df800000000");             // COMMA_status: lead car 29 m ahead, closing at 2 m/s
-    CHECK(cs.leadDist == 29 && near(cs.leadRelSpeed, -2));
+    feed(0, 0x5D9, "f42e80b6264f7220");             // DAS_carLog mux 4: 46.9 m ahead in our lane, 38.7 left, 36.9 right
+    CHECK(near(cs.leadDist, 46.9375) && near(cs.leadRelSpeed, 519 * 0.1 - 51.1));
+    CHECK(near(cs.leadLeftDist, 38.6875) && near(cs.leadRightDist, 36.9375));
+    feed(0, 0x5D9, "4415d80200e89220");             // mux 4 again: nobody to the left
+    CHECK(near(cs.leadDist, 21.25) && cs.leadLeftDist == 0);
+    feed(0, 0x5D9, "c4070000000000f0");             // mux 4: a car 7.75 m ahead, relative speed bits 0
+    feed(0, 0x5D9, "0200000000000000");             // another mux: values kept
+    CHECK(near(cs.leadDist, 7.75));
 
     if (failures) {
         std::printf("%d check(s) failed\n", failures);

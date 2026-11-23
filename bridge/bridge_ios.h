@@ -116,6 +116,8 @@ typedef struct {
     double userPresent;
     double leadDist;
     double leadRelSpeed;
+    double leadLeftDist;
+    double leadRightDist;
 } BridgeCarState;
 
 // Context

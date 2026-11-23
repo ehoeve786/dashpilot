@@ -100,6 +100,8 @@ static void carStateToBridge(const CarState& cs, BridgeCarState* out) {
     out->userPresent = cs.userPresent;
     out->leadDist = cs.leadDist;
     out->leadRelSpeed = cs.leadRelSpeed;
+    out->leadLeftDist = cs.leadLeftDist;
+    out->leadRightDist = cs.leadRightDist;
 }
 
 static std::atomic<bool> receiveLoopRunning{false};

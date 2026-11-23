@@ -144,7 +144,7 @@ class DemoDataSource : IDataSource {
                 }
             }
 
-            // openpilot's lead car: follows through the cruise, gone in the turn, stops ahead of us at the light.
+            // Autopilot's lead car: follows through the cruise, gone in the turn, stops ahead of us at the light.
             val lead = when {
                 phase >= TURN_START && phase < TURN_END -> 0.0
                 phase >= CRUISE2_END && phase < APPROACH_END -> 8 + 27 * (APPROACH_END - phase) / (APPROACH_END - CRUISE2_END)
@@ -231,6 +231,9 @@ class DemoDataSource : IDataSource {
                 coolantBatIn = 24f,
                 leadDist = lead.toFloat(),
                 leadRelSpeed = leadRel.toFloat(),
+                // Cars in the next lanes come and go.
+                leadLeftDist = if (t % 20 < 12) (25 + 8 * sin(t * 0.2)).toFloat() else 0f,
+                leadRightDist = if (t % 17 < 7) (60 + 15 * cos(t * 0.1)).toFloat() else 0f,
                 acTemp = 22f,
                 acTempRight = 21f,
                 hvacFanLevel = 11f,

@@ -130,9 +130,12 @@ struct CarState {
     double lvPower = 0;
     // Someone in the car (UI_userPresent, 0x3B3): 1 yes, 0 no, -1 not reported.
     double userPresent = -1;
-    // openpilot's lead car (COMMA_status from the C3X): distance in m (0 = none) and its speed relative to ours, m/s.
+    // Autopilot's closest car ahead (DAS_carLog): in our lane, m (0 = none), its speed relative to ours, m/s, and the
+    // closest in the lane to the left and to the right, m (0 = none).
     double leadDist = 0;
     double leadRelSpeed = 0;
+    double leadLeftDist = 0;
+    double leadRightDist = 0;
 
     // Vehicle VIN, empty until fully assembled by the mapper.
     static constexpr size_t VIN_LENGTH = 17;
@@ -152,7 +155,7 @@ struct CarState {
     static constexpr size_t CABIN_OFFSET = AMBIENT_OFFSET + 3;
     static constexpr size_t CABIN_COUNT = 12;
     static constexpr size_t DRIVE_OFFSET = CABIN_OFFSET + CABIN_COUNT;
-    static constexpr size_t DRIVE_COUNT = 23;
+    static constexpr size_t DRIVE_COUNT = 25;
     static constexpr size_t FIELD_COUNT = DRIVE_OFFSET + DRIVE_COUNT;
 
     void toArray(double* out) const {
@@ -251,7 +254,7 @@ struct CarState {
                                            wheelTorque, accelLong, accelLat, accelPedal, chargeStatus, chargeLimit,
                                            trafficControlType, batteryHeatPower, dashkitPreheat, dashkitKickdown,
                                            ratedRange, chargerPower, lvVoltage, lvPower, userPresent,
-                                           leadDist, leadRelSpeed};
+                                           leadDist, leadRelSpeed, leadLeftDist, leadRightDist};
         for (size_t i = 0; i < DRIVE_COUNT; i++) out[DRIVE_OFFSET + i] = drive[i];
     }
 };

@@ -61,6 +61,8 @@ extension DashState {
             ("userPresent", .number(c.userPresent)),
             ("leadDist", .number(c.leadDist)),
             ("leadRelSpeed", .number(c.leadRelSpeed)),
+            ("leadLeftDist", .number(c.leadLeftDist)),
+            ("leadRightDist", .number(c.leadRightDist)),
             ("buckleStatus", .number(c.buckleStatus)),
             ("odometer", .number(c.odometer)),
             ("adasOn", .bool(c.adasOn)),

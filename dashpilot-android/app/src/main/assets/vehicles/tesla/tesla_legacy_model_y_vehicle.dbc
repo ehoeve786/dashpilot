@@ -6128,8 +6128,6 @@ BO_ 2024 EPBR_info: 8 Vector__XXX
 
 BO_ 2032 COMMA_status: 8 X
  SG_ COMMA_vCruise : 8|8@1+ (1,0) [0|255] "kph"  X
- SG_ COMMA_leadDist : 16|8@1+ (1,0) [0|255] "m"  X
- SG_ COMMA_leadRelSpeed : 24|8@1- (0.25,0) [-32|31.75] "m/s"  X
  SG_ COMMA_mads : 3|1@1+ (1,0) [0|1] ""  X
  SG_ COMMA_laneChange : 2|1@1+ (1,0) [0|1] ""  X
  SG_ COMMA_experimental : 1|1@1+ (1,0) [0|1] ""  X

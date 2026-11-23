@@ -197,7 +197,7 @@ final class DemoDataSource: IDataSource {
 
         s.accSetSpeed = cruiseSpeed(at: t) + 5
 
-        // openpilot's lead car: follows through the cruise, gone in the turn, stops ahead of us at the light.
+        // Autopilot's lead car: follows through the cruise, gone in the turn, stops ahead of us at the light.
         let lead: Double
         switch phase {
         case turnStart..<turnEnd: lead = 0
@@ -206,6 +206,9 @@ final class DemoDataSource: IDataSource {
         default: lead = 35 + 10 * sin(t * 0.15)
         }
         s.leadDist = Float(lead)
+        // Cars in the next lanes come and go.
+        s.leadLeftDist = t.truncatingRemainder(dividingBy: 20) < 12 ? Float(25 + 8 * sin(t * 0.2)) : 0
+        s.leadRightDist = t.truncatingRemainder(dividingBy: 17) < 7 ? Float(60 + 15 * cos(t * 0.1)) : 0
         s.leadRelSpeed = lead == 0 || lead == 8 ? 0 : Float((cruise2End..<approachEnd).contains(phase) ? -1.5 : 1.5 * cos(t * 0.15))
 
         // While stopped at the light: FL, FR, RL, RR, frunk, trunk open one after another.

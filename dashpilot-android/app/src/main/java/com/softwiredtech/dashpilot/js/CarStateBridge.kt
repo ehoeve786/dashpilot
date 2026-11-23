@@ -67,6 +67,8 @@ class CarStateBridge(
     @Volatile private var userPresent: Float = -1f
     @Volatile private var leadDist: Float = 0f
     @Volatile private var leadRelSpeed: Float = 0f
+    @Volatile private var leadLeftDist: Float = 0f
+    @Volatile private var leadRightDist: Float = 0f
     @Volatile private var dashkitPreheat: Float = -1f
     @Volatile private var accSetSpeed: Float = 0f
     @Volatile private var fullPackEnergy: Float = 0f
@@ -171,6 +173,8 @@ class CarStateBridge(
         userPresent = state.userPresent
         leadDist = state.leadDist
         leadRelSpeed = state.leadRelSpeed
+        leadLeftDist = state.leadLeftDist
+        leadRightDist = state.leadRightDist
         dashkitPreheat = state.dashkitPreheat
         accSetSpeed = state.accSetSpeed
         fullPackEnergy = state.fullPackEnergy
@@ -263,6 +267,8 @@ class CarStateBridge(
     @JavascriptInterface fun getUserPresent(): Float = userPresent
     @JavascriptInterface fun getLeadDist(): Float = leadDist
     @JavascriptInterface fun getLeadRelSpeed(): Float = leadRelSpeed
+    @JavascriptInterface fun getLeadLeftDist(): Float = leadLeftDist
+    @JavascriptInterface fun getLeadRightDist(): Float = leadRightDist
     @JavascriptInterface fun getDashkitPreheat(): Float = dashkitPreheat
     @JavascriptInterface fun getAccSetSpeed(): Float = accSetSpeed
     @JavascriptInterface fun getFullPackEnergy(): Float = fullPackEnergy

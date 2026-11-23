@@ -269,6 +269,14 @@ public:
         cs.leftBlindSpot = cp.get(0, "DAS_status", "DAS_blindSpotRearLeft");
         cs.rightBlindSpot = cp.get(0, "DAS_status", "DAS_blindSpotRearRight");
         cs.fusedSpeedLimit = cp.get(0, "DAS_status", "DAS_fusedSpeedLimit");
+        // Autopilot's closest car in our lane and in each next lane (DAS_carLog 0x5D9, mux 4, about once a second;
+        // 0 = none). Other muxes leave the last values.
+        if (static_cast<int>(cp.get(0, "DAS_carLog", "DAS_carLogMultiplexer")) == 4) {
+            cs.leadDist = cp.get(0, "DAS_carLog", "DAS_closestInLaneTargetDx");
+            cs.leadRelSpeed = cs.leadDist > 0 ? cp.get(0, "DAS_carLog", "DAS_closestInLaneTargetVxRel") : 0;
+            cs.leadLeftDist = cp.get(0, "DAS_carLog", "DAS_closestLeftLaneTargetDx");
+            cs.leadRightDist = cp.get(0, "DAS_carLog", "DAS_closestRightLaneTargetDx");
+        }
         cs.trafficLightColor = cp.get(0, "DAS_road", "DAS_trafficLightColor");
         cs.stopLineDist = cp.get(0, "DAS_road", "DAS_stopLineDist");  // metres, 254 = none
         cs.trafficControlType = cp.get(0, "DAS_road", "DAS_controlType");
@@ -295,8 +303,6 @@ public:
         // openpilot's own set speed (km/h) while it drives: Tesla's DI_digitalSpeed doesn't carry it then
         if (cs.selfdriveActive > 0 && cp.get(1, "COMMA_status", "COMMA_vCruise") > 0)
             cs.accSetSpeed = cp.get(1, "COMMA_status", "COMMA_vCruise");
-        cs.leadDist = cp.get(1, "COMMA_status", "COMMA_leadDist");
-        cs.leadRelSpeed = cp.get(1, "COMMA_status", "COMMA_leadRelSpeed");
 
         cs.leftBlinker = leftBlinkerHold_.update(
             cp.get(1, "VCLEFT_lightStatus", "VCLEFT_turnSignalStatus"));

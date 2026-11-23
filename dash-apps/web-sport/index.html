@@ -192,7 +192,7 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
       </div>
       <svg id="climate" viewBox="0 0 460 200" preserveAspectRatio="xMidYMid meet"></svg>
       <div class="tile" id="lead"><div><div class="cap">LEAD CAR</div><div class="xl" style="font-size:calc(84 * var(--u))"><span id="lGap">--</span><small> s gap</small></div></div>
-        <div style="text-align:right"><div class="val" id="lDist">--</div><div class="row" id="lRel"></div></div></div>
+        <div style="text-align:right"><div class="val" id="lDist">--</div><div class="row" id="lRel"></div><div class="row" id="lLanes"></div></div></div>
       <svg class="big" id="rightBig" viewBox="0 0 520 880" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
     <div class="mode park" id="parkR">
@@ -738,13 +738,17 @@ function tyreState(c) {
 }
 const battColor = (v) => (v < 2.6 ? RED : v < 2.75 ? AMBER : SUB);
 
-// Drive: openpilot's lead car (time gap at our speed, distance, closing speed) and the trip so far.
+// Drive: Autopilot's lead car (time gap at our speed, distance, closing speed), the closest cars in the next lanes,
+// and the trip so far.
 function renderDrive(c, imperial) {
   const d = num(c.leadDist, 0), v = num(c.egoSpeed, 0) / 3.6, rel = num(c.leadRelSpeed, 0) * 3.6;
   const gap = d > 0 && v > 1 ? d / v : 0, mi = imperial ? 0.621371 : 1;
   setText($('lGap'), gap ? gap.toFixed(1) : '--');
   $('lGap').style.color = !gap ? DIM : gap < 1 ? RED : gap < 1.5 ? AMBER : GREEN;
   setText($('lDist'), d > 0 ? Math.round(imperial ? d * 3.28084 : d) + (imperial ? ' ft' : ' m') : 'No lead car');
+  const lane = (x) => (x > 0 ? Math.round(imperial ? x * 3.28084 : x) + (imperial ? ' ft' : ' m') : '–');
+  const ll = num(c.leadLeftDist, 0), lr = num(c.leadRightDist, 0);
+  setText($('lLanes'), ll > 0 || lr > 0 ? 'left ' + lane(ll) + ' · right ' + lane(lr) : '');
   setText($('lRel'), d > 0 && Math.abs(rel) >= 1 ? (rel < 0 ? 'closing ' : 'pulling away ') + Math.round(Math.abs(rel) * mi) + (imperial ? ' mph' : ' km/h') : '');
   const km = Trip && Trip.odo ? num(c.odometer, 0) - Trip.odo : 0, ms = Trip && Trip.t0 ? Date.now() - Trip.t0 : 0;
   setText($('dKm'), (km * mi).toFixed(1));

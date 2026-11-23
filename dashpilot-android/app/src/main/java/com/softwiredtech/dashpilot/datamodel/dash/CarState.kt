@@ -112,9 +112,11 @@ data class CarState(
     val lvPower: Float = 0f,
     // Someone in the car: 1 yes, 0 no, -1 not reported.
     val userPresent: Float = -1f,
-    // openpilot's lead car: distance in m (0 = none), speed relative to ours in m/s.
+    // Autopilot's closest car ahead: in our lane in m (0 = none) and its relative speed in m/s; next lanes in m.
     val leadDist: Float = 0f,
     val leadRelSpeed: Float = 0f,
+    val leadLeftDist: Float = 0f,
+    val leadRightDist: Float = 0f,
 
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = "",
@@ -135,7 +137,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 96
+        const val FIELD_COUNT = 98
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

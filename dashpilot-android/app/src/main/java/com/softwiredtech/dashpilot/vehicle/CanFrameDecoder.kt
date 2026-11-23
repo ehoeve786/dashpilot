@@ -133,7 +133,9 @@ class CanFrameDecoder(
                 lvPower = values[92].toFloat(),
                 userPresent = values[93].toFloat(),
                 leadDist = values[94].toFloat(),
-                leadRelSpeed = values[95].toFloat()
+                leadRelSpeed = values[95].toFloat(),
+                leadLeftDist = values[96].toFloat(),
+                leadRightDist = values[97].toFloat()
             )
         }
 

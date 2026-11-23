@@ -75,7 +75,7 @@ void dashkit_mapper_subscribes_to_what_it_reads() {
     // Chassis bus.
     for (const char* m : {"SCCM_steeringAngleSensor", "DI_systemStatus", "DI_speed", "DAS_status",
                           "DAS_status2", "DAS_road", "RCM_inertial2", "VCFRONT_status", "VCFRONT_sensors",
-                          "VCLEFT_doorStatus", "VCRIGHT_doorStatus", "VIN_info"}) {
+                          "VCLEFT_doorStatus", "VCRIGHT_doorStatus", "VIN_info", "DAS_carLog"}) {
         CHECK(rig.has(subs, 0, m));
     }
     // Vehicle bus.
@@ -90,7 +90,7 @@ void dashkit_mapper_subscribes_to_what_it_reads() {
         CHECK(rig.has(subs, 1, m));
     }
     // Nothing else: a message the mapper stops reading leaves the list too.
-    CHECK(subs.size() == 38);
+    CHECK(subs.size() == 39);
     // Messages only read once a frame has arrived are still found on an empty
     // parser (muxed TPMS and liftgate, the VIN, ambient lighting).
     CHECK(rig.has(subs, 1, "VCSEC_TPMSData") && rig.has(subs, 0, "VIN_info"));

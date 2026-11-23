@@ -59,6 +59,8 @@ extension DashState {
             ("lvVoltage", .number(c.lvVoltage)),
             ("lvPower", .number(c.lvPower)),
             ("userPresent", .number(c.userPresent)),
+            ("leadDist", .number(c.leadDist)),
+            ("leadRelSpeed", .number(c.leadRelSpeed)),
             ("buckleStatus", .number(c.buckleStatus)),
             ("odometer", .number(c.odometer)),
             ("adasOn", .bool(c.adasOn)),

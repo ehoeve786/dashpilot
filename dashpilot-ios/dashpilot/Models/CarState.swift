@@ -106,6 +106,8 @@ struct CarState: Codable {
     var lvVoltage: Float = 0
     var lvPower: Float = 0
     var userPresent: Float = -1
+    var leadDist: Float = 0
+    var leadRelSpeed: Float = 0
 
     init() {}
 
@@ -201,6 +203,8 @@ struct CarState: Codable {
         lvVoltage = Float(bridge.lvVoltage)
         lvPower = Float(bridge.lvPower)
         userPresent = Float(bridge.userPresent)
+        leadDist = Float(bridge.leadDist)
+        leadRelSpeed = Float(bridge.leadRelSpeed)
     }
 
     private static let kmToMiles: Float = 0.621371
@@ -321,5 +325,7 @@ struct CarState: Codable {
         lvVoltage = try c.decodeIfPresent(Float.self, forKey: .lvVoltage) ?? 0
         lvPower = try c.decodeIfPresent(Float.self, forKey: .lvPower) ?? 0
         userPresent = try c.decodeIfPresent(Float.self, forKey: .userPresent) ?? -1
+        leadDist = try c.decodeIfPresent(Float.self, forKey: .leadDist) ?? 0
+        leadRelSpeed = try c.decodeIfPresent(Float.self, forKey: .leadRelSpeed) ?? 0
     }
 }

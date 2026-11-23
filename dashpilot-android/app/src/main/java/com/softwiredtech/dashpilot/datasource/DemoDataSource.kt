@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
@@ -143,6 +144,19 @@ class DemoDataSource : IDataSource {
                 }
             }
 
+            // openpilot's lead car: follows through the cruise, gone in the turn, stops ahead of us at the light.
+            val lead = when {
+                phase >= TURN_START && phase < TURN_END -> 0.0
+                phase >= CRUISE2_END && phase < APPROACH_END -> 8 + 27 * (APPROACH_END - phase) / (APPROACH_END - CRUISE2_END)
+                phase >= APPROACH_END && phase < GO_END -> 8.0
+                else -> 35 + 10 * sin(t * 0.15)
+            }
+            val leadRel = when {
+                lead == 8.0 || lead == 0.0 -> 0.0
+                phase >= CRUISE2_END && phase < APPROACH_END -> -1.5
+                else -> 1.5 * cos(t * 0.15)
+            }
+
             // While stopped at the light: FL, FR, RL, RR, frunk, trunk open one after another.
             val opening = if (phase >= APPROACH_END && phase < STOPPED_END)
                 ((phase - APPROACH_END) / (STOPPED_END - APPROACH_END) * 6).toInt() else -1
@@ -215,6 +229,8 @@ class DemoDataSource : IDataSource {
                 userPresent = 1f,
                 odometer = (42000 + lap * 2 + 2 * min(t % FULL, CYCLE) / CYCLE).toFloat(),
                 coolantBatIn = 24f,
+                leadDist = lead.toFloat(),
+                leadRelSpeed = leadRel.toFloat(),
                 acTemp = 22f,
                 acTempRight = 21f,
                 hvacFanLevel = 11f,

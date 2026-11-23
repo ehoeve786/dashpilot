@@ -131,7 +131,9 @@ class CanFrameDecoder(
                 chargerPower = values[90].toFloat(),
                 lvVoltage = values[91].toFloat(),
                 lvPower = values[92].toFloat(),
-                userPresent = values[93].toFloat()
+                userPresent = values[93].toFloat(),
+                leadDist = values[94].toFloat(),
+                leadRelSpeed = values[95].toFloat()
             )
         }
 

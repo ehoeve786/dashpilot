@@ -55,6 +55,8 @@ fun DashState.dashValues(systemDarkMode: Boolean? = null): Map<String, Any> {
         "lvVoltage" to c.lvVoltage,
         "lvPower" to c.lvPower,
         "userPresent" to c.userPresent,
+        "leadDist" to c.leadDist,
+        "leadRelSpeed" to c.leadRelSpeed,
         "buckleStatus" to c.buckleStatus,
         "odometer" to c.odometer,
         "adasOn" to c.adasOn,

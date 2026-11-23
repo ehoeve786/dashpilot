@@ -98,6 +98,8 @@ static void carStateToBridge(const CarState& cs, BridgeCarState* out) {
     out->lvVoltage = cs.lvVoltage;
     out->lvPower = cs.lvPower;
     out->userPresent = cs.userPresent;
+    out->leadDist = cs.leadDist;
+    out->leadRelSpeed = cs.leadRelSpeed;
 }
 
 static std::atomic<bool> receiveLoopRunning{false};

@@ -106,6 +106,8 @@ int main(int argc, char** argv) {
     CHECK(cs.userPresent == 0);
     feed(1, 0x29D, "e803e51300");                   // made up: 125 A (0.125 A/bit) at 373.0 V
     CHECK(std::fabs(cs.chargerPower - 125 * 5093 * 0.0732422 / 1000) < 1e-3);
+    feed(1, 0x7F0, "01501df800000000");             // COMMA_status: lead car 29 m ahead, closing at 2 m/s
+    CHECK(cs.leadDist == 29 && near(cs.leadRelSpeed, -2));
 
     if (failures) {
         std::printf("%d check(s) failed\n", failures);

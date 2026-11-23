@@ -295,6 +295,8 @@ public:
         // openpilot's own set speed (km/h) while it drives: Tesla's DI_digitalSpeed doesn't carry it then
         if (cs.selfdriveActive > 0 && cp.get(1, "COMMA_status", "COMMA_vCruise") > 0)
             cs.accSetSpeed = cp.get(1, "COMMA_status", "COMMA_vCruise");
+        cs.leadDist = cp.get(1, "COMMA_status", "COMMA_leadDist");
+        cs.leadRelSpeed = cp.get(1, "COMMA_status", "COMMA_leadRelSpeed");
 
         cs.leftBlinker = leftBlinkerHold_.update(
             cp.get(1, "VCLEFT_lightStatus", "VCLEFT_turnSignalStatus"));

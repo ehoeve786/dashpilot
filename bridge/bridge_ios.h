@@ -114,6 +114,8 @@ typedef struct {
     double lvVoltage;
     double lvPower;
     double userPresent;
+    double leadDist;
+    double leadRelSpeed;
 } BridgeCarState;
 
 // Context

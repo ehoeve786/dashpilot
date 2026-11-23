@@ -222,7 +222,8 @@ final class DemoDataSource: IDataSource {
 
         // BMS / power — Tesla-ish pack, slowly discharging.
         s.fullPackEnergy = 75
-        s.nominalEnergyRemaining = Float(51.3 - 21.3 * phase / cycleLength)
+        // A 2 km drive at about 160 Wh/km ends at 30 kWh, where the charge starts.
+        s.nominalEnergyRemaining = Float(30.32 - 0.32 * phase / cycleLength)
         s.ratedRange = rangeKm(s.nominalEnergyRemaining)
         s.energyBuffer = 1.5
         s.maxRegenPower = 60
@@ -257,7 +258,8 @@ final class DemoDataSource: IDataSource {
         s.acTempRight = 21
         s.hvacFanLevel = 11
         s.hvacPowerState = 1
-        s.odometer = Float(42000 + t * 0.01)
+        s.odometer = Float(42000 + Double(cycleIndex) * 2 + 2 * min(t.truncatingRemainder(dividingBy: fullLength), cycleLength) / cycleLength)
+        s.coolantBatIn = 24
 
         return s
     }

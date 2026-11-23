@@ -62,8 +62,7 @@ private const val DEV_RIVE_TYPE = "dev_rive"
 fun DashboardScreen(
     dashboardType: String,
     dashboardUrl: String,
-    dashStateFlow: Flow<DashState>,
-    onControl: (String) -> Unit = {}
+    dashStateFlow: Flow<DashState>
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -165,8 +164,7 @@ fun DashboardScreen(
                         url = currentUrl,
                         scope = scope,
                         dashStateFlow = dashStateFlow,
-                        onEditingChange = { editing -> dashAppEditing = editing },
-                        onControl = onControl
+                        onEditingChange = { editing -> dashAppEditing = editing }
                     )
                 }
                 "rive", DEV_RIVE_TYPE -> {

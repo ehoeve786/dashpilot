@@ -11,8 +11,6 @@ class CarStateBridge(
     // Raised while a dash-app's own editor is open, so the host can suspend
     // gestures of its own (the dashboard carousel) for the duration.
     private val onEditingChange: (Boolean) -> Unit = {},
-    // A dash-app button asking for a vehicle control; only the ids in WEB_CONTROLS get through.
-    private val onControl: (String) -> Unit = {},
 ) {
 
     @Volatile private var egoSteeringAngle: Float = 0f
@@ -323,13 +321,6 @@ class CarStateBridge(
     @JavascriptInterface fun setAppData(json: String) = storeAppData(json)
 
     @JavascriptInterface fun setEditing(editing: Boolean) = onEditingChange(editing)
-
-    @JavascriptInterface fun control(id: String) { if (id in WEB_CONTROLS) onControl(id) }
-
-    private companion object {
-        // Dash-app pages are not trusted with doors or closures: battery preheat only.
-        val WEB_CONTROLS = setOf("battery_preheat")
-    }
 
     fun updatePhoneBattery(level: Int) {
         phoneBattery = level

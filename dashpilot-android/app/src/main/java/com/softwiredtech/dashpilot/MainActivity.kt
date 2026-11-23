@@ -53,7 +53,6 @@ import com.softwiredtech.dashpilot.navigation.SettingsRoute
 import com.softwiredtech.dashpilot.navigation.SetupRoute
 import com.softwiredtech.dashpilot.navigation.TeslaEnrollRoute
 import com.softwiredtech.dashpilot.navigation.ThemePickerRoute
-import com.softwiredtech.dashpilot.ui.controls.controlById
 import com.softwiredtech.dashpilot.ui.AutomationsScreen
 import com.softwiredtech.dashpilot.ui.BatteryScreen
 import com.softwiredtech.dashpilot.ui.ClimateScreen
@@ -427,8 +426,7 @@ class MainActivity : ComponentActivity() {
                                 DashboardScreen(
                                     dashboardType = route.dashboardType,
                                     dashboardUrl = route.dashboardUrl,
-                                    dashStateFlow = flow,
-                                    onControl = { id -> controlById(id)?.perform(connectionVM.bleManager.value) }
+                                    dashStateFlow = flow
                                 )
                             }
                         }

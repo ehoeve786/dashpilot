@@ -45,12 +45,10 @@ fun WebDashView(
     url: String,
     scope: CoroutineScope,
     dashStateFlow: Flow<DashState>,
-    onEditingChange: (Boolean) -> Unit = {},
-    onControl: (String) -> Unit = {}
+    onEditingChange: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val currentOnEditingChange by rememberUpdatedState(onEditingChange)
-    val currentOnControl by rememberUpdatedState(onControl)
     // Bridge calls arrive on the WebView's JavaBridge thread; state goes to the main one.
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val carStateBridge = remember {
@@ -60,7 +58,6 @@ fun WebDashView(
             loadAppData = { dataKey?.let { prefs.getString(it, "") } ?: "" },
             storeAppData = { json -> dataKey?.let { prefs.edit { putString(it, json) } } },
             onEditingChange = { editing -> mainHandler.post { currentOnEditingChange(editing) } },
-            onControl = { id -> mainHandler.post { currentOnControl(id) } },
         )
     }
     val webView = remember { WebView(context) }

@@ -83,11 +83,6 @@ html, body {
 .xl small { font-size: calc(46 * var(--u)); }
 .bar { height: calc(16 * var(--u)); background: #1B1E24; border-radius: calc(8 * var(--u)); overflow: hidden; display: flex; gap: calc(3 * var(--u)); }
 .bar > i { display: block; height: 100%; }
-.btn { height: calc(100 * var(--u)); border-radius: calc(20 * var(--u)); border: calc(3 * var(--u)) solid #3A3E47; background: #1B1E24;
-       display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: calc(30 * var(--u)); font-weight: 600; letter-spacing: calc(2 * var(--u)); }
-.btn.on { border-color: #FF8A3D; background: #331A0A; color: #FF8A3D; }
-.btn.na { opacity: 0.4; }
-.btn small { font-size: calc(20 * var(--u)); font-weight: 400; color: #8B919A; letter-spacing: 0; }
 #charge { display: none; flex: 1 1 0; min-width: 0; gap: calc(20 * var(--u)); grid-template-rows: calc(60 * var(--u)) 1fr auto calc(150 * var(--u)); }
 #root.charging #charge { display: grid; }
 #charge[data-view="0"] { grid-template-columns: 1fr 1.25fr 1fr; grid-template-areas: "dots dots dots" "split ring heat" "lim ring heat" "strip strip strip"; }
@@ -196,9 +191,12 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
     </div>
     <div class="mode park" id="parkR">
       <div class="tile"><div class="cap">CABIN · OUTSIDE</div><div class="xl"><span id="kCab">--</span><small id="kOut"></small></div><div class="row" id="kClim"></div></div>
-      <div class="tile" style="flex:1; justify-content:center; gap:calc(24 * var(--u))"><div class="cap">BEFORE YOU GO</div>
-        <div class="btn" id="btnPre">PREHEAT BATTERY<small id="btnPreSub"></small></div>
-        <div class="btn" id="btnWarm">WARM CABIN<small id="btnWarmSub"></small></div></div>
+      <div class="tile" style="flex:1; justify-content:space-around"><div class="cap">LAST TRIP</div>
+        <div class="xl" style="font-size:calc(90 * var(--u))"><span id="tKm">--</span><small id="tKmU"> km</small></div>
+        <div class="row"><span>Time</span><b id="tTime">--</b></div><div class="row"><span>Energy used</span><b id="tKwh">--</b></div>
+        <div class="row"><span>Efficiency</span><b id="tEff">--</b></div><div class="row"><span>Average speed</span><b id="tAvg">--</b></div></div>
+      <div class="tile"><div class="row"><span class="cap">BATTERY HEALTH</span><b id="hState">--</b></div>
+        <div class="row"><span>Cell spread</span><b id="hSpread">--</b></div><div class="row"><span>Pack · coolant</span><b id="hTemps">--</b></div></div>
     </div>
   </div>
 </div>
@@ -669,14 +667,13 @@ function applyView() {
 
 /* ── Modes: drive; parked in P; charging (BMS_uiChargeStatus 3), with a glance view while nobody is in the car ── */
 const WHEELS = ['FL', 'FR', 'RL', 'RR'];
-const Mode = { now: '', ready: false, view: Number(stored('sportChg')) % 3 || 0, glanceOff: false, preheat: false, warm: false };
+const Mode = { now: '', ready: false, view: Number(stored('sportChg')) % 3 || 0, glanceOff: false };
 function json(key) { try { return JSON.parse(stored(key)); } catch (_) { return null; } }
-let Trip = json('sportTrip'), Park = json('sportPark'), Sess = json('sportCharge');
+let Trip = json('sportTrip'), Park = json('sportPark'), Sess = json('sportCharge'), Last = json('sportLast');
 const psi = (c, w) => num(c['tpmsPressure' + w], -1) * 14.5038;  // < 0: not reported
 const fmtDur = (ms) => { const m = Math.floor(ms / 60000); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'; };
 const fmtClock = (s) => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60;
   return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s % 60).padStart(2, '0'); };
-function sendControl(id) { try { window.NativeCarState && window.NativeCarState.control && window.NativeCarState.control(id); } catch (_) {} }
 
 function updateMode(c, soc, rangeKm) {
   const mode = num(c.chargeStatus, 0) === 3 ? 'charging' : num(c.gear, 0) === 1 ? 'parked' : 'drive';
@@ -685,14 +682,21 @@ function updateMode(c, soc, rangeKm) {
   if (c.chargeStatus !== undefined && num(c.fullPackEnergy, 0) > 0 && (!Mode.ready || mode !== Mode.now)) {
     const load = !Mode.ready;
     Mode.ready = true;
+    // The trip that just ended: distance and energy from the odometer and the pack's own count.
+    if (Mode.now === 'drive' && Trip && Trip.odo) {
+      const km = num(c.odometer, 0) - Trip.odo;
+      if (km > 0.1) { Last = { km, ms: now - Trip.t0, kwh: Trip.nom - num(c.nominalEnergyRemaining, 0) }; store('sportLast', JSON.stringify(Last)); }
+    }
     // A new trip, park or charge starts on a change; on page load the stored one goes on (a swipe rebuilds the page).
     if (mode === 'drive' && (!load || !Trip || now - Trip.last > 600000)) Trip = null;
     if (mode === 'parked' && (!load || !Park)) { Park = { t0: now, soc, range: rangeKm }; store('sportPark', JSON.stringify(Park)); }
     if (mode === 'charging' && (!Sess || now - Sess.last > 900000))  // a re-plug within 15 min continues the session
       Sess = { t0: now, last: now, nom: num(c.nominalEnergyRemaining, 0), range: rangeKm, eb: 0, ec: 0, peak: 0, step: 2, pts: [] };
   }
-  if (mode === 'drive' && !Trip && WHEELS.every((w) => psi(c, w) > 0))
-    Trip = { p: Object.fromEntries(WHEELS.map((w) => [w, psi(c, w)])), last: 0 };
+  if (mode === 'drive' && !Trip && num(c.odometer, 0) > 0 && num(c.fullPackEnergy, 0) > 0)
+    Trip = { t0: now, odo: c.odometer, nom: num(c.nominalEnergyRemaining, 0), p: null, last: 0 };
+  if (mode === 'drive' && Trip && !Trip.p && WHEELS.every((w) => psi(c, w) > 0))
+    Trip.p = Object.fromEntries(WHEELS.map((w) => [w, psi(c, w)]));
   if (mode === 'drive' && Trip && now - Trip.last > 30000) { Trip.last = now; store('sportTrip', JSON.stringify(Trip)); }
   if (mode === Mode.now) return;
   Mode.now = mode;
@@ -705,7 +709,7 @@ function updateMode(c, soc, rangeKm) {
 // four together) and heat (sensor air temperature). 0 fine, 1 watch, 2 warning.
 function tyreState(c) {
   const d = {}, out = {};
-  for (const w of WHEELS) d[w] = Trip && psi(c, w) > 0 ? psi(c, w) - Trip.p[w] : null;
+  for (const w of WHEELS) d[w] = Trip && Trip.p && psi(c, w) > 0 ? psi(c, w) - Trip.p[w] : null;
   for (const w of WHEELS) {
     const others = WHEELS.filter((o) => o !== w && d[o] !== null);
     const rel = d[w] === null || !others.length ? 0 : d[w] - others.reduce((a, o) => a + d[o], 0) / others.length;
@@ -737,19 +741,24 @@ function renderParked(c, soc, rangeKm, imperial) {
   setText($('kCab'), cab ? Math.round(cab) + '°' : '--');
   setText($('kOut'), out ? '  ' + Math.round(out) + '°' : '');
   setText($('kClim'), (num(c.hvacPowerState, 0) > 0 ? 'Climate on' : 'Climate off') + (num(c.cabinHumidity, 0) > 0 ? ' · humidity ' + Math.round(c.cabinHumidity) + '%' : ''));
-  // Preheat follows the DashKit when it reports; Warm cabin has no DashKit command yet, so it only works in the demo.
-  const pre = num(c.dashkitPreheat, -1) >= 0 ? c.dashkitPreheat > 0 : Mode.preheat;
-  $('btnPre').classList.toggle('on', pre);
-  setText($('btnPreSub'), pre ? 'on · tap to stop' : '');
-  const demo = c.dataSourceType === 'demo';
-  $('btnWarm').classList.toggle('on', demo && Mode.warm);
-  $('btnWarm').classList.toggle('na', !demo);
-  setText($('btnWarmSub'), demo ? (Mode.warm ? 'on · tap to stop' : '') : 'needs a DashKit update');
-  Mode.lastPre = pre;
-  Mode.demo = demo;
+  if (Last) {
+    const mi = imperial ? 0.621371 : 1, h = Last.ms / 3600000;
+    setText($('tKm'), (Last.km * mi).toFixed(1));
+    setText($('tKmU'), imperial ? ' mi' : ' km');
+    setText($('tTime'), fmtDur(Last.ms));
+    setText($('tKwh'), Last.kwh.toFixed(1) + ' kWh');
+    setText($('tEff'), Math.round(Last.kwh * 1000 / (Last.km * mi)) + (imperial ? ' Wh/mi' : ' Wh/km'));
+    setText($('tAvg'), h > 0 ? Math.round(Last.km * mi / h) + (imperial ? ' mph' : ' km/h') : '--');
+  }
+  // Battery health at rest: the spread between the lowest and highest cell; pack and coolant temperatures.
+  const vMin = num(c.cellVoltMin, 0), vMax = num(c.cellVoltMax, 0), spread = Math.round((vMax - vMin) * 1000);
+  const lvl = !(vMin > 0) ? -1 : spread > 60 ? 2 : spread > 30 ? 1 : 0;
+  setText($('hState'), ['--', 'Normal', 'Watch', 'Check'][lvl + 1]);
+  $('hState').style.color = [SUB, GREEN, AMBER, RED][lvl + 1];
+  setText($('hSpread'), lvl < 0 ? '--' : spread + ' mV');
+  const tmin = num(c.packTMin, 0), tmax = num(c.packTMax, 0), cool = num(c.coolantBatIn, 0);
+  setText($('hTemps'), (tmax ? Math.round(tmin) + '–' + Math.round(tmax) + '°' : '--') + ' · ' + (cool ? Math.round(cool) + '°' : '--'));
 }
-$('btnPre').addEventListener('click', () => { Mode.preheat = !Mode.lastPre; sendControl('battery_preheat'); });
-$('btnWarm').addEventListener('click', () => { if (Mode.demo) Mode.warm = !Mode.warm; });
 
 function drawCurve() {
   const pts = Sess ? Sess.pts : [];
@@ -1147,7 +1156,6 @@ window.onCarStateUpdate = function () {
   s.experimentalMode = readNative('isExperimentalMode', false);
   s.changingLane = readNative('isChangingLane', false);
   s.isImperial = readNative('isImperial', false);
-  s.dataSourceType = readNative('getDataSourceType', '');
   receiveMessage(s);
 };
 window.receiveMessage = receiveMessage;

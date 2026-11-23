@@ -116,7 +116,7 @@ fun setDevUrlHintShown(context: Context) {
         .edit { putBoolean(PREF_DEV_URL_HINT_SHOWN, true) }
 }
 
-/** Developer option: record the DashKit stream to a CSV (see CanLog). */
+/** Developer option: record the DashKit stream to a candump log (see CanLog). */
 fun isDevCanLogEnabled(context: Context): Boolean =
     context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
         .getBoolean(PREF_DEV_CAN_LOG, false)

@@ -32,7 +32,7 @@
     <string name="settings_developer_load_rive">Load Rive File</string>
     <string name="settings_developer_can_log">Record CAN log</string>
     <string name="settings_developer_can_log_all">Log every frame</string>
-    <string name="settings_developer_can_log_hint">Starts with the next DashKit connection. Files: Download/DashPilot/can-log-*.csv</string>
+    <string name="settings_developer_can_log_hint">Starts with the next DashKit connection. Files: Download/DashPilot/can-log-*.log</string>
     <string name="settings_developer_url_label">Load dash app from URL</string>
     <string name="settings_developer_url_load">Load</string>
     <string name="settings_developer_url_invalid">Enter a valid http(s) URL</string>

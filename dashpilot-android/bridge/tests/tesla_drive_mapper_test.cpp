@@ -97,6 +97,15 @@ int main(int argc, char** argv) {
     CHECK(cs.ratedRange == 0);
     feed(1, 0x33A, "e2c049c2bf8f0000");             // 226 mi (bits 0-9)
     CHECK(near(cs.ratedRange, 226 * 1.609344));
+    CHECK(cs.userPresent == -1 && cs.chargerPower == 0);
+    feed(1, 0x2B4, "3906ff0db601");                 // 15.93 V, 43.8 A out of the DC-DC
+    CHECK(near(cs.lvVoltage, 15.93) && near(cs.lvPower, 15.93 * 43.8 / 1000));
+    feed(1, 0x3B3, "808004308000a889");             // someone in the car
+    CHECK(cs.userPresent == 1);
+    feed(1, 0x3B3, "808040328000a889");             // nobody
+    CHECK(cs.userPresent == 0);
+    feed(1, 0x29D, "e803e51300");                   // made up: 125 A (0.125 A/bit) at 373.0 V
+    CHECK(std::fabs(cs.chargerPower - 125 * 5093 * 0.0732422 / 1000) < 1e-3);
 
     if (failures) {
         std::printf("%d check(s) failed\n", failures);

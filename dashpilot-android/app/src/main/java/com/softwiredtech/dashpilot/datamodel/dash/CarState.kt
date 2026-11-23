@@ -106,6 +106,12 @@ data class CarState(
     val dashkitKickdown: Float = -1f,
     // The car's own rated range, km; 0 = not reported.
     val ratedRange: Float = 0f,
+    // DC charger output, kW (0 = not DC charging); low-voltage battery volts and DC-DC output kW.
+    val chargerPower: Float = 0f,
+    val lvVoltage: Float = 0f,
+    val lvPower: Float = 0f,
+    // Someone in the car: 1 yes, 0 no, -1 not reported.
+    val userPresent: Float = -1f,
 
     // Empty until fully assembled from the CAN stream by the native mapper.
     val vin: String = "",
@@ -126,7 +132,7 @@ data class CarState(
     )
 
     companion object {
-        const val FIELD_COUNT = 90
+        const val FIELD_COUNT = 94
         private const val KM_TO_MILES = 0.621371f
 
         private val MILES_COUNTRIES = setOf("US", "GB", "MM", "LR")

@@ -63,6 +63,49 @@ html, body {
 #right.perf #tyres, #right.perf #car3dCanvas { visibility: hidden; }
 #right.perf #perf { display: block; }
 .edge { position: fixed; top: 0; bottom: 0; opacity: 0; pointer-events: none; }
+/* Parked (P) and charging layouts; the drive layout is the default. */
+[hidden] { display: none !important; }
+.mode { display: none; flex: 1 1 0; min-width: 0; flex-direction: column; gap: calc(20 * var(--u)); }
+#root.parked .mode.park { display: flex; }
+#root.parked #leftWrap, #root.parked #speedo, #root.parked #climate, #root.parked #sizeBtn,
+#root.charging #leftWrap, #root.charging #speedo, #root.charging #right, #root.charging #sizeBtn { display: none; }
+#root.parked #right { flex: 1.5 1 0; }
+#root.parked #right > #tyresWrap, #root.parked #tyres, #root.parked #car3dCanvas { visibility: visible !important; }
+#root.parked #perf, #root.parked #rightBig { display: none !important; }
+.tile { background: #121419; border-radius: calc(24 * var(--u)); padding: calc(24 * var(--u)) calc(30 * var(--u));
+        box-sizing: border-box; display: flex; flex-direction: column; gap: calc(12 * var(--u)); min-height: 0; }
+.cap { font-size: calc(24 * var(--u)); letter-spacing: calc(3 * var(--u)); color: #8B919A; font-weight: 600; }
+.row { display: flex; justify-content: space-between; font-size: calc(30 * var(--u)); color: #8B919A; }
+.row b, .val { color: #F2F4F7; font-weight: 600; }
+.val { font-size: calc(44 * var(--u)); white-space: nowrap; }
+.val small, .xl small { font-size: calc(26 * var(--u)); color: #8B919A; font-weight: 400; }
+.xl { font-size: calc(120 * var(--u)); font-weight: 600; line-height: 1.05; }
+.xl small { font-size: calc(46 * var(--u)); }
+.bar { height: calc(16 * var(--u)); background: #1B1E24; border-radius: calc(8 * var(--u)); overflow: hidden; display: flex; gap: calc(3 * var(--u)); }
+.bar > i { display: block; height: 100%; }
+.btn { height: calc(100 * var(--u)); border-radius: calc(20 * var(--u)); border: calc(3 * var(--u)) solid #3A3E47; background: #1B1E24;
+       display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: calc(30 * var(--u)); font-weight: 600; letter-spacing: calc(2 * var(--u)); }
+.btn.on { border-color: #FF8A3D; background: #331A0A; color: #FF8A3D; }
+.btn.na { opacity: 0.4; }
+.btn small { font-size: calc(20 * var(--u)); font-weight: 400; color: #8B919A; letter-spacing: 0; }
+#charge { display: none; flex: 1 1 0; min-width: 0; gap: calc(20 * var(--u)); grid-template-rows: calc(60 * var(--u)) 1fr auto calc(150 * var(--u)); }
+#root.charging #charge { display: grid; }
+#charge[data-view="0"] { grid-template-columns: 1fr 1.25fr 1fr; grid-template-areas: "dots dots dots" "split ring heat" "lim ring heat" "strip strip strip"; }
+#charge[data-view="1"] { grid-template-columns: 1fr 2.4fr; grid-template-rows: calc(60 * var(--u)) 1fr 1fr calc(150 * var(--u));
+                         grid-template-areas: "dots dots" "batt curve" "now curve" "strip strip"; }
+#charge[data-view="2"] { grid-template-columns: 0.95fr 1fr 1.55fr; grid-template-areas: "dots dots dots" "split ring curve" "lim ring curve" "strip strip strip"; }
+#charge[data-view="g"] { grid-template-rows: 1fr calc(150 * var(--u)); grid-template-areas: "ring" "strip"; }
+#cDots { grid-area: dots; display: flex; justify-content: center; align-items: center; gap: calc(16 * var(--u)); }
+#cDots i { width: calc(18 * var(--u)); height: calc(18 * var(--u)); border-radius: 50%; background: #3A3E47; }
+#cDots i.on { background: #F2F4F7; }
+#cRing { grid-area: ring; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; }
+#cRing svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+#cRingT { display: flex; flex-direction: column; align-items: center; z-index: 1; }
+#charge[data-view="g"] #cRingT { transform: scale(1.5); }
+#cCurve svg { flex: 1; width: 100%; min-height: 0; }
+.axis { display: flex; justify-content: space-between; font-size: calc(22 * var(--u)); color: #59606B; }
+#cStrip { grid-area: strip; flex-direction: row; justify-content: space-around; align-items: center; }
+
 svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dominant-baseline: central; white-space: pre; }
 </style>
 </head>
@@ -81,11 +124,62 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
       <div class="chip" id="chipLane" style="background:#0E1C33; color:#3D8BFF">CHANGING LANE</div>
       <div class="chip" id="chipHeat" style="background:#331A0A; color:#FF8A3D">BATTERY HEATING</div>
       <div class="chip" id="chipKick" style="background:#2A0E33; color:#C86BFF">STANDARD</div>
+      <div class="chip" id="chipChg" style="background:#0E2A17; color:#30D158">CHARGING</div>
+      <div class="chip" id="chipTyre" style="background:#3A1210; color:#FF3B30">TYRE</div>
     </div>
     <svg class="blinker" id="blinkRight" viewBox="0 0 120 96"></svg>
   </div>
   <div id="sizeBtn">Aa</div>
   <div id="main">
+    <div class="mode park" id="parkL">
+      <div class="tile"><div class="cap">BATTERY</div><div class="xl"><span id="kSoc">--</span><small>%</small></div>
+        <div class="bar"><i id="kSocBar" style="background:#30D158"></i></div><div class="row"><span>Range</span><b id="kRange">--</b></div></div>
+      <div class="tile" style="flex:1; justify-content:space-around"><div class="cap">PARKED</div>
+        <div class="row"><span>Since</span><b id="kSince">--</b></div>
+        <div class="row"><span>Lost while parked</span><b id="kLost">--</b></div>
+        <div class="row"><span>LV battery</span><b id="kLv">--</b></div>
+        <div class="row"><span>Tyre sensors</span><b id="kTpms">--</b></div></div>
+    </div>
+    <div id="charge">
+      <div id="cDots" data-v="012"><i></i><i></i><i></i></div>
+      <div class="tile" style="grid-area:split" data-v="02"><div class="cap">WHERE THE POWER GOES</div>
+        <div class="row"><span>From charger</span><b id="gC">--</b></div>
+        <div class="bar"><i id="gBb" style="background:#30D158"></i><i id="gHb" style="background:#FF8A3D"></i><i id="gLb" style="background:#3D8BFF"></i><i id="gOb" style="background:#59606B"></i></div>
+        <div class="row"><span><span style="color:#30D158">●</span> Into battery</span><b id="gB">--</b></div>
+        <div class="row"><span><span style="color:#FF8A3D">●</span> Battery heating</span><b id="gH">--</b></div>
+        <div class="row"><span><span style="color:#3D8BFF">●</span> Low-voltage</span><b id="gL">--</b></div>
+        <div class="row"><span><span style="color:#59606B">●</span> Cabin + losses</span><b id="gO">--</b></div></div>
+      <div class="tile" style="grid-area:lim" data-v="02"><div class="cap">LIMITED BY</div>
+        <div class="val" id="gLim" style="color:#FFB020">--</div><div class="row" id="gLimSub" style="font-size:calc(24 * var(--u))"></div></div>
+      <div id="cRing" data-v="02g"><svg viewBox="0 0 340 340"><circle cx="170" cy="170" r="150" fill="none" stroke="#1B1E24" stroke-width="18"/>
+        <circle id="rArc" cx="170" cy="170" r="150" fill="none" stroke="#30D158" stroke-width="18" stroke-linecap="round" stroke-dasharray="0 943" transform="rotate(-90 170 170)"/></svg>
+        <div id="cRingT"><div class="cap">INTO BATTERY</div><div class="xl" style="color:#30D158"><span id="rKw">--</span><small> kW</small></div>
+          <div class="row" id="rCh"></div><div class="val" id="rSoc" style="font-size:calc(56 * var(--u))">--</div><div class="row" id="rTime"></div></div></div>
+      <div class="tile" style="grid-area:heat" data-v="0"><div class="cap">BATTERY HEATING</div>
+        <div class="xl" style="color:#FF8A3D"><span id="hKw">--</span><small> kW</small></div>
+        <div class="row"><span>Pack</span><b id="hPack">--</b></div><div class="row"><span>Cells</span><b id="hCells">--</b></div>
+        <div class="row"><span>Battery takes</span><b id="hTake">--</b></div></div>
+      <div class="tile" style="grid-area:batt" data-v="1"><div class="cap">BATTERY</div><div class="xl"><span id="bSoc">--</span><small>%</small></div>
+        <div class="bar"><i id="bSocBar" style="background:#30D158"></i></div><div class="row" id="bTime"></div></div>
+      <div class="tile" style="grid-area:now" data-v="1"><div class="cap">NOW</div><div class="xl" style="color:#30D158"><span id="nKw">--</span><small> kW to battery</small></div>
+        <div class="row" id="nCh"></div></div>
+      <div class="tile" id="cCurve" style="grid-area:curve" data-v="12"><div class="row"><span class="cap">THIS SESSION</span>
+        <span style="font-size:calc(22 * var(--u))"><span style="color:#8B919A">━</span> Charger&nbsp; <span style="color:#30D158">━</span> Battery&nbsp; <span style="color:#FF8A3D">━</span> Heating</span></div>
+        <div style="flex:1; display:flex; gap:calc(12 * var(--u)); min-height:0"><div class="axis" style="flex-direction:column; padding-bottom:calc(30 * var(--u))"><span id="yTop">60</span><span id="yMid">30</span><span>0</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; min-width:0"><svg viewBox="0 0 700 300" preserveAspectRatio="none">
+            <line x1="0" y1="150" x2="700" y2="150" stroke="#1B1E24" vector-effect="non-scaling-stroke"/><line x1="0" y1="300" x2="700" y2="300" stroke="#33363E" vector-effect="non-scaling-stroke"/>
+            <polyline id="lC" fill="none" stroke="#8B919A" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+            <polyline id="lB" fill="none" stroke="#30D158" stroke-width="3.5" vector-effect="non-scaling-stroke"/>
+            <polyline id="lH" fill="none" stroke="#FF8A3D" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg>
+            <div class="axis"><span>0</span><span id="xMid"></span><span id="xEnd"></span></div></div></div></div>
+      <div class="tile" id="cStrip" data-v="012g">
+        <div><div class="cap">ADDED</div><div class="val"><span id="sAdd">--</span><small> kWh</small></div></div>
+        <div><div class="cap">RANGE ADDED</div><div class="val"><span id="sRng">--</span><small id="sRngU"> km</small></div></div>
+        <div><div class="cap" id="sPerC">PER 100 KM</div><div class="val"><span id="sPer">--</span><small> kWh</small></div></div>
+        <div><div class="cap">PEAK</div><div class="val"><span id="sPeak">--</span><small> kW</small></div></div>
+        <div><div class="cap">ELAPSED</div><div class="val" id="sTime">--</div></div>
+        <div><div class="cap">CABIN · OUT</div><div class="val" id="sCab">--</div></div></div>
+    </div>
     <div id="leftWrap">
       <svg id="left" viewBox="0 0 440 880" preserveAspectRatio="xMidYMid meet"></svg>
       <svg class="big" id="leftBig" viewBox="0 0 500 880" preserveAspectRatio="xMidYMid meet"></svg>
@@ -99,6 +193,12 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
       </div>
       <svg id="climate" viewBox="0 0 460 200" preserveAspectRatio="xMidYMid meet"></svg>
       <svg class="big" id="rightBig" viewBox="0 0 520 880" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="mode park" id="parkR">
+      <div class="tile"><div class="cap">CABIN · OUTSIDE</div><div class="xl"><span id="kCab">--</span><small id="kOut"></small></div><div class="row" id="kClim"></div></div>
+      <div class="tile" style="flex:1; justify-content:center; gap:calc(24 * var(--u))"><div class="cap">BEFORE YOU GO</div>
+        <div class="btn" id="btnPre">PREHEAT BATTERY<small id="btnPreSub"></small></div>
+        <div class="btn" id="btnWarm">WARM CABIN<small id="btnWarmSub"></small></div></div>
     </div>
   </div>
 </div>
@@ -549,12 +649,13 @@ function applyView() {
     applyView();
   });
   $('leftWrap').addEventListener('click', () => {
-    if (!View.large) return;
+    if (!View.large || Mode.now !== 'drive') return;
     View.leftDetail = !View.leftDetail;
     store('sportLeft', View.leftDetail ? 'detail' : 'big');
     applyView();
   });
   $('right').addEventListener('click', (e) => {
+    if (Mode.now !== 'drive') return;
     if (View.large) {
       View.right = { big: 'tyres', tyres: 'perf', perf: 'big' }[View.right];
     } else {
@@ -565,6 +666,178 @@ function applyView() {
     applyView();
   });
 })();
+
+/* ── Modes: drive; parked in P; charging (BMS_uiChargeStatus 3), with a glance view while nobody is in the car ── */
+const WHEELS = ['FL', 'FR', 'RL', 'RR'];
+const Mode = { now: '', ready: false, view: Number(stored('sportChg')) % 3 || 0, glanceOff: false, preheat: false, warm: false };
+function json(key) { try { return JSON.parse(stored(key)); } catch (_) { return null; } }
+let Trip = json('sportTrip'), Park = json('sportPark'), Sess = json('sportCharge');
+const psi = (c, w) => num(c['tpmsPressure' + w], -1) * 14.5038;  // < 0: not reported
+const fmtDur = (ms) => { const m = Math.floor(ms / 60000); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'; };
+const fmtClock = (s) => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s % 60).padStart(2, '0'); };
+function sendControl(id) { try { window.NativeCarState && window.NativeCarState.control && window.NativeCarState.control(id); } catch (_) {} }
+
+function updateMode(c, soc, rangeKm) {
+  const mode = num(c.chargeStatus, 0) === 3 ? 'charging' : num(c.gear, 0) === 1 ? 'parked' : 'drive';
+  const now = Date.now();
+  // A real frame with the pack's energy in it: page load or a change.
+  if (c.chargeStatus !== undefined && num(c.fullPackEnergy, 0) > 0 && (!Mode.ready || mode !== Mode.now)) {
+    const load = !Mode.ready;
+    Mode.ready = true;
+    // A new trip, park or charge starts on a change; on page load the stored one goes on (a swipe rebuilds the page).
+    if (mode === 'drive' && (!load || !Trip || now - Trip.last > 600000)) Trip = null;
+    if (mode === 'parked' && (!load || !Park)) { Park = { t0: now, soc, range: rangeKm }; store('sportPark', JSON.stringify(Park)); }
+    if (mode === 'charging' && (!Sess || now - Sess.last > 900000))  // a re-plug within 15 min continues the session
+      Sess = { t0: now, last: now, nom: num(c.nominalEnergyRemaining, 0), range: rangeKm, eb: 0, ec: 0, peak: 0, step: 2, pts: [] };
+  }
+  if (mode === 'drive' && !Trip && WHEELS.every((w) => psi(c, w) > 0))
+    Trip = { p: Object.fromEntries(WHEELS.map((w) => [w, psi(c, w)])), last: 0 };
+  if (mode === 'drive' && Trip && now - Trip.last > 30000) { Trip.last = now; store('sportTrip', JSON.stringify(Trip)); }
+  if (mode === Mode.now) return;
+  Mode.now = mode;
+  $('root').classList.toggle('parked', mode === 'parked');
+  $('root').classList.toggle('charging', mode === 'charging');
+  requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));  // the 3D car refits its panel
+}
+
+// Per wheel: change since the trip started (psi), a slow leak (lower than the others' change: warm-up raises all
+// four together) and heat (sensor air temperature). 0 fine, 1 watch, 2 warning.
+function tyreState(c) {
+  const d = {}, out = {};
+  for (const w of WHEELS) d[w] = Trip && psi(c, w) > 0 ? psi(c, w) - Trip.p[w] : null;
+  for (const w of WHEELS) {
+    const others = WHEELS.filter((o) => o !== w && d[o] !== null);
+    const rel = d[w] === null || !others.length ? 0 : d[w] - others.reduce((a, o) => a + d[o], 0) / others.length;
+    const t = num(c['tpmsTemp' + w], -100);
+    out[w] = { d: d[w], low: rel <= -4 ? 2 : rel <= -2.5 ? 1 : 0, hot: t >= 70 ? 2 : t >= 55 ? 1 : 0 };
+  }
+  return out;
+}
+const battColor = (v) => (v < 2.6 ? RED : v < 2.75 ? AMBER : SUB);
+
+function renderParked(c, soc, rangeKm, imperial) {
+  const dist = (km) => Math.round(imperial ? km * 0.621371 : km) + (imperial ? ' mi' : ' km');
+  setText($('kSoc'), String(Math.round(soc)));
+  $('kSocBar').style.width = soc.toFixed(1) + '%';
+  $('kSocBar').style.background = soc < 19 ? RED : GREEN;
+  setText($('kRange'), dist(rangeKm));
+  if (Park) {
+    setText($('kSince'), fmtDur(Date.now() - Park.t0));
+    setText($('kLost'), Math.max(0, Math.round(Park.soc - soc)) + ' % · ' + dist(Math.max(0, Park.range - rangeKm)));
+  }
+  const lv = num(c.lvVoltage, 0);
+  setText($('kLv'), lv > 0 ? lv.toFixed(1) + ' V' : '--');
+  $('kLv').style.color = lv > 0 && lv < 12.2 ? (lv < 11.8 ? RED : AMBER) : TEXT;
+  const bat = WHEELS.map((w) => num(c['tpmsBatt' + w], -1)).filter((v) => v >= 0);
+  const lo = Math.min(...bat), hi = Math.max(...bat);
+  setText($('kTpms'), bat.length ? (lo === hi ? lo.toFixed(2) : lo.toFixed(2) + '–' + hi.toFixed(2)) + ' V' : '--');
+  $('kTpms').style.color = bat.length && lo < 2.75 ? battColor(lo) : GREEN;
+  const cab = num(c.cabinTemp, 0), out = num(c.outsideTemp, 0);
+  setText($('kCab'), cab ? Math.round(cab) + '°' : '--');
+  setText($('kOut'), out ? '  ' + Math.round(out) + '°' : '');
+  setText($('kClim'), (num(c.hvacPowerState, 0) > 0 ? 'Climate on' : 'Climate off') + (num(c.cabinHumidity, 0) > 0 ? ' · humidity ' + Math.round(c.cabinHumidity) + '%' : ''));
+  // Preheat follows the DashKit when it reports; Warm cabin has no DashKit command yet, so it only works in the demo.
+  const pre = num(c.dashkitPreheat, -1) >= 0 ? c.dashkitPreheat > 0 : Mode.preheat;
+  $('btnPre').classList.toggle('on', pre);
+  setText($('btnPreSub'), pre ? 'on · tap to stop' : '');
+  const demo = c.dataSourceType === 'demo';
+  $('btnWarm').classList.toggle('on', demo && Mode.warm);
+  $('btnWarm').classList.toggle('na', !demo);
+  setText($('btnWarmSub'), demo ? (Mode.warm ? 'on · tap to stop' : '') : 'needs a DashKit update');
+  Mode.lastPre = pre;
+  Mode.demo = demo;
+}
+$('btnPre').addEventListener('click', () => { Mode.preheat = !Mode.lastPre; sendControl('battery_preheat'); });
+$('btnWarm').addEventListener('click', () => { if (Mode.demo) Mode.warm = !Mode.warm; });
+
+function drawCurve() {
+  const pts = Sess ? Sess.pts : [];
+  const end = Math.max(60, pts.length ? pts[pts.length - 1][0] : 0);
+  const top = Math.max(60, Math.ceil(Math.max(0, ...pts.map((p) => Math.max(p[1], p[2]))) / 20) * 20);
+  const line = (i) => (pts.some((p) => p[i] > 0) ? pts.map((p) => (p[0] / end * 700).toFixed(1) + ',' + (300 - p[i] / top * 300).toFixed(1)).join(' ') : '');
+  $('lC').setAttribute('points', line(1));
+  $('lB').setAttribute('points', line(2));
+  $('lH').setAttribute('points', line(3));
+  setText($('yTop'), top + ' kW');
+  setText($('yMid'), String(top / 2));
+  const t = (x) => (end < 180 ? Math.round(x) + ' s' : Math.round(x / 60) + ' min');
+  setText($('xMid'), t(end / 2));
+  setText($('xEnd'), t(end));
+}
+
+function renderCharge(c, soc, rangeKm, imperial) {
+  const now = Date.now(), S2 = Sess;
+  const b = Math.max(0, -num(c.packCurrent, 0) * num(c.packVoltage, 0) / 1000), ch = Math.max(0, num(c.chargerPower, 0));
+  const heat = Math.max(0, num(c.batteryHeatPower, 0)), lv = Math.max(0, num(c.lvPower, 0));
+  const dt = clamp((now - S2.last) / 1000, 0, 5);
+  S2.last = now;
+  S2.eb += b * dt / 3600;
+  S2.ec += (ch > 0 ? ch : b) * dt / 3600;
+  S2.peak = Math.max(S2.peak, b);
+  const sec = (now - S2.t0) / 1000, lastPt = S2.pts[S2.pts.length - 1];
+  if (!lastPt || sec - lastPt[0] >= S2.step) {
+    S2.pts.push([Math.round(sec), +ch.toFixed(1), +b.toFixed(1), +heat.toFixed(1)]);
+    if (S2.pts.length > 240) { S2.pts = S2.pts.filter((_, i) => i % 2 === 0); S2.step *= 2; }
+    drawCurve();
+    if (!(now - S2.saved < 10000)) { S2.saved = now; store('sportCharge', JSON.stringify(S2)); }
+  }
+  // Views: tap flips A (ring) > B (curve) > A+B; the glance shows by itself while the car says nobody is inside.
+  const present = num(c.userPresent, -1);
+  if (present === 1) Mode.glanceOff = false;
+  const v = present === 0 && !Mode.glanceOff ? 'g' : String(Mode.view);
+  const box = $('charge');
+  if (box.dataset.view !== v) {
+    box.dataset.view = v;
+    for (const e of box.children) e.hidden = !e.dataset.v.includes(v);
+    [...$('cDots').children].forEach((d, i) => d.classList.toggle('on', String(i) === v));
+  }
+  const kw = (x) => x.toFixed(1);
+  setText($('chipChg'), ch > 0 ? 'DC FAST CHARGING' : 'CHARGING');
+  // Where the charger's power goes: battery, battery heating, low-voltage system, the rest (cabin, losses).
+  const other = Math.max(0, ch - b - heat - lv);
+  setText($('gC'), ch > 0 ? kw(ch) + ' kW' : '--');
+  [['gB', 'gBb', b], ['gH', 'gHb', heat], ['gL', 'gLb', lv], ['gO', 'gOb', ch > 0 ? other : 0]].forEach(([t, bar, x]) => {
+    setText($(t), kw(x));
+    $(bar).style.flex = x.toFixed(2);
+  });
+  const lim = num(c.chargeLimit, 0), cold = heat > 0 && num(c.packTMin, 99) < 20;
+  setText($('gLim'), cold ? 'Cold battery' : lim > 0 && b >= lim - 2 ? 'Battery' : ch > 0 ? 'Charger' : '--');
+  setText($('gLimSub'), lim > 0 ? 'The battery takes up to ' + Math.round(lim) + ' kW now' : '');
+  $('rArc').setAttribute('stroke-dasharray', (soc / 100 * 942.5).toFixed(1) + ' 943');
+  setText($('rKw'), String(Math.round(b)));
+  setText($('nKw'), String(Math.round(b)));
+  setText($('rCh'), ch > 0 ? Math.round(ch) + ' kW from the charger' : '');
+  setText($('nCh'), ch > 0 ? Math.round(ch) + ' kW from the charger' : '');
+  setText($('rSoc'), Math.round(soc) + '%');
+  setText($('rTime'), fmtClock(sec) + ' charging');
+  setText($('bTime'), fmtClock(sec) + ' charging');
+  setText($('bSoc'), String(Math.round(soc)));
+  $('bSocBar').style.width = soc.toFixed(1) + '%';
+  setText($('hKw'), kw(heat));
+  const tmin = num(c.packTMin, 0), tmax = num(c.packTMax, 0), vmin = num(c.cellVoltMin, 0), vmax = num(c.cellVoltMax, 0);
+  setText($('hPack'), tmax ? Math.round(tmin) + '–' + Math.round(tmax) + '°C' : '--');
+  setText($('hCells'), vmax ? vmin.toFixed(2) + '–' + vmax.toFixed(2) + ' V' : '--');
+  setText($('hTake'), lim > 0 ? Math.round(lim) + ' kW' : '--');
+  // Session: energy from the change in the pack's own count, range from the car's rated range; the charger's share
+  // from the two integrated powers, so a page reload or a gap in frames does not skew it.
+  const added = Math.max(0, num(c.nominalEnergyRemaining, 0) - S2.nom), gained = rangeKm - S2.range;
+  const fromCharger = S2.eb > 0.01 ? added * S2.ec / S2.eb : added, per = imperial ? 160.934 : 100;
+  setText($('sAdd'), added.toFixed(1));
+  setText($('sRng'), (gained >= 0 ? '+' : '−') + Math.round(Math.abs(imperial ? gained * 0.621371 : gained)));
+  setText($('sRngU'), imperial ? ' mi' : ' km');
+  setText($('sPerC'), imperial ? 'PER 100 MI' : 'PER 100 KM');
+  setText($('sPer'), gained > 3 ? (fromCharger / gained * per).toFixed(1) : '--');
+  setText($('sPeak'), kw(S2.peak));
+  setText($('sTime'), fmtClock(sec));
+  const cab = num(c.cabinTemp, 0), out = num(c.outsideTemp, 0);
+  setText($('sCab'), (cab ? Math.round(cab) + '°' : '--') + (out ? ' · ' + Math.round(out) + '°' : ''));
+}
+$('charge').addEventListener('click', () => {
+  if ($('charge').dataset.view === 'g') { Mode.glanceOff = true; return; }
+  Mode.view = (Mode.view + 1) % 3;
+  store('sportChg', String(Mode.view));
+});
 
 /* ── Render ── */
 function setText(node, s) { if (node.textContent !== s) node.textContent = s; }
@@ -643,6 +916,7 @@ function render(c) {
   const rangeKm = num(c.ratedRange, 0) > 0 ? c.ratedRange : usable * 1000 / RANGE_WH_PER_KM;
   setText(P.range.childNodes[1], String(Math.round(imperial ? rangeKm * 0.621371 : rangeKm)));
   setText(P.range.lastChild, imperial ? ' mi' : ' km');
+  updateMode(c, soc, rangeKm);
   setText(P.kwh.firstChild, usable.toFixed(1));
   // Pack
   setText(P.volt.firstChild, String(Math.round(volts)));
@@ -746,20 +1020,35 @@ function render(c) {
   S.signCa.setAttribute('display', sign === 2 ? 'inline' : 'none');
   setText(S.limitRound, lim); setText(S.limitUs, lim); setText(S.limitCa, lim);
 
-  // Tyres (native values are bar / °C / V; pressure shows in psi)
-  for (const w of ['FL', 'FR', 'RL', 'RR']) {
-    const r = T.wheels[w];
+  // Tyres (native values are bar / °C / V; pressure shows in psi). Driving: the change since the trip started, amber
+  // or red for a tyre losing air against the others or running hot. Parked: the sensor batteries instead.
+  const tyre = tyreState(c), warn = [];
+  for (const w of WHEELS) {
+    const r = T.wheels[w], st = tyre[w];
     const p = num(c['tpmsPressure' + w], -1), t = num(c['tpmsTemp' + w], -100), b = num(c['tpmsBatt' + w], -1);
+    const pc = [TEXT, AMBER, RED][st.low];
     setText(r.p.firstChild, p >= 0 ? String(Math.round(p * 14.5038)) : '--');
-    r.p.firstChild.setAttribute('fill', p >= 0 ? TEXT : DIM);
+    r.p.firstChild.setAttribute('fill', p >= 0 ? pc : DIM);
     setText(r.p.lastChild, p >= 0 ? ' psi' : '');
     setText(r.t.firstChild, t > -100 ? String(Math.round(imperial ? t * 1.8 + 32 : t)) : '--');
-    r.t.firstChild.setAttribute('fill', t > -100 ? SUB : DIM);
+    r.t.firstChild.setAttribute('fill', t > -100 ? [SUB, AMBER, RED][st.hot] : DIM);
     setText(r.t.lastChild, t > -100 ? (imperial ? '°F' : '°C') : '');
-    r.b.setAttribute('opacity', b >= 0 ? 1 : 0);
-    setText(r.b.firstChild, b >= 0 ? b.toFixed(1) : '');
+    const trip = Mode.now === 'drive' && st.d !== null;
+    r.b.setAttribute('opacity', trip || b >= 0 ? 1 : 0);
+    setText(r.b.firstChild, trip ? (st.d < -0.05 ? '−' : '+') + Math.abs(st.d).toFixed(1) : b >= 0 ? b.toFixed(2) : '');
+    r.b.firstChild.setAttribute('fill', trip ? (st.low ? pc : SUB) : battColor(b));
+    setText(r.b.lastChild, trip ? ' trip' : ' V');
     setText(B.tyres[w], p >= 0 ? String(Math.round(p * 14.5038)) : '--');
-    B.tyres[w].setAttribute('fill', p >= 0 ? TEXT : DIM);
+    B.tyres[w].setAttribute('fill', p >= 0 ? pc : DIM);
+    if (st.low) warn.push([w + ' LOW', st.low]);
+    if (st.hot) warn.push([w + ' HOT', st.hot]);
+  }
+  $('chipTyre').classList.toggle('on', warn.length > 0);
+  if (warn.length) {
+    setText($('chipTyre'), 'TYRE ' + warn.map((x) => x[0]).join(' · '));
+    const red = warn.some((x) => x[1] === 2);
+    $('chipTyre').style.background = red ? '#3A1210' : '#33270A';
+    $('chipTyre').style.color = red ? RED : AMBER;
   }
   setText(B.tyreCaption, 'TYRES  ·  PSI');
 
@@ -808,6 +1097,9 @@ function render(c) {
   T.trunk(1 - 0.58 * fold);
   T.trunkHl(trunkOpen);
   if (window.car3d && typeof window.car3d.update === 'function') window.car3d.update(c);
+  $('chipChg').classList.toggle('on', Mode.now === 'charging');
+  if (Mode.now === 'parked') renderParked(c, soc, rangeKm, imperial);
+  if (Mode.now === 'charging' && Sess) renderCharge(c, soc, rangeKm, imperial);
 }
 
 /* ── Data: iOS calls receiveMessage(state); Android calls onCarStateUpdate() ── */
@@ -844,7 +1136,8 @@ for (const w of ['FL', 'FR', 'RL', 'RR']) NATIVE_KEYS.push('tpmsPressure' + w, '
 NATIVE_KEYS.push('mirrorFoldedL', 'mirrorFoldedR');
 for (const s of ['FL', 'FR', 'RL', 'RC', 'RR']) NATIVE_KEYS.push('seatHeat' + s, 'seatBelt' + s);
 NATIVE_KEYS.push('cellVoltMin', 'cellVoltMax', 'coolantBatIn', 'outsideTemp', 'cabinTemp', 'cabinHumidity', 'wheelTorque',
-  'accelLong', 'accelLat', 'accelPedal', 'chargeStatus', 'chargeLimit', 'trafficControlType', 'batteryHeatPower', 'dashkitKickdown', 'ratedRange');
+  'accelLong', 'accelLat', 'accelPedal', 'chargeStatus', 'chargeLimit', 'trafficControlType', 'batteryHeatPower', 'dashkitKickdown', 'ratedRange',
+  'chargerPower', 'lvVoltage', 'lvPower', 'userPresent', 'dashkitPreheat');
 window.onCarStateUpdate = function () {
   const s = {};
   for (const k of NATIVE_KEYS) s[k] = readNative('get' + k[0].toUpperCase() + k.slice(1), undefined);
@@ -854,6 +1147,7 @@ window.onCarStateUpdate = function () {
   s.experimentalMode = readNative('isExperimentalMode', false);
   s.changingLane = readNative('isChangingLane', false);
   s.isImperial = readNative('isImperial', false);
+  s.dataSourceType = readNative('getDataSourceType', '');
   receiveMessage(s);
 };
 window.receiveMessage = receiveMessage;

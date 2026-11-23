@@ -183,6 +183,12 @@ static inline void updateDrive(const CANParsers& cp, CarState& cs) {
     if (static_cast<int>(cp.get(1, "VCFRONT_vehicleStatus", "VCFRONT_vehicleStatusMuxIndex")) == 1) {  // on mux 1
         cs.batteryHeatPower = cp.get(1, "VCFRONT_vehicleStatus", "VCFRONT_hpBattHeatingPowerTrgt") / 1000.0;
     }
+    cs.chargerPower = cp.get(1, "CP_dcChargeStatus", "CP_evseOutputDcVoltage") *
+                      cp.get(1, "CP_dcChargeStatus", "CP_evseOutputDcCurrent") / 1000.0;
+    cs.lvVoltage = cp.get(1, "PCS_dcdcRailStatus", "PCS_dcdcLvBusVolt");
+    cs.lvPower = cs.lvVoltage * cp.get(1, "PCS_dcdcRailStatus", "PCS_dcdcLvOutputCurrent") / 1000.0;
+    uint64_t present = 0;
+    if (cp.getRaw(1, "UI_vehicleControl2", "UI_userPresent", &present)) cs.userPresent = static_cast<double>(present);
 }
 
 static inline void updateVehicleBus(const CANParsers& cp, CarState& cs) {

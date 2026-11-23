@@ -11,6 +11,8 @@ class CarStateBridge(
     // Raised while a dash-app's own editor is open, so the host can suspend
     // gestures of its own (the dashboard carousel) for the duration.
     private val onEditingChange: (Boolean) -> Unit = {},
+    // A dash-app button asking for a vehicle control; only the ids in WEB_CONTROLS get through.
+    private val onControl: (String) -> Unit = {},
 ) {
 
     @Volatile private var egoSteeringAngle: Float = 0f
@@ -61,6 +63,11 @@ class CarStateBridge(
     @Volatile private var batteryHeatPower: Float = 0f
     @Volatile private var dashkitKickdown: Float = -1f
     @Volatile private var ratedRange: Float = 0f
+    @Volatile private var chargerPower: Float = 0f
+    @Volatile private var lvVoltage: Float = 0f
+    @Volatile private var lvPower: Float = 0f
+    @Volatile private var userPresent: Float = -1f
+    @Volatile private var dashkitPreheat: Float = -1f
     @Volatile private var accSetSpeed: Float = 0f
     @Volatile private var fullPackEnergy: Float = 0f
     @Volatile private var nominalEnergyRemaining: Float = 0f
@@ -158,6 +165,11 @@ class CarStateBridge(
         batteryHeatPower = state.batteryHeatPower
         dashkitKickdown = state.dashkitKickdown
         ratedRange = state.ratedRange
+        chargerPower = state.chargerPower
+        lvVoltage = state.lvVoltage
+        lvPower = state.lvPower
+        userPresent = state.userPresent
+        dashkitPreheat = state.dashkitPreheat
         accSetSpeed = state.accSetSpeed
         fullPackEnergy = state.fullPackEnergy
         nominalEnergyRemaining = state.nominalEnergyRemaining
@@ -243,6 +255,11 @@ class CarStateBridge(
     @JavascriptInterface fun getBatteryHeatPower(): Float = batteryHeatPower
     @JavascriptInterface fun getDashkitKickdown(): Float = dashkitKickdown
     @JavascriptInterface fun getRatedRange(): Float = ratedRange
+    @JavascriptInterface fun getChargerPower(): Float = chargerPower
+    @JavascriptInterface fun getLvVoltage(): Float = lvVoltage
+    @JavascriptInterface fun getLvPower(): Float = lvPower
+    @JavascriptInterface fun getUserPresent(): Float = userPresent
+    @JavascriptInterface fun getDashkitPreheat(): Float = dashkitPreheat
     @JavascriptInterface fun getAccSetSpeed(): Float = accSetSpeed
     @JavascriptInterface fun getFullPackEnergy(): Float = fullPackEnergy
     @JavascriptInterface fun getNominalEnergyRemaining(): Float = nominalEnergyRemaining
@@ -306,6 +323,13 @@ class CarStateBridge(
     @JavascriptInterface fun setAppData(json: String) = storeAppData(json)
 
     @JavascriptInterface fun setEditing(editing: Boolean) = onEditingChange(editing)
+
+    @JavascriptInterface fun control(id: String) { if (id in WEB_CONTROLS) onControl(id) }
+
+    private companion object {
+        // Dash-app pages are not trusted with doors or closures: battery preheat only.
+        val WEB_CONTROLS = setOf("battery_preheat")
+    }
 
     fun updatePhoneBattery(level: Int) {
         phoneBattery = level

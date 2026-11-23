@@ -50,10 +50,72 @@ final class DemoDataSource: IDataSource {
         Float(70 + 20 * sin(t * 0.02))
     }
 
+    // After the drive: 20 s parked (rear-left door opens, the driver leaves), then 60 s on a Supercharger.
+    private static let parkLength: TimeInterval = 20
+    private static let fullLength: TimeInterval = cycleLength + parkLength + 60
+    // kW into the battery and into battery heating, per minute of a real 43-minute Supercharger session.
+    private static let chargeKw: [Float] = [3.4, 49.4, 40, 38, 37.6, 37.6, 38.4, 39.6, 40.8, 41.6, 42.4, 42.8, 43.2,
+        43.6, 43.6, 43.6, 43.6, 43, 42.2, 41.2, 40, 38.8, 37.4, 36, 34.4, 32.8, 31, 29.2, 27.2, 25.4,
+        23.6, 21.6, 19.4, 17.2, 14.8, 12, 8.4, 7.4, 7.4, 7.6, 4, 1, 0.6]
+    private static let heatKw: [Float] = [5.6, 5.6, 5.6, 5.6, 5.8, 5.6, 4.4, 3.8, 3.6, 3.6, 3.6, 3.6, 3.4, 3.2,
+        3.2, 3, 2.8, 2.8, 2.6, 2.4, 2.4, 2, 2, 2, 2, 1.8, 1.6, 1.6, 1.6, 1.6, 1.6, 1.2, 0.8, 0.8,
+        1.4, 1, 0.2, 0, 0, 0, 0, 0, 0]
+    private static func rangeKm(_ nominal: Float) -> Float { (nominal - 1.5) * 1000 / 147 }
+    private static func at(_ a: [Float], _ u: Double) -> Float {
+        let x = u * Double(a.count - 1)
+        let i = min(Int(x), a.count - 2)
+        return a[i] + (a[i + 1] - a[i]) * Float(x - Double(i))
+    }
+
     private static func frame(at t: TimeInterval) -> CarState {
+        let lap = Int(t / fullLength)
+        let cyc = t.truncatingRemainder(dividingBy: fullLength)
+        // Tyres: all four warm up on the drive and the rear right runs hot at the end; the rear left loses air.
+        let leak = 0.3 * min(cyc, cycleLength) / cycleLength
+        if cyc < cycleLength { return drive(at: t, lap: lap, phase: cyc, warm: cyc / cycleLength, leak: leak) }
+        let st = cyc - cycleLength
+        var s = drive(at: t, lap: lap, phase: 0, warm: max(0, 1 - st / 40), leak: leak)
+        s.gear = 1
+        s.egoSpeed = 0
+        s.egoSteeringAngle = 0
+        s.leftBlinker = 0
+        s.rightBlinker = 0
+        s.adasOn = false
+        s.selfdriveActive = false
+        s.madsActive = false
+        s.leftBlindSpot = 0
+        s.rightBlindSpot = 0
+        s.powerLevel = 0
+        if st < parkLength {
+            s.doorOpenRL = st > 4 && st < 10 ? 1 : 0
+            s.anyDoorOpen = s.doorOpenRL
+            s.packCurrent = 0.8
+            s.nominalEnergyRemaining = 30
+            s.ratedRange = rangeKm(30)
+            s.lvPower = 0.3
+            s.userPresent = st < 10 ? 1 : 0
+            s.hvacPowerState = s.userPresent
+            return s
+        }
+        let u = (st - parkLength) / 60
+        let kw = at(chargeKw, u), heat = at(heatKw, u)
+        s.chargeStatus = 3
+        s.chargerPower = kw + heat + 2.2
+        s.batteryHeatPower = heat
+        s.chargeLimit = kw + 1.5
+        s.packVoltage = Float(355 + 30 * u)
+        s.packCurrent = -kw * 1000 / s.packVoltage
+        s.packTMin = Float(6 + 24 * u)
+        s.nominalEnergyRemaining = Float(30 + 21.3 * u)
+        s.ratedRange = rangeKm(s.nominalEnergyRemaining)
+        // Someone sits in the car for the first half, then the dash goes to the glance view on its own.
+        s.userPresent = u < 0.5 ? 1 : 0
+        s.hvacPowerState = s.userPresent
+        return s
+    }
+
+    private static func drive(at t: TimeInterval, lap cycleIndex: Int, phase: TimeInterval, warm: Double, leak: Double) -> CarState {
         var s = CarState()
-        let cycleIndex = Int(t / cycleLength)
-        let phase = t.truncatingRemainder(dividingBy: cycleLength)
         let turningLeft = cycleIndex % 2 == 0
 
         s.gear = 4 // Drive
@@ -160,7 +222,8 @@ final class DemoDataSource: IDataSource {
 
         // BMS / power — Tesla-ish pack, slowly discharging.
         s.fullPackEnergy = 75
-        s.nominalEnergyRemaining = Float(max(10, 60 - t * 0.01))
+        s.nominalEnergyRemaining = Float(51.3 - 21.3 * phase / cycleLength)
+        s.ratedRange = rangeKm(s.nominalEnergyRemaining)
         s.energyBuffer = 1.5
         s.maxRegenPower = 60
         s.maxDischargePower = 300
@@ -171,18 +234,25 @@ final class DemoDataSource: IDataSource {
         s.powerLevel = max(-1, min(kw / (kw >= 0 ? s.maxDischargePower : s.maxRegenPower), 1)) * 100
         s.packTMin = 22
         s.packTMax = 28
-        s.tpmsPressureFL = 2.7
-        s.tpmsPressureFR = 2.775
-        s.tpmsPressureRL = 2.525
-        s.tpmsPressureRR = 2.85
-        s.tpmsTempFL = 12
-        s.tpmsTempFR = 12
-        s.tpmsTempRL = 14
-        s.tpmsTempRR = 13
+        let hot = max(0, (warm - 0.6) / 0.4)
+        s.tpmsPressureFL = Float(2.7 + 0.1 * warm)
+        s.tpmsPressureFR = Float(2.775 + 0.1 * warm)
+        s.tpmsPressureRL = Float(2.6 + 0.1 * warm - leak)
+        s.tpmsPressureRR = Float(2.85 + 0.1 * warm + 0.12 * hot)
+        s.tpmsTempFL = Float(12 + 10 * warm)
+        s.tpmsTempFR = Float(12 + 10 * warm)
+        s.tpmsTempRL = Float(13 + 10 * warm)
+        s.tpmsTempRR = Float(13 + 10 * warm + 50 * hot)
         s.tpmsBattFL = 2.99
         s.tpmsBattFR = 2.98
         s.tpmsBattRL = 2.99
-        s.tpmsBattRR = 2.99
+        s.tpmsBattRR = 2.71
+        s.outsideTemp = 7
+        s.cabinTemp = 20
+        s.cabinHumidity = 20
+        s.lvVoltage = 15.9
+        s.lvPower = 0.7
+        s.userPresent = 1
         s.acTemp = 22
         s.acTempRight = 21
         s.hvacFanLevel = 11

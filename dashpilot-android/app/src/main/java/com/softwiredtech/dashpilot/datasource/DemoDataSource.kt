@@ -46,12 +46,60 @@ class DemoDataSource : IDataSource {
         const val STOPPED_END = 75.0
         const val GO_END = 78.0
         val LIMITS = floatArrayOf(50f, 90f, 130f)
+        // After the drive: 20 s parked (rear-left door opens, the driver leaves), then 60 s on a Supercharger.
+        const val PARK_S = 20.0
+        const val FULL = CYCLE + PARK_S + 60.0
+        // kW into the battery and into battery heating, per minute of a real 43-minute Supercharger session.
+        val CHARGE_KW = floatArrayOf(3.4f, 49.4f, 40f, 38f, 37.6f, 37.6f, 38.4f, 39.6f, 40.8f, 41.6f, 42.4f, 42.8f, 43.2f,
+            43.6f, 43.6f, 43.6f, 43.6f, 43f, 42.2f, 41.2f, 40f, 38.8f, 37.4f, 36f, 34.4f, 32.8f, 31f, 29.2f, 27.2f, 25.4f,
+            23.6f, 21.6f, 19.4f, 17.2f, 14.8f, 12f, 8.4f, 7.4f, 7.4f, 7.6f, 4f, 1f, 0.6f)
+        val HEAT_KW = floatArrayOf(5.6f, 5.6f, 5.6f, 5.6f, 5.8f, 5.6f, 4.4f, 3.8f, 3.6f, 3.6f, 3.6f, 3.6f, 3.4f, 3.2f,
+            3.2f, 3f, 2.8f, 2.8f, 2.6f, 2.4f, 2.4f, 2f, 2f, 2f, 2f, 1.8f, 1.6f, 1.6f, 1.6f, 1.6f, 1.6f, 1.2f, 0.8f, 0.8f,
+            1.4f, 1f, 0.2f, 0f, 0f, 0f, 0f, 0f, 0f)
+        fun rangeKm(nominal: Float) = (nominal - 1.5f) * 1000 / 147
+        fun at(a: FloatArray, u: Double): Float {
+            val x = u * (a.size - 1)
+            val i = min(x.toInt(), a.size - 2)
+            return (a[i] + (a[i + 1] - a[i]) * (x - i)).toFloat()
+        }
 
         fun cruise(t: Double): Float = (70 + 20 * sin(t * 0.02)).toFloat()
 
         fun frame(t: Double): CarState {
-            val lap = (t / CYCLE).toInt()
-            val phase = t % CYCLE
+            val lap = (t / FULL).toInt()
+            val cyc = t % FULL
+            // Tyres: all four warm up on the drive and the rear right runs hot at the end; the rear left loses air.
+            val leak = 0.3 * min(cyc, CYCLE) / CYCLE
+            if (cyc < CYCLE) return drive(t, lap, cyc, cyc / CYCLE, leak)
+            val s = cyc - CYCLE
+            val base = drive(t, lap, 0.0, max(0.0, 1 - s / 40), leak)
+            if (s < PARK_S) {
+                val door = if (s > 4 && s < 10) 1f else 0f
+                return base.copy(
+                    gear = 1f, egoSpeed = 0f, egoSteeringAngle = 0f, leftBlinker = 0f, rightBlinker = 0f,
+                    adasOn = false, selfdriveActive = false, madsActive = false, leftBlindSpot = 0f, rightBlindSpot = 0f,
+                    doorOpenRL = door, anyDoorOpen = door, packCurrent = 0.8f, powerLevel = 0f,
+                    nominalEnergyRemaining = 30f, ratedRange = rangeKm(30f), lvPower = 0.3f,
+                    userPresent = if (s < 10) 1f else 0f, hvacPowerState = if (s < 10) 1f else 0f,
+                )
+            }
+            val u = (s - PARK_S) / 60
+            val kw = at(CHARGE_KW, u)
+            val heat = at(HEAT_KW, u)
+            val volts = (355 + 30 * u).toFloat()
+            val nominal = (30 + 21.3 * u).toFloat()
+            return base.copy(
+                gear = 1f, egoSpeed = 0f, egoSteeringAngle = 0f, leftBlinker = 0f, rightBlinker = 0f,
+                adasOn = false, selfdriveActive = false, madsActive = false, leftBlindSpot = 0f, rightBlindSpot = 0f,
+                chargeStatus = 3f, chargerPower = kw + heat + 2.2f, batteryHeatPower = heat, chargeLimit = kw + 1.5f,
+                packVoltage = volts, packCurrent = -kw * 1000 / volts, powerLevel = 0f, packTMin = (6 + 24 * u).toFloat(),
+                nominalEnergyRemaining = nominal, ratedRange = rangeKm(nominal),
+                // Someone sits in the car for the first half, then the dash goes to the glance view on its own.
+                userPresent = if (u < 0.5) 1f else 0f, hvacPowerState = if (u < 0.5) 1f else 0f,
+            )
+        }
+
+        fun drive(t: Double, lap: Int, phase: Double, warm: Double, leak: Double): CarState {
             val turningLeft = lap % 2 == 0
             val blink = if (t % 1.0 < 0.5) 2f else 1f
             val wiggle = (sin(t * 0.3) * 15).toFloat()
@@ -100,6 +148,7 @@ class DemoDataSource : IDataSource {
                 ((phase - APPROACH_END) / (STOPPED_END - APPROACH_END) * 6).toInt() else -1
             fun open(i: Int) = if (opening == i) 1f else 0f
 
+            val hot = max(0.0, (warm - 0.6) / 0.4)
             val packVoltage = (380 + sin(t * 0.2) * 5).toFloat()
             val packCurrent = if (braking) -speed * 1.2f else speed * 0.4f
             val kw = packVoltage * packCurrent / 1000
@@ -136,7 +185,8 @@ class DemoDataSource : IDataSource {
                 buckleStatus = 1f,
                 accSetSpeed = cruise(t) + 5,
                 fullPackEnergy = 75f,
-                nominalEnergyRemaining = max(10.0, 60 - t * 0.01).toFloat(),
+                nominalEnergyRemaining = (51.3 - 21.3 * phase / CYCLE).toFloat(),
+                ratedRange = rangeKm((51.3 - 21.3 * phase / CYCLE).toFloat()),
                 energyBuffer = 1.5f,
                 maxRegenPower = maxRegen,
                 maxDischargePower = maxDischarge,
@@ -144,18 +194,24 @@ class DemoDataSource : IDataSource {
                 packCurrent = packCurrent,
                 packTMin = 22f,
                 packTMax = 28f,
-                tpmsPressureFL = 2.7f,
-                tpmsPressureFR = 2.775f,
-                tpmsPressureRL = 2.525f,
-                tpmsPressureRR = 2.85f,
-                tpmsTempFL = 12f,
-                tpmsTempFR = 12f,
-                tpmsTempRL = 14f,
-                tpmsTempRR = 13f,
+                tpmsPressureFL = (2.7 + 0.1 * warm).toFloat(),
+                tpmsPressureFR = (2.775 + 0.1 * warm).toFloat(),
+                tpmsPressureRL = (2.6 + 0.1 * warm - leak).toFloat(),
+                tpmsPressureRR = (2.85 + 0.1 * warm + 0.12 * hot).toFloat(),
+                tpmsTempFL = (12 + 10 * warm).toFloat(),
+                tpmsTempFR = (12 + 10 * warm).toFloat(),
+                tpmsTempRL = (13 + 10 * warm).toFloat(),
+                tpmsTempRR = (13 + 10 * warm + 50 * hot).toFloat(),
                 tpmsBattFL = 2.99f,
                 tpmsBattFR = 2.98f,
                 tpmsBattRL = 2.99f,
-                tpmsBattRR = 2.99f,
+                tpmsBattRR = 2.71f,
+                outsideTemp = 7f,
+                cabinTemp = 20f,
+                cabinHumidity = 20f,
+                lvVoltage = 15.9f,
+                lvPower = 0.7f,
+                userPresent = 1f,
                 odometer = (42000 + t * 0.01).toFloat(),
                 acTemp = 22f,
                 acTempRight = 21f,

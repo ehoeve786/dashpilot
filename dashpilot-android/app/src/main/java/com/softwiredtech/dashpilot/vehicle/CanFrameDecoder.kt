@@ -127,7 +127,11 @@ class CanFrameDecoder(
                 batteryHeatPower = values[86].toFloat(),
                 dashkitPreheat = values[87].toFloat(),
                 dashkitKickdown = values[88].toFloat(),
-                ratedRange = values[89].toFloat()
+                ratedRange = values[89].toFloat(),
+                chargerPower = values[90].toFloat(),
+                lvVoltage = values[91].toFloat(),
+                lvPower = values[92].toFloat(),
+                userPresent = values[93].toFloat()
             )
         }
 

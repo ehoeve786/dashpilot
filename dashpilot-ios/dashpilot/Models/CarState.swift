@@ -102,6 +102,10 @@ struct CarState: Codable {
     var dashkitPreheat: Float = -1
     var dashkitKickdown: Float = -1
     var ratedRange: Float = 0
+    var chargerPower: Float = 0
+    var lvVoltage: Float = 0
+    var lvPower: Float = 0
+    var userPresent: Float = -1
 
     init() {}
 
@@ -193,6 +197,10 @@ struct CarState: Codable {
         dashkitPreheat = Float(bridge.dashkitPreheat)
         dashkitKickdown = Float(bridge.dashkitKickdown)
         ratedRange = Float(bridge.ratedRange)
+        chargerPower = Float(bridge.chargerPower)
+        lvVoltage = Float(bridge.lvVoltage)
+        lvPower = Float(bridge.lvPower)
+        userPresent = Float(bridge.userPresent)
     }
 
     private static let kmToMiles: Float = 0.621371
@@ -309,5 +317,9 @@ struct CarState: Codable {
         dashkitPreheat = try c.decodeIfPresent(Float.self, forKey: .dashkitPreheat) ?? -1
         dashkitKickdown = try c.decodeIfPresent(Float.self, forKey: .dashkitKickdown) ?? -1
         ratedRange = try c.decodeIfPresent(Float.self, forKey: .ratedRange) ?? 0
+        chargerPower = try c.decodeIfPresent(Float.self, forKey: .chargerPower) ?? 0
+        lvVoltage = try c.decodeIfPresent(Float.self, forKey: .lvVoltage) ?? 0
+        lvPower = try c.decodeIfPresent(Float.self, forKey: .lvPower) ?? 0
+        userPresent = try c.decodeIfPresent(Float.self, forKey: .userPresent) ?? -1
     }
 }

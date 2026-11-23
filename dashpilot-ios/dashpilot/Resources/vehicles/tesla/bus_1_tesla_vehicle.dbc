@@ -1381,7 +1381,7 @@ BO_ 605 DAS_road: 6 XXX
  SG_ DAS_trafficLightColor : 26|3@0+ (1,0) [0|7] "" XXX
 
 BO_ 669 CP_dcChargeStatus: 4 VEH
- SG_ CP_evseOutputDcCurrent : 0|15@1- (0.0732467,0) [-1200|1200] "A" X
+ SG_ CP_evseOutputDcCurrent : 0|15@1- (0.125,0) [-1200|1200] "A" X
  SG_ CP_evseOutputDcCurrentStale : 29|1@1+ (1,0) [0|1] "" X
  SG_ CP_evseOutputDcVoltage : 16|13@1+ (0.0732422,0) [0|599.927] "V" X
 
@@ -5334,10 +5334,10 @@ BO_ 516 PCS_chgStatus: 8 VEH
  SG_ PCS_chgPwmEnableLine: 56|1@1+ (1,0) [0|0] "" X
  SG_ PCS_gridConfig: 6|2@1+ (1,0) [0|0] "" X
 
-BO_ 692 PCS_dcdcBusStatus: 5 VEH
- SG_ PCS_dcdcHvBusVolt : 10|12@1+ (0.146484375,0) [0|599.853515625] "V" X
- SG_ PCS_dcdcLvBusVolt : 0|10@1+ (0.0390625,0) [0|39.9609375] "V" X
- SG_ PCS_dcdcLvOutputCurrent : 24|12@1+ (0.1,0) [0|400] "A" X
+BO_ 692 PCS_dcdcRailStatus: 6 VEH
+ SG_ PCS_dcdcLvOutputCurrent : 32|13@1- (0.1,0) [-409.6|409.5] "A" X
+ SG_ PCS_dcdcHvBusVolt : 16|14@1+ (0.1,0) [0|1638.3] "V" X
+ SG_ PCS_dcdcLvBusVolt : 0|13@1+ (0.01,0) [0|81.91] "V" X
 
 BO_ 548 PCS_dcdcStatus: 8 VEH
  SG_ PCS_dcdc12VSupportRtyCnt: 44|4@1+ (1,0) [0|0] "" X
@@ -7132,7 +7132,7 @@ BO_ 627 UI_vehicleControl: 8 VEH
  SG_ UI_wiperMode: 6|2@1+ (1,0) [0|0] "" X
  SG_ UI_wiperRequest: 56|3@1+ (1,0) [0|0] "" X
 
-BO_ 947 UI_vehicleControl2: 2 VEH
+BO_ 947 UI_vehicleControl2: 8 VEH
  SG_ UI_PINToDriveEnabled : 6|1@1+ (1,0) [0|1] "" X
  SG_ UI_PINToDrivePassed : 7|1@1+ (1,0) [0|1] "" X
  SG_ UI_UMCUpdateInhibit : 2|1@1+ (1,0) [0|1] "" X

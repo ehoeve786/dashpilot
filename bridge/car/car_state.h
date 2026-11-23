@@ -117,8 +117,9 @@ struct CarState {
     // Whether the DashKit is injecting its battery preheat request (DASHKIT_status): 1 on, 0 off, -1 not reported
     // (firmware without it, or another source).
     double dashkitPreheat = -1;
-    // Whether the DashKit's sport kick-down is injecting Standard over Chill (DASHKIT_status): 1 Standard,
-    // 0 not, -1 not reported. The car's own UI_pedalMap keeps saying Chill meanwhile.
+    // Whether the car is in Standard: the DashKit's sport kick-down injecting it over Chill (DASHKIT_status; the
+    // car's UI_pedalMap keeps saying Chill meanwhile) or the car set to Standard (UI_pedalMap). 1 Standard,
+    // 0 Chill, -1 neither reported.
     double dashkitKickdown = -1;
 
     // Vehicle VIN, empty until fully assembled by the mapper.

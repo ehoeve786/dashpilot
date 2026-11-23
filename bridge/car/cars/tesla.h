@@ -270,8 +270,11 @@ public:
         // DASHKIT_status (0x7F3, bus 1; app-only, from the DashKit once a second and on a change).
         uint64_t preheat = 0;
         if (cp.getRaw(1, "DASHKIT_status", "DASHKIT_preheat", &preheat)) cs.dashkitPreheat = static_cast<double>(preheat);
-        uint64_t kickdown = 0;
-        if (cp.getRaw(1, "DASHKIT_status", "DASHKIT_kickdown", &kickdown)) cs.dashkitKickdown = static_cast<double>(kickdown);
+        // Standard: the DashKit's kick-down (UI_pedalMap stays Chill meanwhile) or the car itself set to Standard.
+        uint64_t kickdown = 0, pedalMap = 0;
+        bool kd = cp.getRaw(1, "DASHKIT_status", "DASHKIT_kickdown", &kickdown);
+        bool pm = cp.getRaw(1, "UI_powertrainControl", "UI_pedalMap", &pedalMap);  // 0x334: 0 Chill, 1 Standard
+        if (kd || pm) cs.dashkitKickdown = (kd && kickdown) || (pm && pedalMap == 1) ? 1 : 0;
 
         // openpilot state from the comma 3X over its USB link to the DashKit, which forwards it as
         // COMMA_status (0x7F0, bus 1; app-only, never on CAN). All zero once the C3X goes quiet for 1 s.

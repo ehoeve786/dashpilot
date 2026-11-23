@@ -603,7 +603,7 @@ function render(c) {
   $('chipDoor').classList.toggle('on', num(c.anyDoorOpen, 0) > 0);
   $('chipBelt').classList.toggle('on', c.buckleStatus !== undefined && num(c.buckleStatus, 1) === 0);
   $('chipLane').classList.toggle('on', !!c.changingLane);
-  $('chipKick').classList.toggle('on', num(c.dashkitKickdown, 0) > 0);  // kick-down: the DashKit has the car in Standard; off again back in Chill
+  $('chipKick').classList.toggle('on', num(c.dashkitKickdown, 0) > 0);  // Standard: the DashKit's kick-down or the car's own setting; off in Chill
   $('chipHeat').classList.toggle('on', num(c.batteryHeatPower, 0) > 0);  // the car heating the pack: preheat, Supercharger navigation or cold
   const lbs = num(c.leftBlindSpot, 0), rbs = num(c.rightBlindSpot, 0);
   $('bsLeft').style.opacity = clamp(lbs, 0, 1);

@@ -275,6 +275,10 @@ public:
         bool kd = cp.getRaw(1, "DASHKIT_status", "DASHKIT_kickdown", &kickdown);
         bool pm = cp.getRaw(1, "UI_powertrainControl", "UI_pedalMap", &pedalMap);  // 0x334: 0 Chill, 1 Standard
         if (kd || pm) cs.dashkitKickdown = (kd && kickdown) || (pm && pedalMap == 1) ? 1 : 0;
+        // The car's rated range: 0x33A bits 0-9 in miles (UI_ratedRange in the per-bus DBC, UI_expectedRange in bus_1).
+        uint64_t range = 0;
+        if (cp.getRaw(1, "UI_range", "UI_ratedRange", &range) || cp.getRaw(1, "UI_rangeSOC", "UI_expectedRange", &range))
+            cs.ratedRange = range * 1.609344;
 
         // openpilot state from the comma 3X over its USB link to the DashKit, which forwards it as
         // COMMA_status (0x7F0, bus 1; app-only, never on CAN). All zero once the C3X goes quiet for 1 s.

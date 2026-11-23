@@ -639,7 +639,8 @@ function render(c) {
   setText($('pSoc'), String(Math.round(soc)));
   P.socFill.setAttribute('width', (soc * 3.6).toFixed(1));
   P.socFill.setAttribute('fill', soc < 19 ? RED : GREEN);
-  const rangeKm = usable * 1000 / RANGE_WH_PER_KM;
+  // The car's own rated range when it sends one (matches the Tesla screen), else an estimate from the usable energy.
+  const rangeKm = num(c.ratedRange, 0) > 0 ? c.ratedRange : usable * 1000 / RANGE_WH_PER_KM;
   setText(P.range.childNodes[1], String(Math.round(imperial ? rangeKm * 0.621371 : rangeKm)));
   setText(P.range.lastChild, imperial ? ' mi' : ' km');
   setText(P.kwh.firstChild, usable.toFixed(1));
@@ -843,7 +844,7 @@ for (const w of ['FL', 'FR', 'RL', 'RR']) NATIVE_KEYS.push('tpmsPressure' + w, '
 NATIVE_KEYS.push('mirrorFoldedL', 'mirrorFoldedR');
 for (const s of ['FL', 'FR', 'RL', 'RC', 'RR']) NATIVE_KEYS.push('seatHeat' + s, 'seatBelt' + s);
 NATIVE_KEYS.push('cellVoltMin', 'cellVoltMax', 'coolantBatIn', 'outsideTemp', 'cabinTemp', 'cabinHumidity', 'wheelTorque',
-  'accelLong', 'accelLat', 'accelPedal', 'chargeStatus', 'chargeLimit', 'trafficControlType', 'batteryHeatPower', 'dashkitKickdown');
+  'accelLong', 'accelLat', 'accelPedal', 'chargeStatus', 'chargeLimit', 'trafficControlType', 'batteryHeatPower', 'dashkitKickdown', 'ratedRange');
 window.onCarStateUpdate = function () {
   const s = {};
   for (const k of NATIVE_KEYS) s[k] = readNative('get' + k[0].toUpperCase() + k.slice(1), undefined);

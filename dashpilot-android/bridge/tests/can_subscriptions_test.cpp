@@ -85,11 +85,11 @@ void dashkit_mapper_subscribes_to_what_it_reads() {
                           "VCSEC_TPMSData",
                           "VCLEFT_liftgateStatus", "UI_ambientLightingCtrls", "VCRIGHT_restraintStatus",
                           "UI_vehicleControl", "COMMA_status", "DI_torque",
-                          "BMS_status", "VCRIGHT_logging1Hz", "VCRIGHT_thsStatus", "VCFRONT_vehicleStatus", "DASHKIT_status", "UI_powertrainControl"}) {
+                          "BMS_status", "VCRIGHT_logging1Hz", "VCRIGHT_thsStatus", "VCFRONT_vehicleStatus", "DASHKIT_status", "UI_powertrainControl", "UI_rangeSOC"}) {
         CHECK(rig.has(subs, 1, m));
     }
     // Nothing else: a message the mapper stops reading leaves the list too.
-    CHECK(subs.size() == 34);
+    CHECK(subs.size() == 35);
     // Messages only read once a frame has arrived are still found on an empty
     // parser (muxed TPMS and liftgate, the VIN, ambient lighting).
     CHECK(rig.has(subs, 1, "VCSEC_TPMSData") && rig.has(subs, 0, "VIN_info"));

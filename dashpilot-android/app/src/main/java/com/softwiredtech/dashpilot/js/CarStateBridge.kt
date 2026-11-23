@@ -60,6 +60,7 @@ class CarStateBridge(
     @Volatile private var trafficControlType: Float = 0f
     @Volatile private var batteryHeatPower: Float = 0f
     @Volatile private var dashkitKickdown: Float = -1f
+    @Volatile private var ratedRange: Float = 0f
     @Volatile private var accSetSpeed: Float = 0f
     @Volatile private var fullPackEnergy: Float = 0f
     @Volatile private var nominalEnergyRemaining: Float = 0f
@@ -156,6 +157,7 @@ class CarStateBridge(
         trafficControlType = state.trafficControlType
         batteryHeatPower = state.batteryHeatPower
         dashkitKickdown = state.dashkitKickdown
+        ratedRange = state.ratedRange
         accSetSpeed = state.accSetSpeed
         fullPackEnergy = state.fullPackEnergy
         nominalEnergyRemaining = state.nominalEnergyRemaining
@@ -240,6 +242,7 @@ class CarStateBridge(
     @JavascriptInterface fun getTrafficControlType(): Float = trafficControlType
     @JavascriptInterface fun getBatteryHeatPower(): Float = batteryHeatPower
     @JavascriptInterface fun getDashkitKickdown(): Float = dashkitKickdown
+    @JavascriptInterface fun getRatedRange(): Float = ratedRange
     @JavascriptInterface fun getAccSetSpeed(): Float = accSetSpeed
     @JavascriptInterface fun getFullPackEnergy(): Float = fullPackEnergy
     @JavascriptInterface fun getNominalEnergyRemaining(): Float = nominalEnergyRemaining

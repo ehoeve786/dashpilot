@@ -94,6 +94,9 @@ int main(int argc, char** argv) {
     CHECK(near(cs.batteryHeatPower, 6.8));
     feed(1, 0x3A1, "e84d00ca0078425d");             // mux 0 (other signals on the same bits): value kept
     CHECK(near(cs.batteryHeatPower, 6.8));
+    CHECK(cs.ratedRange == 0);
+    feed(1, 0x33A, "e2c049c2bf8f0000");             // 226 mi (bits 0-9)
+    CHECK(near(cs.ratedRange, 226 * 1.609344));
 
     if (failures) {
         std::printf("%d check(s) failed\n", failures);

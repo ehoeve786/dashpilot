@@ -738,6 +738,17 @@ function tyreState(c) {
 }
 const battColor = (v) => (v < 2.6 ? RED : v < 2.75 ? AMBER : SUB);
 
+// Blind spot (0 none, 1 car there, 2 urgent: signalling toward it; 3 not available). Autopilot's warning flickers: a
+// level 1 shows once it has lasted 0.3 s and a drop-out under 0.3 s is bridged; level 2 shows at once.
+const BS = { L: { v: 0, t: 0, on: 0, near: 0 }, R: { v: 0, t: 0, on: 0, near: 0 } };
+function blindSpot(side, v) {
+  const b = BS[side], now = performance.now();
+  if (v === 3) v = 0;
+  if (v !== b.v) { b.v = v; b.t = now; }
+  if (v === 2 || (v === 1 && (b.on || now - b.t >= 300)) || (v === 0 && now - b.t >= 300)) b.on = v;
+  return b.on;
+}
+
 // Drive: Autopilot's lead car (time gap at our speed, distance, closing speed), the closest cars in the next lanes,
 // and the trip so far.
 function renderDrive(c, imperial) {
@@ -746,9 +757,15 @@ function renderDrive(c, imperial) {
   setText($('lGap'), gap ? gap.toFixed(1) : '--');
   $('lGap').style.color = !gap ? DIM : gap < 1 ? RED : gap < 1.5 ? AMBER : GREEN;
   setText($('lDist'), d > 0 ? Math.round(imperial ? d * 3.28084 : d) + (imperial ? ' ft' : ' m') : 'No lead car');
-  const lane = (x) => (x > 0 ? Math.round(imperial ? x * 3.28084 : x) + (imperial ? ' ft' : ' m') : '–');
-  const ll = num(c.leadLeftDist, 0), lr = num(c.leadRightDist, 0);
-  setText($('lLanes'), ll > 0 || lr > 0 ? 'left ' + lane(ll) + ' · right ' + lane(lr) : '');
+  // Next lanes: a car Autopilot last saw within 8 m stays "beside" for 3 s, as it drops out of DAS_carLog (ahead only,
+  // about once a second) before the blind spot warning picks it up.
+  const now = performance.now();
+  const lane = (side, x) => {
+    if (x > 0 && x < 8) BS[side].near = now + 3000;
+    return BS[side].on || now < BS[side].near ? 'beside' : x > 0 ? Math.round(imperial ? x * 3.28084 : x) + (imperial ? ' ft' : ' m') : '–';
+  };
+  const ll = lane('L', num(c.leadLeftDist, 0)), lr = lane('R', num(c.leadRightDist, 0));
+  setText($('lLanes'), ll !== '–' || lr !== '–' ? 'left ' + ll + ' · right ' + lr : '');
   setText($('lRel'), d > 0 && Math.abs(rel) >= 1 ? (rel < 0 ? 'closing ' : 'pulling away ') + Math.round(Math.abs(rel) * mi) + (imperial ? ' mph' : ' km/h') : '');
   const km = Trip && Trip.odo ? num(c.odometer, 0) - Trip.odo : 0, ms = Trip && Trip.t0 ? Date.now() - Trip.t0 : 0;
   setText($('dKm'), (km * mi).toFixed(1));
@@ -929,7 +946,7 @@ function render(c) {
   $('chipLane').classList.toggle('on', !!c.changingLane);
   $('chipKick').classList.toggle('on', num(c.dashkitKickdown, 0) > 0);  // Standard: the DashKit's kick-down or the car's own setting; off in Chill
   $('chipHeat').classList.toggle('on', num(c.batteryHeatPower, 0) > 0);  // the car heating the pack: preheat, Supercharger navigation or cold
-  const lbs = num(c.leftBlindSpot, 0), rbs = num(c.rightBlindSpot, 0);
+  const lbs = blindSpot('L', num(c.leftBlindSpot, 0)), rbs = blindSpot('R', num(c.rightBlindSpot, 0));
   $('bsLeft').style.opacity = clamp(lbs, 0, 1);
   $('bsLeftUrgent').style.opacity = clamp(lbs - 1, 0, 1);
   $('bsRight').style.opacity = clamp(rbs, 0, 1);

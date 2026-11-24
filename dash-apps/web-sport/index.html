@@ -691,6 +691,12 @@ const fmtClock = (s) => { s = Math.floor(s); const h = Math.floor(s / 3600), m =
 function updateMode(c, soc, rangeKm) {
   const mode = num(c.chargeStatus, 0) === 3 ? 'charging' : num(c.gear, 0) === 1 ? 'parked' : 'drive';
   const now = Date.now();
+  // A trip whose odometer went backwards, or further than 300 km/h since it started, began on another car's
+  // odometer (the demo's, kept in storage or still on screen when the DashKit connected): start a new one.
+  if (Trip && Trip.odo && num(c.odometer, 0) > 0) {
+    const km = c.odometer - Trip.odo;
+    if (km < -0.5 || km > (now - Trip.t0) / 3600000 * 300 + 1) Trip = null;
+  }
   // A real frame with the pack's energy in it: page load or a change.
   if (c.chargeStatus !== undefined && num(c.fullPackEnergy, 0) > 0 && (!Mode.ready || mode !== Mode.now)) {
     const load = !Mode.ready;

@@ -89,7 +89,7 @@ html, body {
 .bar > i { display: block; height: 100%; }
 #charge { display: none; flex: 1 1 0; min-width: 0; gap: calc(20 * var(--u)); grid-template-rows: calc(60 * var(--u)) 1fr auto calc(150 * var(--u)); }
 #root.charging #charge { display: grid; }
-#charge[data-view="2"] { grid-template-columns: 0.95fr 1fr 1.55fr; grid-template-rows: 1fr auto calc(150 * var(--u));
+#charge[data-view="2"] { grid-template-columns: 1.2fr 1fr 1.4fr; grid-template-rows: 1fr auto calc(150 * var(--u));
                          grid-template-areas: "split ring curve" "lim ring curve" "strip strip strip"; }
 #charge[data-view="g"] { grid-template-rows: 1fr calc(150 * var(--u)); grid-template-areas: "ring" "strip"; }
 #cRing { grid-area: ring; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; }
@@ -105,7 +105,13 @@ html, body {
 #charge .val { font-size: calc(54 * var(--u)); }
 #charge .val small { font-size: calc(32 * var(--u)); color: #B4BAC4; }
 #charge .axis, #charge .legend { font-size: calc(28 * var(--u)); color: #B4BAC4; }
-#charge #gLimSub { font-size: calc(30 * var(--u)); }
+/* The two left tiles carry the most text: larger again, white labels, and the split's rows spread over its height. */
+#cSplit, #cLim { justify-content: space-between; }
+#cSplit .cap, #cLim .cap { font-size: calc(30 * var(--u)); }
+#cSplit .row { font-size: calc(46 * var(--u)); color: #F2F4F7; }
+#cSplit .bar { height: calc(22 * var(--u)); border-radius: calc(11 * var(--u)); }
+#cLim .val { font-size: calc(64 * var(--u)); }
+#charge #gLimSub { font-size: calc(36 * var(--u)); color: #F2F4F7; }
 #charge #rSoc { font-size: calc(64 * var(--u)); }
 
 svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dominant-baseline: central; white-space: pre; }
@@ -143,14 +149,14 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
         <div class="row"><span>Tyre sensors</span><b id="kTpms">--</b></div></div>
     </div>
     <div id="charge">
-      <div class="tile" style="grid-area:split" data-v="02"><div class="cap">WHERE THE POWER GOES</div>
+      <div class="tile" id="cSplit" style="grid-area:split" data-v="02"><div class="cap">WHERE THE POWER GOES</div>
         <div class="row"><span>From charger</span><b id="gC">--</b></div>
         <div class="bar"><i id="gBb" style="background:#30D158"></i><i id="gHb" style="background:#FF8A3D"></i><i id="gLb" style="background:#3D8BFF"></i><i id="gOb" style="background:#59606B"></i></div>
         <div class="row"><span><span style="color:#30D158">●</span> Into battery</span><b id="gB">--</b></div>
         <div class="row"><span><span style="color:#FF8A3D">●</span> Battery heating</span><b id="gH">--</b></div>
         <div class="row"><span><span style="color:#3D8BFF">●</span> Low-voltage</span><b id="gL">--</b></div>
         <div class="row"><span><span style="color:#59606B">●</span> Cabin + losses</span><b id="gO">--</b></div></div>
-      <div class="tile" style="grid-area:lim" data-v="02"><div class="cap">LIMITED BY</div>
+      <div class="tile" id="cLim" style="grid-area:lim" data-v="02"><div class="cap">LIMITED BY</div>
         <div class="val" id="gLim" style="color:#FFB020">--</div><div class="row" id="gLimSub"></div></div>
       <div id="cRing" data-v="02g"><svg viewBox="0 0 340 340"><circle cx="170" cy="170" r="150" fill="none" stroke="#1B1E24" stroke-width="18"/>
         <circle id="rArc" cx="170" cy="170" r="150" fill="none" stroke="#30D158" stroke-width="18" stroke-linecap="round" stroke-dasharray="0 943" transform="rotate(-90 170 170)"/></svg>
@@ -878,7 +884,7 @@ function renderCharge(c, soc, rangeKm, imperial) {
   });
   const lim = num(c.chargeLimit, 0), cold = heat > 0 && num(c.packTMin, 99) < 20;
   setText($('gLim'), cold ? 'Cold battery' : lim > 0 && b >= lim - 2 ? 'Battery' : ch > 0 ? 'Charger' : '--');
-  setText($('gLimSub'), lim > 0 ? 'The battery takes up to ' + Math.round(lim) + ' kW now' : '');
+  setText($('gLimSub'), lim > 0 ? 'Battery takes up to ' + Math.round(lim) + ' kW' : '');
   $('rArc').setAttribute('stroke-dasharray', (soc / 100 * 942.5).toFixed(1) + ' 943');
   setText($('rKw'), String(Math.round(b)));
   setText($('nKw'), String(Math.round(b)));

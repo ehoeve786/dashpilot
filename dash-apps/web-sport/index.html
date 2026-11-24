@@ -99,6 +99,14 @@ html, body {
 #cCurve svg { flex: 1; width: 100%; min-height: 0; }
 .axis { display: flex; justify-content: space-between; font-size: calc(22 * var(--u)); color: #59606B; }
 #cStrip { grid-area: strip; flex-direction: row; justify-content: space-around; align-items: center; }
+/* Charging is read from a distance: larger, brighter text than the shared tile styles. */
+#charge .cap { font-size: calc(28 * var(--u)); color: #B4BAC4; }
+#charge .row { font-size: calc(36 * var(--u)); color: #D0D5DC; align-items: baseline; }
+#charge .val { font-size: calc(54 * var(--u)); }
+#charge .val small { font-size: calc(32 * var(--u)); color: #B4BAC4; }
+#charge .axis, #charge .legend { font-size: calc(28 * var(--u)); color: #B4BAC4; }
+#charge #gLimSub { font-size: calc(30 * var(--u)); }
+#charge #rSoc { font-size: calc(64 * var(--u)); }
 
 svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dominant-baseline: central; white-space: pre; }
 </style>
@@ -143,11 +151,11 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
         <div class="row"><span><span style="color:#3D8BFF">●</span> Low-voltage</span><b id="gL">--</b></div>
         <div class="row"><span><span style="color:#59606B">●</span> Cabin + losses</span><b id="gO">--</b></div></div>
       <div class="tile" style="grid-area:lim" data-v="02"><div class="cap">LIMITED BY</div>
-        <div class="val" id="gLim" style="color:#FFB020">--</div><div class="row" id="gLimSub" style="font-size:calc(24 * var(--u))"></div></div>
+        <div class="val" id="gLim" style="color:#FFB020">--</div><div class="row" id="gLimSub"></div></div>
       <div id="cRing" data-v="02g"><svg viewBox="0 0 340 340"><circle cx="170" cy="170" r="150" fill="none" stroke="#1B1E24" stroke-width="18"/>
         <circle id="rArc" cx="170" cy="170" r="150" fill="none" stroke="#30D158" stroke-width="18" stroke-linecap="round" stroke-dasharray="0 943" transform="rotate(-90 170 170)"/></svg>
         <div id="cRingT"><div class="cap">INTO BATTERY</div><div class="xl" style="color:#30D158"><span id="rKw">--</span><small> kW</small></div>
-          <div class="row" id="rCh"></div><div class="val" id="rSoc" style="font-size:calc(56 * var(--u))">--</div><div class="row" id="rTime"></div></div></div>
+          <div class="row" id="rCh"></div><div class="val" id="rSoc">--</div><div class="row" id="rTime"></div></div></div>
       <div class="tile" style="grid-area:heat" data-v="0"><div class="cap">BATTERY HEATING</div>
         <div class="xl" style="color:#FF8A3D"><span id="hKw">--</span><small> kW</small></div>
         <div class="row"><span>Pack</span><b id="hPack">--</b></div><div class="row"><span>Cells</span><b id="hCells">--</b></div>
@@ -157,7 +165,7 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
       <div class="tile" style="grid-area:now" data-v="1"><div class="cap">NOW</div><div class="xl" style="color:#30D158"><span id="nKw">--</span><small> kW to battery</small></div>
         <div class="row" id="nCh"></div></div>
       <div class="tile" id="cCurve" style="grid-area:curve" data-v="12"><div class="row"><span class="cap">THIS SESSION</span>
-        <span style="font-size:calc(22 * var(--u))"><span style="color:#8B919A">━</span> Charger&nbsp; <span style="color:#30D158">━</span> Battery&nbsp; <span style="color:#FF8A3D">━</span> Heating</span></div>
+        <span class="legend"><span style="color:#8B919A">━</span> Charger&nbsp; <span style="color:#30D158">━</span> Battery&nbsp; <span style="color:#FF8A3D">━</span> Heating</span></div>
         <div style="flex:1; display:flex; gap:calc(12 * var(--u)); min-height:0"><div class="axis" style="flex-direction:column; padding-bottom:calc(30 * var(--u))"><span id="yTop">60</span><span id="yMid">30</span><span>0</span></div>
           <div style="flex:1; display:flex; flex-direction:column; min-width:0"><svg viewBox="0 0 700 300" preserveAspectRatio="none">
             <line x1="0" y1="150" x2="700" y2="150" stroke="#1B1E24" vector-effect="non-scaling-stroke"/><line x1="0" y1="300" x2="700" y2="300" stroke="#33363E" vector-effect="non-scaling-stroke"/>

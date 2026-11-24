@@ -89,14 +89,9 @@ html, body {
 .bar > i { display: block; height: 100%; }
 #charge { display: none; flex: 1 1 0; min-width: 0; gap: calc(20 * var(--u)); grid-template-rows: calc(60 * var(--u)) 1fr auto calc(150 * var(--u)); }
 #root.charging #charge { display: grid; }
-#charge[data-view="0"] { grid-template-columns: 1fr 1.25fr 1fr; grid-template-areas: "dots dots dots" "split ring heat" "lim ring heat" "strip strip strip"; }
-#charge[data-view="1"] { grid-template-columns: 1fr 2.4fr; grid-template-rows: calc(60 * var(--u)) 1fr 1fr calc(150 * var(--u));
-                         grid-template-areas: "dots dots" "batt curve" "now curve" "strip strip"; }
-#charge[data-view="2"] { grid-template-columns: 0.95fr 1fr 1.55fr; grid-template-areas: "dots dots dots" "split ring curve" "lim ring curve" "strip strip strip"; }
+#charge[data-view="2"] { grid-template-columns: 0.95fr 1fr 1.55fr; grid-template-rows: 1fr auto calc(150 * var(--u));
+                         grid-template-areas: "split ring curve" "lim ring curve" "strip strip strip"; }
 #charge[data-view="g"] { grid-template-rows: 1fr calc(150 * var(--u)); grid-template-areas: "ring" "strip"; }
-#cDots { grid-area: dots; display: flex; justify-content: center; align-items: center; gap: calc(16 * var(--u)); }
-#cDots i { width: calc(18 * var(--u)); height: calc(18 * var(--u)); border-radius: 50%; background: #3A3E47; }
-#cDots i.on { background: #F2F4F7; }
 #cRing { grid-area: ring; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; }
 #cRing svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 #cRingT { display: flex; flex-direction: column; align-items: center; z-index: 1; }
@@ -140,7 +135,6 @@ svg text { font-family: 'Inter', system-ui, sans-serif; text-anchor: middle; dom
         <div class="row"><span>Tyre sensors</span><b id="kTpms">--</b></div></div>
     </div>
     <div id="charge">
-      <div id="cDots" data-v="012"><i></i><i></i><i></i></div>
       <div class="tile" style="grid-area:split" data-v="02"><div class="cap">WHERE THE POWER GOES</div>
         <div class="row"><span>From charger</span><b id="gC">--</b></div>
         <div class="bar"><i id="gBb" style="background:#30D158"></i><i id="gHb" style="background:#FF8A3D"></i><i id="gLb" style="background:#3D8BFF"></i><i id="gOb" style="background:#59606B"></i></div>
@@ -680,7 +674,7 @@ function applyView() {
 
 /* ── Modes: drive; parked in P; charging (BMS_uiChargeStatus 3), with a glance view while nobody is in the car ── */
 const WHEELS = ['FL', 'FR', 'RL', 'RR'];
-const Mode = { now: '', ready: false, view: Number(stored('sportChg')) % 3 || 0, glanceOff: false };
+const Mode = { now: '', ready: false, view: 2, glanceOff: false };
 function json(key) { try { return JSON.parse(stored(key)); } catch (_) { return null; } }
 let Trip = json('sportTrip'), Park = json('sportPark'), Sess = json('sportCharge'), Last = json('sportLast');
 const psi = (c, w) => num(c['tpmsPressure' + w], -1) * 14.5038;  // < 0: not reported
@@ -856,7 +850,7 @@ function renderCharge(c, soc, rangeKm, imperial) {
     drawCurve();
     if (!(now - S2.saved < 10000)) { S2.saved = now; store('sportCharge', JSON.stringify(S2)); }
   }
-  // Views: tap flips A (ring) > B (curve) > A+B; the glance shows by itself while the car says nobody is inside.
+  // One view (ring + curve); the glance shows by itself while the car says nobody is inside, a tap dismisses it.
   const present = num(c.userPresent, -1);
   if (present === 1) Mode.glanceOff = false;
   const v = present === 0 && !Mode.glanceOff ? 'g' : String(Mode.view);
@@ -864,7 +858,6 @@ function renderCharge(c, soc, rangeKm, imperial) {
   if (box.dataset.view !== v) {
     box.dataset.view = v;
     for (const e of box.children) e.hidden = !e.dataset.v.includes(v);
-    [...$('cDots').children].forEach((d, i) => d.classList.toggle('on', String(i) === v));
   }
   const kw = (x) => x.toFixed(1);
   setText($('chipChg'), ch > 0 ? 'DC FAST CHARGING' : 'CHARGING');
@@ -908,9 +901,7 @@ function renderCharge(c, soc, rangeKm, imperial) {
   setText($('sCab'), (cab ? Math.round(cab) + '°' : '--') + (out ? ' · ' + Math.round(out) + '°' : ''));
 }
 $('charge').addEventListener('click', () => {
-  if ($('charge').dataset.view === 'g') { Mode.glanceOff = true; return; }
-  Mode.view = (Mode.view + 1) % 3;
-  store('sportChg', String(Mode.view));
+  if ($('charge').dataset.view === 'g') Mode.glanceOff = true;
 });
 
 /* ── Render ── */

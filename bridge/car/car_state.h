@@ -40,7 +40,7 @@ struct CarState {
     double hvacKeepClimateOn = 0;
     double powerLevel = 0;
 
-    // Openpilot state
+    // Assist state. No current data source sets these.
     double madsActive = 0;
     double selfdriveActive = 0;
     double experimentalMode = 0;
@@ -187,7 +187,7 @@ struct CarState {
         out[22] = packTMax;
         out[23] = odometer;
 
-        // Openpilot
+        // Assist state
         out[24] = selfdriveActive;
         out[25] = experimentalMode;
         out[26] = madsActive;

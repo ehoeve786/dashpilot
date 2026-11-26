@@ -1,10 +1,10 @@
 package com.softwiredtech.dashpilot.vehicle
 
 import com.softwiredtech.dashpilot.datamodel.dash.CarState
+import com.softwiredtech.dashpilot.datasource.RawCanFrame
 import com.softwiredtech.dashpilot.jni.VehicleBridge
 
-// This is a wrapper for the C++ VehicleDecoder so that DataSources that are
-// non-native (such as PandaBleDataSource) can still decode can frames.
+// Wrapper for the C++ VehicleDecoder so Kotlin data sources can decode CAN frames.
 class CanFrameDecoder(
     private val bridge: VehicleBridge,
     profile: VehicleProfile
@@ -13,9 +13,23 @@ class CanFrameDecoder(
         profile.dbcContents, profile.busIndices, profile.type
     )
 
-    @Synchronized fun decodeFrame(bus: Int, address: Int, data: ByteArray): CarState? {
+    // Decodes one BLE packet's frames in a single JNI call: one result array and
+    // one CarState per packet instead of per frame.
+    @Synchronized fun decodeFrames(frames: List<RawCanFrame>): CarState? {
         if (decoderHandle == 0L) return null
-        val values = bridge.nativeDecodeCanFrame(decoderHandle, bus, address, data)
+        val buses = IntArray(frames.size)
+        val addresses = IntArray(frames.size)
+        val lengths = IntArray(frames.size)
+        val data = ByteArray(frames.sumOf { it.data.size })
+        var offset = 0
+        frames.forEachIndexed { i, f ->
+            buses[i] = f.bus
+            addresses[i] = f.address
+            lengths[i] = f.data.size
+            f.data.copyInto(data, offset)
+            offset += f.data.size
+        }
+        val values = bridge.nativeDecodeCanFrames(decoderHandle, buses, addresses, lengths, data)
         return arrayToCarState(values)
     }
 

@@ -41,6 +41,8 @@ enum VehicleControl {
     // Arms/disarms the firmware's auto wiper-off automation. 1=enable,
     // 0=disable. The firmware persists it in NVS (wiper_off module).
     static let cmdWiperOffEnable = 0x41
+    // Turn signal off when shifting into Park (firmware signal_off module, persisted in NVS).
+    static let cmdSignalOffEnable = 0x53
 
     // --- Enter BLE pairing mode ---
     // Opens a window on the firmware during which one new (not-yet-paired)
@@ -107,6 +109,9 @@ enum VehicleControl {
     static let doorRearLeft = 2
     static let doorRearRight = 3
 
+    // 1=enable, 0=disable. Persisted in NVS by the firmware.
+    static let cmdTouchAutoHighBeamEnable = 0x51
+
     /// Bind (or clear, with actionValue 0) an N-finger tap to a control action.
     @discardableResult
     static func sendFingerAction(_ manager: DashKitBleManager, fingers: Int, actionValue: Int) -> Bool {
@@ -123,6 +128,18 @@ enum VehicleControl {
     @discardableResult
     static func sendBleRole(_ manager: DashKitBleManager, controls: Bool) -> Bool {
         send(manager, opcode: cmdBleRole, value: controls ? 0 : 1)
+    }
+
+    /// Enable or disable the firmware's touch-to-re-enable auto high beams automation.
+    @discardableResult
+    static func sendTouchAutoHighBeamEnable(_ manager: DashKitBleManager, enabled: Bool) -> Bool {
+        send(manager, opcode: cmdTouchAutoHighBeamEnable, value: enabled ? 1 : 0)
+    }
+
+    /// Enable or disable the firmware's turn-signal-off-in-Park automation.
+    @discardableResult
+    static func sendSignalOff(_ manager: DashKitBleManager, enabled: Bool) -> Bool {
+        send(manager, opcode: cmdSignalOffEnable, value: enabled ? 1 : 0)
     }
 
     /// Ask the DashKit to open a pairing window for one new device.

@@ -5,6 +5,8 @@ import androidx.core.content.edit
 
 const val DASH_PREFS_NAME = "dash_prefs"
 const val PREF_SELECTED_DASHBOARD_ID = "selected_dashboard_id"
+const val PREF_AUTO_START_DRIVE = "auto_start_drive"
+
 const val PREF_DEV_RIVE_FILE_URI = "dev_rive_file_uri"
 const val PREF_DEV_DASHBOARD_URL = "dev_dashboard_url"
 const val PREF_DEV_URL_HINT_SHOWN = "dev_url_hint_shown"
@@ -31,6 +33,7 @@ const val PREF_PINNED_CONTROL = "pinned_control"
 // Automations
 const val PREF_WIPER_OFF_AUTOMATION = "wiper_off_automation"
 const val PREF_SIGNAL_OFF_AUTOMATION = "signal_off_automation"
+const val PREF_TOUCH_AUTO_HIGH_BEAM_AUTOMATION = "auto_high_beam_hold_automation"
 const val PREF_CLIMATE_KEEP_AUTOMATION = "climate_keep_automation"
 const val PREF_CLIMATE_KEEP_MINUTES = "climate_keep_minutes"
 const val PREF_SPORT_KICKDOWN_AUTOMATION = "sport_kickdown_automation"
@@ -59,6 +62,16 @@ const val DEFAULT_DARK_MODE_BACKGROUND_GRAY = 0
 const val DEFAULT_ONBOARDING_COMPLETED = false
 
 private const val DEFAULT_DASHBOARD_ID = "vanilla"
+
+fun getAutoStartDrive(context: Context): Boolean =
+    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
+        .getBoolean(PREF_AUTO_START_DRIVE, false)
+
+fun setAutoStartDrive(context: Context, enabled: Boolean) {
+    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE).edit {
+        putBoolean(PREF_AUTO_START_DRIVE, enabled)
+    }
+}
 
 fun defaultDashboard(): DashboardConfig {
     return dashboardById(DEFAULT_DASHBOARD_ID) ?: availableDashboards.first().withManifest()
@@ -226,6 +239,15 @@ fun getSignalOffAutomation(context: Context): Boolean =
 fun setSignalOffAutomation(context: Context, value: Boolean) {
     context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
         .edit { putBoolean(PREF_SIGNAL_OFF_AUTOMATION, value) }
+}
+
+fun getTouchAutoHighBeamAutomation(context: Context): Boolean =
+    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
+        .getBoolean(PREF_TOUCH_AUTO_HIGH_BEAM_AUTOMATION, false)
+
+fun setTouchAutoHighBeamAutomation(context: Context, value: Boolean) {
+    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
+        .edit { putBoolean(PREF_TOUCH_AUTO_HIGH_BEAM_AUTOMATION, value) }
 }
 
 fun getClimateKeepAutomation(context: Context): Boolean =

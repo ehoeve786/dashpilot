@@ -52,6 +52,8 @@ object VehicleControl {
     const val CMD_WIPER_OFF_ENABLE: Int = 0x41
     // Turn signal off when shifting into Park (firmware signal_off module, persisted in NVS).
     const val CMD_SIGNAL_OFF_ENABLE: Int = 0x53
+    // 1=enable, 0=disable. Persisted in NVS by the firmware.
+    const val CMD_TOUCH_AUTO_HIGH_BEAM_ENABLE: Int = 0x51
 
     // --- Enter BLE pairing mode ---
     // Opens a window on the firmware during which one new (not-yet-bonded) device
@@ -104,7 +106,7 @@ object VehicleControl {
 
     // --- Diagnostic records in the CAN stream (firmware can_diag.h) ---
     // 1 = on, 0 = off. Not persisted; the DashKit switches it off on disconnect.
-    const val CMD_DIAG_LOG: Int = 0x51
+    const val CMD_DIAG_LOG: Int = 0x5D
 
     // --- Compact CAN packets (11 bytes per frame instead of 18) ---
     // 1 = on. Not persisted; firmware without the opcode rejects the write and keeps the original format.
@@ -134,6 +136,9 @@ object VehicleControl {
     /** Enable or disable the firmware's turn-signal-off-in-Park automation. */
     fun sendSignalOff(manager: DashKitBleManager, enabled: Boolean): Boolean =
         send(manager, CMD_SIGNAL_OFF_ENABLE, if (enabled) 1 else 0)
+
+    fun sendTouchAutoHighBeamEnable(manager: DashKitBleManager, enabled: Boolean): Boolean =
+        send(manager, CMD_TOUCH_AUTO_HIGH_BEAM_ENABLE, if (enabled) 1 else 0)
 
     /** Enable or disable the firmware's keep-climate-on automation. */
     fun sendClimateKeep(manager: DashKitBleManager, enabled: Boolean): Boolean =

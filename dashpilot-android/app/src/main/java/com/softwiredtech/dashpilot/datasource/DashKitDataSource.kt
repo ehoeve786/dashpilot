@@ -98,7 +98,11 @@ class DashKitDataSource(
             TAG, "BLE role"
         )
         val payload = decoder.canFilterPayload()
-        if (payload.isEmpty()) return
+        if (payload.isEmpty()) {
+            // No mapper for this vehicle, or more ids than one write carries.
+            Log.w(TAG, "No CAN filter for this vehicle; the DashKit sends its default set")
+            return
+        }
         wanted = filterIds(payload)
         Log.d(TAG, "Subscribing to ${wanted.size} CAN ids")
         manager.writeCommandWithRetry(SERVICE_UUID, FILTER_UUID, payload, TAG, "CAN filter")
@@ -171,7 +175,9 @@ class DashKitDataSource(
 
     private fun parseAndEmit(payload: ByteArray) {
         if (payload.isEmpty()) return
-        for (frame in parseCanPacket(payload)) {
+        val frames = parseCanPacket(payload)
+        val kept = ArrayList<RawCanFrame>(frames.size)
+        for (frame in frames) {
             if (logging) canLog.write(frame.bus, frame.address, frame.data)
             if (CanLog.isDiagnostic(frame.bus)) {
                 onDiagnostic(frame)   // firmware record, not a CAN frame
@@ -180,8 +186,12 @@ class DashKitDataSource(
             // Decode only what the mapper reads. With "Log every frame" ~5,000 frames/s arrive, and running the
             // mapper on each one stalled this thread: the dashboard stopped updating and notifications were lost.
             if (wanted.isNotEmpty() && (frame.bus.toLong() shl 32 or frame.address.toLong()) !in wanted) continue
-            currentState = decoder.decodeFrame(frame.bus, frame.address, frame.data) ?: return
-            decoded++
+            kept.add(frame)
+        }
+        // One JNI call for the packet's frames (decodeFrames maps after each one).
+        if (kept.isNotEmpty()) {
+            currentState = decoder.decodeFrames(kept) ?: return
+            decoded += kept.size
         }
         if (_incoming.tryEmit(currentState)) emitted++ else emitFailed++
         if (logging) appRecord()

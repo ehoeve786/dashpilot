@@ -16,6 +16,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.softwiredtech.dashpilot.datamodel.dash.DASH_PREFS_NAME
+import com.softwiredtech.dashpilot.datamodel.dash.getAutoStartDrive
+import com.softwiredtech.dashpilot.datamodel.dash.setAutoStartDrive
+import com.softwiredtech.dashpilot.navigation.AutoStartDriveGate
 import com.softwiredtech.dashpilot.datamodel.dash.DashState
 import com.softwiredtech.dashpilot.datamodel.dash.DisplaySettings
 import com.softwiredtech.dashpilot.datamodel.dash.PREF_ALWAYS_ON_BLIND_SPOT_MONITOR
@@ -42,8 +45,10 @@ import com.softwiredtech.dashpilot.datamodel.dash.setPinnedControl
 import com.softwiredtech.dashpilot.datamodel.dash.getFingerActions
 import com.softwiredtech.dashpilot.datamodel.dash.setFingerActions
 import com.softwiredtech.dashpilot.datamodel.dash.getSignalOffAutomation
+import com.softwiredtech.dashpilot.datamodel.dash.getTouchAutoHighBeamAutomation
 import com.softwiredtech.dashpilot.datamodel.dash.getWiperOffAutomation
 import com.softwiredtech.dashpilot.datamodel.dash.setSignalOffAutomation
+import com.softwiredtech.dashpilot.datamodel.dash.setTouchAutoHighBeamAutomation
 import com.softwiredtech.dashpilot.datamodel.dash.setWiperOffAutomation
 import com.softwiredtech.dashpilot.datamodel.dash.DEFAULT_CLIMATE_KEEP_MINUTES
 import com.softwiredtech.dashpilot.datamodel.dash.getClimateKeepAutomation
@@ -61,7 +66,7 @@ import com.softwiredtech.dashpilot.datamodel.dash.setSportKickdownPercent
 import com.softwiredtech.dashpilot.ui.controls.ControlsState
 import com.softwiredtech.dashpilot.ui.controls.controlById
 import com.softwiredtech.dashpilot.datasource.DataSourceType
-import com.softwiredtech.dashpilot.datasource.CommaDataSource
+import com.softwiredtech.dashpilot.datasource.cacheForConnection
 import com.softwiredtech.dashpilot.datasource.ConnectionStatus
 import com.softwiredtech.dashpilot.datasource.IDataSource
 import com.softwiredtech.dashpilot.datasource.DashKitBleManager
@@ -70,7 +75,6 @@ import com.softwiredtech.dashpilot.datasource.DemoDataSource
 import com.softwiredtech.dashpilot.datasource.WebsocketDataSource
 import com.softwiredtech.dashpilot.ble.VehicleControl
 import com.softwiredtech.dashpilot.jni.VehicleBridge
-import com.softwiredtech.dashpilot.util.NetworkUtil
 import com.softwiredtech.dashpilot.vehicle.CanFrameDecoder
 import com.softwiredtech.dashpilot.vehicle.VehicleProfileLoader
 import kotlinx.coroutines.Dispatchers
@@ -92,7 +96,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 import com.softwiredtech.dashpilot.R
 
-class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
+class ConnectionViewModel : ViewModel() {
     private val _dataSource = MutableStateFlow<IDataSource?>(null)
     private var connectionJob: Job? = null
 
@@ -112,6 +116,19 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
     }
 
     private val _pinnedControl = MutableStateFlow<String?>(null)
+    private val _autoStartDrive = MutableStateFlow(false)
+    val autoStartDrive = _autoStartDrive.asStateFlow()
+    val autoStartDriveGate = AutoStartDriveGate()
+
+    fun loadAutoStartDrive(context: Context) {
+        _autoStartDrive.value = getAutoStartDrive(context)
+    }
+
+    fun updateAutoStartDrive(context: Context, enabled: Boolean) {
+        setAutoStartDrive(context, enabled)
+        _autoStartDrive.value = enabled
+    }
+
     val pinnedControl = _pinnedControl.asStateFlow()
 
     fun loadPinnedControl(context: Context) {
@@ -128,6 +145,8 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
     val wiperOffAutomation = _wiperOffAutomation.asStateFlow()
     private val _signalOffAutomation = MutableStateFlow(false)
     val signalOffAutomation = _signalOffAutomation.asStateFlow()
+    private val _touchAutoHighBeamAutomation = MutableStateFlow(false)
+    val touchAutoHighBeamAutomation = _touchAutoHighBeamAutomation.asStateFlow()
 
     private val _climateKeepAutomation = MutableStateFlow(false)
     val climateKeepAutomation = _climateKeepAutomation.asStateFlow()
@@ -154,6 +173,7 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
         _carModel.value = getCarModel(context)
         _wiperOffAutomation.value = getWiperOffAutomation(context)
         _signalOffAutomation.value = getSignalOffAutomation(context)
+        _touchAutoHighBeamAutomation.value = getTouchAutoHighBeamAutomation(context)
         _climateKeepAutomation.value = getClimateKeepAutomation(context)
         _climateKeepMinutes.value = getClimateKeepMinutes(context)
         _sportKickdownAutomation.value = getSportKickdownAutomation(context)
@@ -181,6 +201,12 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
         setSignalOffAutomation(context, value)
         _signalOffAutomation.value = value
         _bleManager.value?.let { VehicleControl.sendSignalOff(it, value) }
+    }
+
+    fun updateTouchAutoHighBeamAutomation(context: Context, value: Boolean) {
+        setTouchAutoHighBeamAutomation(context, value)
+        _touchAutoHighBeamAutomation.value = value
+        _bleManager.value?.let { VehicleControl.sendTouchAutoHighBeamEnable(it, value) }
     }
 
     private fun pushWiperOff(enabled: Boolean) {
@@ -289,7 +315,7 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
     // Briefly scan for an advertising DashKit and decide the launch route:
     //  - found + bonded   -> auto-connect DashKit
     //  - found + unbonded -> open onboarding (pair flow)
-    //  - not found / no permission -> default (setup + comma)
+    //  - not found / no permission -> default (stay disconnected)
     fun runStartupDiscovery(context: Context, hasBlePermission: Boolean) {
         if (startupDiscoveryStarted) return
         startupDiscoveryStarted = true
@@ -358,7 +384,7 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
     private val _displaySettings = MutableStateFlow(DisplaySettings())
     private val _speedCameraDistance = MutableStateFlow(-1)
 
-    private val _dashState = MutableStateFlow<Flow<DashState>?>(null)
+    private val _dashState = MutableStateFlow<StateFlow<DashState>?>(null)
     val dashState = _dashState.asStateFlow()
 
     // Vehicle VIN from CarState (assembled by the native mapper); null until known.
@@ -406,7 +432,6 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
         _activeSourceType.value = dataSourceType
         lastServerAddress = manualServerAddress
 
-        var finalServerAddress = manualServerAddress
         _connectionStatus.value = ConnectionStatus.Connecting
         connectionJob = viewModelScope.launch(Dispatchers.IO) {
             val vehicleName = "tesla" // TODO: make configurable via UI
@@ -415,8 +440,7 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
             _carModel.value = carModel
             val configFile = when {
                 carModel == CarModel.TESLA_JUNIPER -> "config_juniper.json"
-                dataSourceType == DataSourceType.DASHKIT -> "config_dashkit.json"
-                else -> "config_comma_normal.json"
+                else -> "config_dashkit.json"
             }
             val profile = VehicleProfileLoader.loadProfile(context, vehicleName, configFile)
             val bridge = VehicleBridge()
@@ -437,17 +461,7 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
                     DashKitDataSource(manager, decoder)
                 }
                 DataSourceType.WEBSOCKET -> WebsocketDataSource()
-                DataSourceType.DEMO -> DemoDataSource()
-                else -> CommaDataSource(bridge, profile)
-            }
-
-            if (finalServerAddress.isEmpty() && dataSourceType == DataSourceType.COMMA) {
-                var localIp = networkUtil.getWifiIpAddress()
-                while (localIp == null) {
-                    delay(1000)
-                    localIp = networkUtil.getWifiIpAddress()
-                }
-                finalServerAddress = networkUtil.findCanPublisher(initialIp = localIp)
+                else -> DemoDataSource()
             }
 
             _dataSource.value = ds
@@ -489,9 +503,12 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
                     dataSourceType = dataSourceType
                 )
             }
-            _dashState.value = combined
+            _dashState.value = combined.cacheForConnection(
+                scope = this,
+                initial = DashState(displaySettings = _displaySettings.value, dataSourceType = dataSourceType)
+            )
 
-            launch(Dispatchers.IO) { ds.connect(finalServerAddress) }
+            launch(Dispatchers.IO) { ds.connect(manualServerAddress) }
             ds.incomingMessages.first()
             _connectionStatus.value = ConnectionStatus.Connected
 
@@ -516,6 +533,9 @@ class ConnectionViewModel(private var networkUtil: NetworkUtil) : ViewModel() {
                 val signalOff = getSignalOffAutomation(context)
                 _signalOffAutomation.value = signalOff
                 VehicleControl.sendSignalOff(mgr, signalOff)
+                val touchAutoHighBeam = getTouchAutoHighBeamAutomation(context)
+                _touchAutoHighBeamAutomation.value = touchAutoHighBeam
+                VehicleControl.sendTouchAutoHighBeamEnable(mgr, touchAutoHighBeam)
 
                 // Re-sync the climate-keep automation the same way.
                 val climateKeep = getClimateKeepAutomation(context)

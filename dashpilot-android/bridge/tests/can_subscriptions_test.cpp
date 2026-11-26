@@ -158,10 +158,10 @@ void filter_wire_format() {
     CHECK(encodeCanFilter(subs) == want);
     CHECK(encodeCanFilter({}).empty());
 
-    // The largest list one write can carry: 63 ids on one bus (2 + 63 * 4 = 254 bytes).
+    // The largest list one write can carry: 127 ids on one bus (2 + 127 * 4 = 510 bytes).
     Subs many;
-    for (uint32_t i = 0; i < 63; i++) many.emplace_back(1, 0x100 + i);
-    CHECK(encodeCanFilter(many).size() == 254);
+    for (uint32_t i = 0; i < 127; i++) many.emplace_back(1, 0x100 + i);
+    CHECK(encodeCanFilter(many).size() == 510);
     // One more does not fit: no partial list, the DashKit keeps its default.
     many.emplace_back(1, 0x200);
     CHECK(encodeCanFilter(many).empty());

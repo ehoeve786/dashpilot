@@ -104,10 +104,6 @@ object VehicleControl {
     // --- Door unlatch (VCSEC_requests 0x1F9); value = door index ---
     const val CMD_DOOR_UNLATCH: Int = 0x50
 
-    // --- Diagnostic records in the CAN stream (firmware can_diag.h) ---
-    // 1 = on, 0 = off. Not persisted; the DashKit switches it off on disconnect.
-    const val CMD_DIAG_LOG: Int = 0x5D
-
     // --- Compact CAN packets (11 bytes per frame instead of 18) ---
     // 1 = on. Not persisted; firmware without the opcode rejects the write and keeps the original format.
     const val CMD_COMPACT: Int = 0x52

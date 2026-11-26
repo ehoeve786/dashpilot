@@ -18,10 +18,6 @@ import com.softwiredtech.dashpilot.datamodel.dash.DEV_RIVE_DASHBOARD_ID
 import com.softwiredtech.dashpilot.datamodel.dash.DEV_URL_DASHBOARD_ID
 import com.softwiredtech.dashpilot.datamodel.dash.getDevDashboardUrl
 import com.softwiredtech.dashpilot.datamodel.dash.saveDevDashboardUrl
-import com.softwiredtech.dashpilot.datamodel.dash.isDevCanLogEnabled
-import com.softwiredtech.dashpilot.datamodel.dash.setDevCanLogEnabled
-import com.softwiredtech.dashpilot.datamodel.dash.isDevCanLogAllEnabled
-import com.softwiredtech.dashpilot.datamodel.dash.setDevCanLogAllEnabled
 import com.softwiredtech.dashpilot.datamodel.dash.saveDevRiveFileUri
 import com.softwiredtech.dashpilot.datamodel.dash.saveSelectedDashboard
 import android.net.Uri
@@ -558,25 +554,6 @@ private fun DeveloperSection(
     if (loadedRiveFile && selectedDashboardId == DEV_RIVE_DASHBOARD_ID) {
         LoadedConfirmation()
         Spacer(modifier = Modifier.height(8.dp))
-    }
-    var canLog by remember { mutableStateOf(isDevCanLogEnabled(context)) }
-    var canLogAll by remember { mutableStateOf(isDevCanLogAllEnabled(context)) }
-    SettingsToggle(stringResource(R.string.settings_developer_can_log), canLog) { enabled ->
-        canLog = enabled
-        setDevCanLogEnabled(context, enabled)
-        bleManager?.reconnect()   // read once per connection
-    }
-    if (canLog) {
-        SettingsToggle(stringResource(R.string.settings_developer_can_log_all), canLogAll) { enabled ->
-            canLogAll = enabled
-            setDevCanLogAllEnabled(context, enabled)
-            bleManager?.reconnect()
-        }
-        Text(
-            text = stringResource(R.string.settings_developer_can_log_hint),
-            color = DarkColors.TextMuted,
-            fontSize = 13.sp
-        )
     }
     Spacer(modifier = Modifier.height(4.dp))
     Text(text = stringResource(R.string.settings_developer_url_label), color = Color.White, fontSize = 16.sp)

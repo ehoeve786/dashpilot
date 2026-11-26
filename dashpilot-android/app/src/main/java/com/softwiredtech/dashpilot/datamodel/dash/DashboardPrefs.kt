@@ -10,8 +10,6 @@ const val PREF_AUTO_START_DRIVE = "auto_start_drive"
 const val PREF_DEV_RIVE_FILE_URI = "dev_rive_file_uri"
 const val PREF_DEV_DASHBOARD_URL = "dev_dashboard_url"
 const val PREF_DEV_URL_HINT_SHOWN = "dev_url_hint_shown"
-const val PREF_DEV_CAN_LOG = "dev_can_log"
-const val PREF_DEV_CAN_LOG_ALL = "dev_can_log_all"
 
 const val PREF_DASH_APP_DATA_PREFIX = "dash_app_data."
 
@@ -127,26 +125,6 @@ fun isDevUrlHintShown(context: Context): Boolean =
 fun setDevUrlHintShown(context: Context) {
     context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
         .edit { putBoolean(PREF_DEV_URL_HINT_SHOWN, true) }
-}
-
-/** Developer option: record the DashKit stream to a candump log (see CanLog). */
-fun isDevCanLogEnabled(context: Context): Boolean =
-    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
-        .getBoolean(PREF_DEV_CAN_LOG, false)
-
-fun setDevCanLogEnabled(context: Context, value: Boolean) {
-    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
-        .edit { putBoolean(PREF_DEV_CAN_LOG, value) }
-}
-
-/** Developer option: while recording, ask stream-all firmware for every frame. */
-fun isDevCanLogAllEnabled(context: Context): Boolean =
-    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
-        .getBoolean(PREF_DEV_CAN_LOG_ALL, false)
-
-fun setDevCanLogAllEnabled(context: Context, value: Boolean) {
-    context.getSharedPreferences(DASH_PREFS_NAME, Context.MODE_PRIVATE)
-        .edit { putBoolean(PREF_DEV_CAN_LOG_ALL, value) }
 }
 
 fun isOnboardingCompleted(context: Context): Boolean =

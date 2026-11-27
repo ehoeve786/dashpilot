@@ -103,14 +103,14 @@ object VehicleControl {
 
     // --- Door unlatch (VCSEC_requests 0x1F9); value = door index ---
     const val CMD_DOOR_UNLATCH: Int = 0x50
-
-    // --- Compact CAN packets (11 bytes per frame instead of 18) ---
-    // 1 = on. Not persisted; firmware without the opcode rejects the write and keeps the original format.
-    const val CMD_COMPACT: Int = 0x52
     const val DOOR_FRONT_LEFT: Int = 0
     const val DOOR_FRONT_RIGHT: Int = 1
     const val DOOR_REAR_LEFT: Int = 2
     const val DOOR_REAR_RIGHT: Int = 3
+
+    // --- Compact CAN packets (11 bytes per frame instead of 18) ---
+    // 1 = on. Not persisted; firmware without the opcode rejects the write and keeps the original format.
+    const val CMD_COMPACT: Int = 0x52
 
     // --- BLE role with two phones on one DashKit ---
     // 0 = this phone sends the commands, ahead of a phone that didn't send it, whatever the connect order;
